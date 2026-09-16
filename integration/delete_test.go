@@ -1,0 +1,156 @@
+/*
+Copyright 2022 The Skaffold Authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package integration
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/client"
+
+	"github.com/lucky-tools/devloop/integration/devloop"
+	"github.com/lucky-tools/devloop/pkg/devloop/docker"
+	"github.com/lucky-tools/devloop/testutil"
+)
+
+func TestDelete(t *testing.T) {
+	tests := []struct {
+		description string
+		dir         string
+		args        []string
+		pods        []string
+		deployments []string
+		env         []string
+	}{
+		{
+			description: "getting-started",
+			dir:         "testdata/getting-started",
+			pods:        []string{"getting-started"},
+		},
+		{
+			description: "templated fields must exist",
+			dir:         "testdata/helm-render-delete",
+		},
+		{
+			description: "microservices",
+			dir:         "examples/microservices",
+			args:        []string{"--status-check=false"},
+			deployments: []string{"leeroy-app", "leeroy-web"},
+		},
+		{
+			description: "multi-config-microservices",
+			dir:         "examples/multi-config-microservices",
+			deployments: []string{"leeroy-app", "leeroy-web"},
+		},
+		{
+			description: "multiple deployers",
+			dir:         "testdata/deploy-multiple",
+			pods:        []string{"deploy-kubectl", "deploy-kustomize"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			MarkIntegrationTest(t, CanRunWithoutGcp)
+			ns, client := SetupNamespace(t)
+
+			args := append(test.args, "--cache-artifacts=false")
+			devloop.Run(args...).InDir(test.dir).InNs(ns.Name).WithEnv(test.env).RunOrFail(t)
+
+			client.WaitForPodsReady(test.pods...)
+			client.waitForDeploymentsToStabilizeWithTimeout(time.Minute*2, test.deployments...)
+
+			devloop.Delete().InDir(test.dir).InNs(ns.Name).WithEnv(test.env).RunOrFail(t)
+		})
+	}
+}
+
+func TestDeleteDockerDeployer(t *testing.T) {
+	tests := []struct {
+		description        string
+		dir                string
+		args               []string
+		deployedContainers []string
+	}{
+		{
+			description:        "run with one container",
+			dir:                "testdata/docker-deploy",
+			args:               []string{"-p", "one-container"},
+			deployedContainers: []string{"docker-bert-img-1"},
+		},
+		{
+			description:        "run with more than one container",
+			dir:                "testdata/docker-deploy",
+			args:               []string{"-p", "more-than-one-container"},
+			deployedContainers: []string{"docker-bert-img-2", "docker-ernie-img-2"},
+		},
+	}
+
+	for _, test := range tests {
+		testutil.Run(t, test.description, func(t *testutil.T) {
+			MarkIntegrationTest(t.T, CanRunWithoutGcp)
+			ctx := context.Background()
+			devloop.Run(test.args...).InDir(test.dir).RunOrFail(t.T)
+			devloop.Delete(test.args...).InDir(test.dir).RunOrFail(t.T)
+
+			client := SetupDockerClient(t.T)
+			cs := getContainers(ctx, t, test.deployedContainers, client)
+			t.CheckDeepEqual(0, len(cs))
+		})
+	}
+}
+
+func getContainers(ctx context.Context, t *testutil.T, deployedContainers []string, dClient docker.LocalDaemon) []container.Summary {
+	t.Helper()
+
+	containersFilters := client.Filters{}
+	for _, c := range deployedContainers {
+		containersFilters.Add("name", c)
+	}
+
+	cl, err := dClient.ContainerList(ctx, client.ContainerListOptions{
+		Filters: containersFilters,
+	})
+	t.CheckNoError(err)
+
+	return cl
+}
+
+func TestDeleteNonExistedHelmResource(t *testing.T) {
+	tests := []struct {
+		description string
+		dir         string
+		env         []string
+	}{
+		{
+			description: "helm deployment doesn't exist.",
+			dir:         "testdata/helm",
+			env:         []string{"TEST_NS=test-ns"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			MarkIntegrationTest(t, CanRunWithoutGcp)
+			ns, _ := SetupNamespace(t)
+
+			devloop.Delete().InDir(test.dir).InNs(ns.Name).WithEnv(test.env).RunOrFail(t)
+		})
+	}
+}

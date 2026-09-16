@@ -1,0 +1,33 @@
+apiVersion: devloop/v1
+kind: Config
+build:
+  # only build and deploy "base-service" on main profile
+  artifacts:
+  - image: devloop-base
+    context: base-service
+manifests:
+  rawYaml:
+  - 'base-service/*.yaml'
+
+profiles:
+  - name: hello
+    patches:
+      - op: add
+        path: /build/artifacts/1
+        value:
+          image: devloop-hello
+          context: hello-service
+      - op: add
+        path: /manifests/rawYaml/1
+        value: 'hello-service/*.yaml'
+
+  - name: world
+    patches:
+      - op: add
+        path: /build/artifacts/1
+        value:
+          image: devloop-world
+          context: world-service
+      - op: add
+        path: /manifests/rawYaml/1
+        value: 'world-service/*.yaml'

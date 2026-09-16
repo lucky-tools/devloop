@@ -1,0 +1,14 @@
+apiVersion: devloop/v1
+kind: Config
+build:
+  artifacts:
+    - image: us-central1-docker.pkg.dev/k8s-devloop/testing/devloop-example
+      context: ./kubectl
+manifests:
+  rawYaml:
+    - kubectl/k8s-pod.yaml
+  kustomize:
+    paths:
+      - ./kustomize
+deploy:
+  kubectl: {}

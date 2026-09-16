@@ -1,0 +1,9 @@
+.scheme-container, .information-container {
+    display: none;
+}
+
+
+/*TODO remove (https://github.com/lucky-tools/devloop/issues/3168)*/
+#operations-DevloopService-EventLog div.opblock-section, div.execute-wrapper {
+    display: none;
+}

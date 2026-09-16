@@ -1,0 +1,4 @@
+apiVersion: devloop/v1
+kind: Config
+requires:
+  - path: ./module1

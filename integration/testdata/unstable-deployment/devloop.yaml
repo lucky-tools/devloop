@@ -1,0 +1,9 @@
+apiVersion: devloop/v1
+kind: Config
+build:
+  artifacts:
+    - image: incorrect-example
+deploy:
+  kubectl:
+    manifests:
+      - incorrect-deployment.yaml

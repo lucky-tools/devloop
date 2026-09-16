@@ -1,0 +1,107 @@
+/*
+Copyright 2019 The Skaffold Authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package update
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	"github.com/blang/semver"
+
+	"github.com/lucky-tools/devloop/pkg/devloop/config"
+	"github.com/lucky-tools/devloop/pkg/devloop/output/log"
+	"github.com/lucky-tools/devloop/pkg/devloop/util"
+	"github.com/lucky-tools/devloop/pkg/devloop/version"
+)
+
+// EnableCheck enabled the check for a more recent version of Devloop.
+var EnableCheck bool
+
+// For testing
+var (
+	GetLatestAndCurrentVersion = getLatestAndCurrentVersion
+	isConfigUpdateCheckEnabled = config.IsUpdateCheckEnabled
+)
+
+const LatestVersionURL = "https://storage.googleapis.com/devloop/releases/latest/VERSION"
+
+// CheckVersion returns an update message when update check is enabled and devloop binary in not latest
+func CheckVersion(config string) (string, error) {
+	return checkVersion(config, false)
+}
+
+// CheckVersionOnError returns an error message when update check is enabled and devloop binary in not latest
+func CheckVersionOnError(config string) (string, error) {
+	return checkVersion(config, true)
+}
+
+func checkVersion(configfile string, onError bool) (string, error) {
+	if !isUpdateCheckEnabled(configfile) {
+		log.Entry(context.TODO()).Debug("Update check not enabled, skipping.")
+		return "", nil
+	}
+	latest, current, err := GetLatestAndCurrentVersion()
+	if err != nil {
+		return "", fmt.Errorf("getting latest and current devloop versions: %w", err)
+	}
+	if latest.GT(current) && config.ShouldDisplayUpdateMsg(configfile) {
+		if onError {
+			return fmt.Sprintf("Your Devloop version might be too old. Download the latest version (%s) from:\n  %s\n", latest, releaseURL(latest)), nil
+		}
+		return fmt.Sprintf("There is a new version (%s) of Devloop available. Download it from:\n  %s\n", latest, releaseURL(latest)), nil
+	}
+	return "", nil
+}
+
+// isUpdateCheckEnabled returns whether or not the update check is enabled
+// It is true by default, but setting it to any other value than true will disable the check
+func isUpdateCheckEnabled(configfile string) bool {
+	return EnableCheck && isConfigUpdateCheckEnabled(configfile)
+}
+
+// getLatestAndCurrentVersion uses a VERSION file stored on GCS to determine the latest released version
+// and returns it with the current version of Devloop
+func getLatestAndCurrentVersion() (semver.Version, semver.Version, error) {
+	none := semver.Version{}
+	versionString, err := DownloadLatestVersion()
+	if err != nil {
+		return none, none, err
+	}
+	log.Entry(context.TODO()).Tracef("latest devloop version: %s", versionString)
+	latest, err := version.ParseVersion(versionString)
+	if err != nil {
+		return none, none, fmt.Errorf("parsing latest version from GCS: %w", err)
+	}
+	current, err := version.ParseVersion(version.Get().Version)
+	if err != nil {
+		return none, none, fmt.Errorf("parsing current semver, skipping update check: %w", err)
+	}
+	return latest, current, nil
+}
+
+func DownloadLatestVersion() (string, error) {
+	versionBytes, err := util.Download(LatestVersionURL)
+	if err != nil {
+		return "", fmt.Errorf("getting latest version info from GCS: %w", err)
+	}
+	return strings.TrimSuffix(string(versionBytes), "\n"), nil
+}
+
+func releaseURL(v semver.Version) string {
+	return fmt.Sprintf("https://github.com/lucky-tools/devloop/releases/tag/v%s", v.String())
+}

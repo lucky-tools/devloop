@@ -1,0 +1,30 @@
+version: 2
+# dependabot ignores can be configured here or via `@dependabot ignore` rules 
+# in PRs.  See those list by searching:
+# https://github.com/GoogleContainerTools/skaffold/search?q=%22%40dependabot+ignore%22+in%3Acomments
+updates:
+  # check Skaffold dependencies
+  - directory: "/"
+    package-ecosystem: "gomod"
+    schedule:
+      interval: "weekly"
+    groups:
+      golang:
+        patterns:
+          - "*"
+    exclude-paths:
+      - codelab
+      - examples
+      - hack
+      - integration
+      - pkg/skaffold/build/ko/testdata
+
+  # check for updates to github actions
+  - directory: "/"
+    package-ecosystem: "github-actions"
+    schedule:
+      interval: "weekly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"

@@ -1,0 +1,5 @@
+apiVersion: devloop/v1
+kind: Config
+requires:
+- path: ./leeroy-app
+- path: ./leeroy-web

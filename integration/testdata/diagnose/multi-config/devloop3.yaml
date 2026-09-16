@@ -1,0 +1,11 @@
+apiVersion: devloop/v1
+kind: Config
+metadata:
+  name: cfg3
+build:
+  artifacts:
+  - image: app3
+    context: foo3
+manifests:
+  rawYaml:
+  - /k8s/*

@@ -1,0 +1,57 @@
+# GoReleaser configuration for devloop releases.
+# Docs: https://goreleaser.com/customization/
+
+version: 2
+
+project_name: devloop
+
+# The repo commits a vendor/ directory and no cgo is used in the source,
+# so skip the default `go mod tidy` hook and build against vendor directly.
+before:
+  hooks: []
+
+builds:
+  - id: devloop
+    main: ./cmd/devloop
+    binary: devloop
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+    flags:
+      - -trimpath
+      - -mod=vendor
+    tags:
+      - timetzdata # embed tzdata for static binaries
+      - netgo
+      - osusergo
+    ldflags:
+      - -s -w
+      - -X github.com/lucky-tools/devloop/pkg/devloop/version.version={{ .Tag }}
+      - -X github.com/lucky-tools/devloop/pkg/devloop/version.buildDate={{ .Date }}
+      - -X github.com/lucky-tools/devloop/pkg/devloop/version.gitCommit={{ .Commit }}
+
+archives:
+  - formats: [tar.gz]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - Merge pull request
+      - Merge branch

@@ -1,0 +1,84 @@
+apiVersion: devloop/v1
+kind: Config
+build:
+  artifacts:
+  - image: devloop-debug-java
+    context: java
+    jib:
+      args:
+      - --no-transfer-progress
+  - image: devloop-debug-npm
+    context: npm
+  - image: devloop-debug-nodejs
+    context: nodejs
+  #- image: devloop-debug-python3
+  #  context: python3
+  - image: devloop-debug-go
+    context: go
+  #- image: devloop-debug-netcore
+  #  context: netcore
+manifests:
+  rawYaml:
+    - java/k8s/web.yaml
+    - nodejs/k8s/pod.yaml
+    - npm/k8s/pod.yaml
+    #- python3/k8s/pod.yaml
+    - go/k8s/pod.yaml
+    #- netcore/k8s/pod.yaml
+
+profiles:
+- name: kustomize
+  patches:
+  - op: remove
+    path: /manifests/rawYaml
+  manifests:
+    kustomize:
+      paths:
+      - "."
+# use GCP Buildpacks to build the individual projects
+- name: buildpacks
+  build:
+    artifacts:
+    - image: devloop-debug-java
+      context: java
+      buildpacks: {}
+    - image: devloop-debug-npm
+      context: npm
+      buildpacks: {}
+    - image: devloop-debug-nodejs
+      context: nodejs
+      buildpacks: {}
+    #- image: devloop-debug-python3
+    #  context: python3
+    #  buildpacks:
+    #    builder: "gcr.io/buildpacks/builder:v1"
+    - image: devloop-debug-go
+      context: go
+      buildpacks:
+        env:
+        - GOOGLE_RUNTIME_VERSION=1.16 # temporarily pin due to issue#6450
+    #- image: devloop-debug-netcore
+    #  context: netcore
+    #  buildpacks:
+    #    builder: "gcr.io/buildpacks/builder:v1"
+- name: docker
+  patches:
+  - op: remove
+    path: /manifests/rawYaml
+  build:
+    artifacts:
+    - image: devloop-debug-nodejs
+      context: nodejs
+  deploy:
+    docker:
+      images: [devloop-debug-nodejs]
+
+- name: specified-runtime
+  build:
+    artifacts:
+    - image: specified-runtime-nodejs
+      context: specified-runtime
+      runtimeType: nodejs
+  manifests:
+    rawYaml:
+      - specified-runtime/k8s/*

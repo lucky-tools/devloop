@@ -1,0 +1,11 @@
+apiVersion: devloop/v1
+kind: Config
+metadata:
+  name: kpt-cl
+build:
+  artifacts:
+  - image: "frontend"
+    context: php-redis
+deploy:
+  kpt:
+    dir: config

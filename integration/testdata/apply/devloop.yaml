@@ -1,0 +1,20 @@
+apiVersion: devloop/v1
+kind: Config
+profiles:
+  - name: deployment
+    deploy:
+      kubectl:
+        manifests: ["deployment.yaml"]
+  - name: statefulset
+    deploy:
+      kubectl:
+        manifests: ["statefulset.yaml"]
+  - name: configconnector
+    deploy:
+      statusCheckDeadlineSeconds: 10
+      kubectl:
+        manifests: ["configconnector.yaml"]
+  - name: pod
+    deploy:
+      kubectl:
+        manifests: ["pod.yaml"]

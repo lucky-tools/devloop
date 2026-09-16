@@ -1,0 +1,19 @@
+apiVersion: devloop/v1
+kind: Config
+metadata:
+  name: helm-project
+build:
+  artifacts:
+  - image: go-hello
+    context: hello-world/src
+    docker:
+      dockerfile: Dockerfile
+manifests:
+  helm:
+    releases:
+    - name: hello-world
+      chartPath: hello-world
+      valuesFiles:
+      - hello-world/val.yaml
+      - hello-world/values.yaml
+      version: 0.1.0

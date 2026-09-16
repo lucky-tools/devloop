@@ -1,0 +1,5 @@
+apiVersion: devloop/v1
+kind: Config
+requires:
+  - path: ./app1/devloop.yml
+  - path: ./app2/devloop.yml

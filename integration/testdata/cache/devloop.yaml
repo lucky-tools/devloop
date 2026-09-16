@@ -1,0 +1,16 @@
+apiVersion: devloop/v1
+kind: Config
+build:
+  artifacts:
+  - image: app
+    context: app
+    requires:
+    - image: base
+      alias: BASE
+  - image: base
+    context: base
+deploy:
+  kubectl:
+    manifests:
+    - app/k8s-pod.yaml
+

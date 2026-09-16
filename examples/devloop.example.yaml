@@ -1,0 +1,433 @@
+# =============================================================================
+# devloop.example.yaml —— devloop 全量配置参考（每行带注释）
+# -----------------------------------------------------------------------------
+# 适用版本：devloop/v1（lucky-tools/devloop，Skaffold 的一个 fork）
+# 若你用的是上游 Skaffold：把 apiVersion 改成 skaffold/v4beta14，
+# 并把进程级环境变量前缀 DEVLOOP_* 换成 SKAFFOLD_*（devloop.env 是 fork 独有）。
+#
+# 字段来源：pkg/devloop/schema/latest/config.go
+# 标注「oneOf」= 同一层级只能选一个；「optional」= 可省略。
+# 本文件为「参考全集」，把互斥选项都列了出来；实际使用请只保留需要的部分。
+# =============================================================================
+
+apiVersion: devloop/v1            # 配置 schema 版本（必填）
+kind: Config                            # 固定值 Config（必填）
+
+metadata:                               # 项目元信息（optional）
+  name: my-project                      # 项目名
+  labels:                               # 项目标签（optional）
+    team: platform
+  annotations:                          # 项目注解（optional）
+    description: devloop 全量示例
+
+# -----------------------------------------------------------------------------
+# env：注入进程环境变量（等价于 devloop.env 文件，optional）
+# -----------------------------------------------------------------------------
+env:                                        # 顶层环境变量，`KEY=value` 数组（optional）
+  - DOCKER_HOST=ssh://root@192.168.1.53     # 若变量已存在于环境，则不覆盖
+  - DOCKER_CONTEXT=53-remote                # 仅当变量未设置时才会生效
+
+# -----------------------------------------------------------------------------
+# requires：引用其它 devloop 配置（跨文件复用配置，optional）
+# -----------------------------------------------------------------------------
+requires:
+  - path: ../shared/devloop.yaml        # 本地路径（oneOf）
+    # git:                              # 或：从 git 仓库拉取（oneOf）
+    #   repo: https://github.com/org/repo.git
+    #   path: configs/devloop.yaml
+    #   ref: main
+    #   sync: true
+    # googleCloudStorage:               # 或：从 GCS 拷贝（oneOf）
+    #   source: gs://my-bucket/dir/*
+    #   path: configs/devloop.yaml
+    configs: [shared-config]            # 只引入该文件里指定 name 的 config（optional，空=全部）
+    activeProfiles:                     # 被引用配置的 profile 激活映射（optional）
+      - name: prod                      # 被引用配置里的 profile 名
+        activatedBy: [production]       # 当前配置哪些 profile 激活时，联动激活上面那个（空=始终激活）
+
+# =============================================================================
+# build：构建阶段
+# =============================================================================
+build:
+  # ---- 构建执行环境（oneOf）：local / cluster ----
+  local:                                # 本地 Docker 构建（oneOf）
+    push: true                          # 是否推送到镜像仓库（默认：连远程集群时自动 push）
+    tryImportMissing: false             # 缓存未命中时尝试从本地/远程仓库导入镜像
+    concurrency: 1                      # 并行构建的 artifact 数量（0=不限）
+    # docker 构建后端（oneOf）：cli / api；不写默认 api（走本机 docker socket）
+    cli:                                # 用 docker CLI 构建（跟随 docker context）
+      useBuildKit: true                   # 使用 docker buildx 构建（需先安装 buildkit 并创建 builder）
+      buildKitBuilder: buildkit           # buildkit builder 名（optional；缺省用 buildkit 默认 builder）
+      cacheTag: cache                   # buildkit 缓存 tag（optional；缺省用 tagPolicy 生成的 tag）
+    # api:                              # 用 Docker Engine HTTP API 构建（不走 DOCKER_HOST/docker context）
+    #   host: tcp://192.168.1.10:2376   # daemon 地址（unix:///... 默认、tcp://、ssh://、npipe://）
+  # 透明 buildkit 支持（可选）：用 docker buildx + 远程/daemon-less BuildKit 构建。
+  # 前置：本机需先创建 builder：
+  #   docker buildx create --driver docker-container --name buildkit   # 本地 builder
+  #   # 或 --driver remote tcp://buildkitd:2375                          # 远程/daemon-less builder
+  # 然后在 yaml 里 `cli.useBuildKit: true` 即可启用；`buildKitBuilder` 不填则用 buildkit 默认 builder。
+  # 启用后可给 artifact 配 cacheFrom / cacheTo（type=registry）。
+  # cluster:                            # 集群内构建（oneOf，用 kaniko 在集群里构建）
+  #   HTTP_PROXY: http://proxy:3128     # kaniko pod 的 http 代理
+  #   HTTPS_PROXY: http://proxy:3128    # kaniko pod 的 https 代理
+  #   namespace: default                # 构建 pod 命名空间
+  #   timeout: 20m                      # 构建超时
+  #   pullSecretName: kaniko-secret     # 拉取/推送镜像用的 secret 名
+  #   serviceAccount: kaniko-builder    # pod 使用的 service account
+  #   dockerConfig:                     # 挂载本地 docker config.json
+  #     path: ~/.docker/config.json     # 本地路径（oneOf）
+  #     # secretName: docker-cfg         # 或：已有 k8s secret 名（oneOf）
+  #   resources:                        # kaniko pod 资源
+  #     requests: { cpu: "1", memory: 1Gi }
+  #     limits: { cpu: "2", memory: 2Gi }
+  #   concurrency: 0                    # 并行构建数
+
+  artifacts:                            # 要构建的镜像列表
+    # ================= docker 构建（最常用，oneOf） =================
+    - image: 192.168.1.53:9010/imk/my-app   # 镜像名（必填）
+      context: .                        # 源码目录（默认 .）
+      docker:                           # 构建器（oneOf）
+        dockerfile: docker/Dockerfile   # Dockerfile 路径（默认 Dockerfile）
+        target: builder                 # Dockerfile 目标 stage（optional）
+        buildArgs:                      # --build-arg，value 支持 {{.ENV}} 模板
+          ARG_NAME: "{{.MY_ENV_VAR}}"
+        network: host                   # docker build 网络模式
+        addHost:                        # --add-host
+          - host1:192.168.1.10
+        cacheFrom:                      # --cache-from 缓存源镜像
+          - my-app:cache
+        cacheTo:                        # --cache-to 缓存导出（仅 buildkit 生效，optional）
+          - type=registry,ref=my-app:cache,mode=max   # 显式缓存目标（buildkit 缓存导出语法）
+          # 省略 cacheTo 时：buildkit 会自动用 cacheFrom 的镜像名 + cache-tag 生成
+          # `type=registry,ref=<镜像名>:<cache-tag>,mode=max`（仅在 push=true 时导出）
+        cliFlags:                       # 仅走 docker CLI 时的额外 flag
+          - --platform=linux/amd64
+        pullParent: false               # 强制拉取父镜像
+        noCache: false                  # --no-cache
+        squash: false                   # --squash 合并层
+        secrets:                        # --secret（需 useBuildKit）
+          - id: mysecret
+            src: ./secret.txt           # 来源：本地文件（oneOf）
+            # env: SECRET_ENV_VAR       # 或：从环境变量取值（oneOf）
+        ssh: default                    # --ssh 使用 SSH agent
+      sync:                             # 文件同步（改动直接 sync 进容器而非重建，optional）
+        manual:                         # 手动指定同步规则（oneOf）
+          - src: "src/**/*.go"          # 源 glob（必填）
+            dest: /app                  # 容器内目标路径（必填）
+            strip: src/                 # 去掉的路径前缀（optional）
+        # infer: ["src/**"]             # 或：从 Dockerfile 推断（oneOf）
+        # auto: true                    # 或：构建系统自动发现（仅 jib/buildpacks，oneOf）
+        hooks:                          # sync 前后生命周期钩子（optional）
+          before: []
+          after: []
+      requires:                         # 本 artifact 依赖的其它 artifact（optional）
+        - image: my-base-image          # 依赖的镜像名
+          alias: BASE_IMAGE             # 在 builder 里替换的别名（默认=image）
+      hooks:                            # 构建前后钩子（optional）
+        before:                         # 构建前
+          - command: [echo, before-build]   # 命令（必填）
+            os: [linux, darwin]         # 仅这些 OS 执行（optional）
+            dir: .                      # 工作目录（optional）
+        after: []                       # 构建后
+      platforms: [linux/amd64, linux/arm64]  # 该 artifact 的构建平台（覆盖顶层 platforms）
+      runtimeType: go                   # 语言运行时：go/nodejs/jvm/python/netcore（debug 用）
+
+    # ================= buildpacks 构建（oneOf，与 docker 二选一） =================
+    # - image: gcr.io/example/my-app
+    #   context: .
+    #   buildpacks:                     # 构建器（oneOf）
+    #     builder: gcr.io/buildpacks/builder:v1   # builder 镜像
+    #     runImage: gcr.io/buildpacks/gcp/run:v1  # 覆盖 run image（optional）
+    #     env:                          # 构建时环境变量，value 支持 {{.ENV}} 模板
+    #       - GOPROXY={{.GOPROXY}}
+    #     buildpacks:                   # 显式指定 buildpack 列表（可选）
+    #       - gcr.io/buildpacks/go
+    #     trustBuilder: false           # 信任 builder
+    #     clearCache: false             # 清理旧缓存卷
+    #     projectDescriptor: project.toml  # 项目描述文件（默认 project.toml）
+    #     dependencies:                 # 文件依赖（监听哪些文件触发重建/同步）
+    #       paths: ["src/**"]           # 依赖路径（oneOf）
+    #       ignore: ["src/**/*_test.go"]  # 忽略路径（需配合 paths）
+    #     volumes:                      # 挂载宿主机目录到构建容器
+    #       - host: ./cache             # 宿主机路径（必填）
+    #         target: /cache            # 容器内路径（必填）
+    #         options: ro               # 挂载选项：ro/rw
+    #     buildArgs:                    # 传给 pack build 的额外参数
+    #       - --network=host
+
+    # ================= ko 构建（Go，oneOf） =================
+    # - image: gcr.io/example/my-go-app
+    #   context: .
+    #   ko:                             # 构建器（oneOf）
+    #     fromImage: gcr.io/distroless/static:nonroot  # 基础镜像
+    #     dir: ./cmd                     # go 工具运行目录（相对 context）
+    #     main: ./cmd/server             # 主包路径（默认 .）
+    #     env:                           # 构建时环境变量（不写进镜像）
+    #       - GOPRIVATE=git.example.com
+    #     flags: [ -trimpath, -v ]       # go build 附加 flag
+    #     ldflags: [ -s, -w ]            # 链接 flag
+    #     labels: { foo: bar }           # 镜像 label
+    #     dependencies:                  # 文件依赖
+    #       paths: ["**/*.go"]           # 默认 ["**/*.go"]
+    #       ignore: ["**/*_test.go"]
+
+    # ================= jib 构建（Java，oneOf） =================
+    # - image: gcr.io/example/my-java-app
+    #   context: .
+    #   jib:                             # 构建器（oneOf）
+    #     project: my-submodule          # 多模块项目里选择子项目
+    #     type: maven                    # maven / gradle（默认自动探测）
+    #     fromImage: eclipse-temurin:17  # 基础镜像
+    #     args: [--no-build-cache]       # 附加构建参数
+
+    # ================= kaniko 构建（集群内，oneOf） =================
+    # - image: gcr.io/example/my-app
+    #   context: .
+    #   kaniko:                          # 构建器（oneOf）
+    #     dockerfile: Dockerfile         # Dockerfile 路径
+    #     target: builder                # 目标 stage
+    #     buildArgs: { ARG_NAME: value } # 构建参数（支持模板）
+    #     env:                           # 传给 kaniko pod 的环境变量
+    #       - name: KEY
+    #         value: value
+    #     cache:                         # kaniko 远程缓存
+    #       repo: gcr.io/example/cache
+    #     image: gcr.io/kaniko-project/executor  # kaniko 镜像
+    #     destination: [gcr.io/example/my-app:extra]  # 额外推送 tag
+    #     insecure: false                # 用 HTTP 推镜像
+    #     skipTLS: false                 # 推送时跳过 TLS 校验
+    #     reproducible: true             # 剥离时间戳生成可复现镜像
+    #     verbosity: info                # 日志级别
+
+
+    # ================= custom 构建（自定义脚本，oneOf） =================
+    # - image: gcr.io/example/my-app
+    #   context: .
+    #   custom:                          # 构建器（oneOf）
+    #     buildCommand: ./build.sh --tag $IMAGE   # 自定义构建命令
+    #     dependencies:                  # 文件依赖（否则无法监听变更）
+    #       dockerfile:                  # 从 Dockerfile 推断依赖（oneOf）
+    #         path: Dockerfile
+    #       # command: ./list-deps.sh    # 或：命令输出 JSON 数组（oneOf）
+    #       # paths: ["src/**"]          # 或：直接列路径（oneOf）
+    #       # ignore: ["src/**/*_test.go"]
+
+  insecureRegistries:                   # 声明为不安全（走 HTTP）的仓库（optional）
+    - 192.168.1.53:9010
+
+  tagPolicy:                            # 镜像打 tag 策略（oneOf，默认 gitCommit）
+    # ======= gitCommit（默认，oneOf） =======
+    gitCommit: {}                       # 用 git tag/commit 打 tag
+    # gitCommit:
+    #   variant: CommitSha               # Tags/CommitSha/AbbrevCommitSha/TreeSha/AbbrevTreeSha
+    #   prefix: v                        # tag 前缀
+    #   ignoreChanges: true             # 有未提交改动时不加 -dirty 后缀
+    # ======= sha256（oneOf） =======
+    # sha256: {}                         # 用镜像 sha256 打 tag
+    # ======= envTemplate（oneOf） =======
+    # envTemplate:                       # 用模板打 tag（引用环境变量）
+    #   template: "{{.RELEASE}}"         # 模板（必填）
+    # ======= dateTime（oneOf） =======
+    # dateTime:                          # 用构建时间戳打 tag
+    #   format: "2006-01-02_15-04-05"    # 时间格式
+    #   timezone: Local                  # 时区
+    # ======= customTemplate（oneOf） =======
+    # customTemplate:                    # 组合多个 tagger 的模板
+    #   template: "{{.DATE}}-{{.SHA}}"
+    #   components:
+    #     - name: DATE                   # 组件名，供模板引用
+    #       dateTime: { format: "2006-01-02" }  # 组件内容（一个 tagger）
+    #     - name: SHA
+    #       gitCommit: {}
+    # ======= inputDigest（oneOf） =======
+    # inputDigest: {}                    # 用镜像内容 sha256 打 tag
+
+  platforms: [linux/amd64, linux/arm64] # 顶层构建平台（可被 artifact 覆盖）
+
+  # 构建阶段整体生命周期钩子（optional）
+  hooks:
+    before:                             # 构建前
+      - command: [echo, build-start]
+    after: []                           # 构建后
+
+# =============================================================================
+# test：测试阶段（构建后对镜像跑测试，optional）
+# =============================================================================
+test:
+  - image: 192.168.1.53:9010/imk/my-app  # 对哪个镜像跑测试（必填）
+    context: .                          # 测试源码目录（默认 .）
+    structureTests:                     # Container Structure Test 文件（optional）
+      - ./test/*.yaml
+    structureTestsArgs:                 # 传给 container-structure-test 的附加参数
+      - --driver=tar
+      - --no-color
+    custom:                             # 自定义测试命令（optional）
+      - command: go test ./...          # 测试命令（必填）
+        timeoutSeconds: 120             # 超时（秒，0=不限）
+        dependencies:                   # 额外测试依赖（监听变更触发重测）
+          paths: ["src/**"]
+          ignore: ["src/**/*_test.go"]
+
+# =============================================================================
+# manifests（render）：渲染/生成最终 K8s 清单
+# =============================================================================
+manifests:
+  rawYaml:                              # 本地裸清单文件（optional）
+    - docker/imk-deploy.yaml
+  # remoteManifests:                    # 引用远程集群里的清单（optional）
+  #   - manifest: deploy/my-app
+  #     kubeContext: minikube
+  kustomize:                            # kustomize 渲染（optional）
+    paths: [k8s/]                       # kustomization 路径（默认 ["."]）
+    buildArgs: []                       # 传给 kustomize build 的附加参数
+  # helm:                               # 用 helm 渲染清单（注意：渲染后仍用 kubectl/kpt 部署）
+  #   releases:
+  #     - name: my-app                  # release 名（必填）
+  #       chartPath: charts/my-app      # 本地 chart（oneOf）
+  #       # remoteChart: myrepo/my-app  # 或：远程 chart（oneOf）
+  #       valuesFiles: [values.yaml]    # values 文件
+  #       version: "1.0.0"              # chart 版本
+  #       namespace: imk                # 命名空间
+  #       setValues: { replicaCount: "2" }          # --set
+  #       setValueTemplates: { image: "{{.IMAGE}}" } # --set（value 走模板）
+  #       setFiles: { config: ./config.json }        # --set-file
+  #       createNamespace: true         # --create-namespace
+  #       wait: false                   # --wait
+  #       repo: https://charts.example.com  # helm repo 地址
+  # kpt: [kpt/]                         # kpt 资源目录（optional）
+  hooks:                                # 渲染前后钩子（optional）
+    before: []
+    after: []
+  transform:                            # kpt 转换器（optional）
+    - name: set-namespace               # 转换器名
+      configMap: [k8s/ns.yaml]
+  validate:                             # kpt 校验器（optional）
+    - name: kubeval
+      configMap: []
+  output: .kpt-pipeline                 # 水合后的输出目录（optional）
+
+# =============================================================================
+# deploy：部署阶段
+# =============================================================================
+deploy:
+  kubectl: {}                           # 用 kubectl apply 部署（deployer 之一）
+  # kubectl:
+  #   defaultNamespace: imk             # 默认命名空间
+  #   flags:
+  #     global: []                      # 所有 kubectl 命令的附加 flag
+  #     apply: []                       # kubectl apply 的附加 flag
+  #     delete: []                      # kubectl delete 的附加 flag
+  #     disableValidation: false        # --validate=false
+  #   remoteManifests: []               # 远程集群里的清单
+  # kpt:                                # 用 kpt live apply 部署（deployer 之一）
+  #   dir: .kpt-pipeline
+  #   inventoryID: my-inventory
+  #   applyFlags: []
+  # docker:                             # 用 docker 部署（deployer 之一，本地容器）
+  #   useCompose: false                 # 是否用 docker-compose
+  #   images: [my-app]                  # 要运行的镜像（必填）
+  # cloudrun:                           # 部署到 GCP Cloud Run（deployer 之一）
+  #   projectid: my-gcp-project
+  #   region: us-central1
+  statusCheck: true                     # 等待部署稳定（optional）
+  statusCheckDeadlineSeconds: 600       # 稳定等待超时（秒）
+  tolerateFailuresUntilDeadline: false  # 容忍失败直到超时
+  kubeContext: imk                      # 部署目标 kube context（optional）
+  logs:                                 # 部署后容器日志输出配置（optional）
+    prefix: auto                        # 日志前缀：container/podAndContainer/auto/none
+    jsonParse:                          # JSON 日志解析（optional）
+      fields: [message, level]
+  hooks:                                # 部署前后钩子（optional）
+    before:
+      - command: [echo, deploy-start]
+    after:
+      - command: [echo, deploy-done]
+
+# =============================================================================
+# portForward：端口转发（optional）
+# =============================================================================
+portForward:
+  - resourceType: deployment            # 资源类型：Service/Pod/Deployment/StatefulSet 等
+    resourceName: my-app                # 资源名（支持模板）
+    namespace: imk                      # 命名空间（支持模板）
+    port: 8080                          # 要转发的资源端口
+    localPort: 8080                     # 本地端口（不可用则随机）
+    address: 127.0.0.1                  # 本地绑定地址（默认 127.0.0.1）
+
+# =============================================================================
+# resourceSelector：过滤渲染时处理哪些资源/字段（optional）
+# =============================================================================
+resourceSelector:
+  allow:                                # 白名单
+    - groupKind: deployment.apps        # 资源类型（必填）
+      image: [spec.template.spec.containers.*.image]   # 重写镜像的 JSON-path
+      labels: [metadata.labels]         # 补 labels 的 JSON-path
+      podSpec: [spec.template.spec]     # 覆盖 podSpec 的 JSON-path
+  deny: []                              # 黑名单（同结构）
+
+# =============================================================================
+# verify：构建后验证（跑一次性容器做校验，optional）
+# =============================================================================
+verify:
+  - name: smoke-test                    # 验证名（必填）
+    timeout: 300                        # 超时（秒，optional）
+    container:                          # 验证容器（必填）
+      name: smoke-container             # 容器名（必填）
+      image: my-app                     # 镜像名（必填）
+      command: [/bin/sh]                # entrypoint（optional，默认用镜像 ENTRYPOINT）
+      args: [-c, echo ok]               # 参数（optional，默认用镜像 CMD）
+      env:                              # 设置到验证容器的环境变量
+        - name: FOO                     # 变量名（必填）
+          value: bar                    # 变量值
+    executionMode:                      # 执行方式（optional）
+      local: {}                         # 本机 docker 跑（默认，oneOf）
+      # kubernetesCluster:              # 或：k8s Job 跑（oneOf）
+      #   overrides: '{"spec":{"ttlSecondsAfterFinished":60}}'  # 内联 JSON 覆盖
+      #   jobManifestPath: k8s/verify-job.yaml  # 自定义 Job 清单
+
+# =============================================================================
+# customActions：自定义动作（用 devloop exec 触发，optional）
+# =============================================================================
+customActions:
+  - name: migrate-db                    # 动作名（必填）
+    failFast: true                      # 失败即停（默认 true）
+    timeout: 600                        # 超时（秒）
+    executionMode:                      # 执行方式（optional）
+      local: {}
+    containers:                         # 要执行的容器列表（必填）
+      - name: migrate                   # 容器名（必填）
+        image: my-app                   # 镜像（必填）
+        command: [/app/migrate]
+        env:
+          - name: DB_URL
+            value: postgres://db:5432
+
+# =============================================================================
+# profiles：环境差异配置（激活后叠加到主配置，optional）
+# =============================================================================
+profiles:
+  - name: production                    # profile 名（必填）
+    activation:                         # 自动激活条件（optional）
+      - env: DEPLOY_ENV=prod            # 环境变量匹配（正则，前缀 ! 取反）
+      - kubeContext: prod-cluster       # kube context 匹配
+        command: deploy                 # 命令匹配（dev/run/build/deploy）
+    requiresAllActivations: false       # true=所有 activation 都满足才激活（默认任一即可）
+    # ---- 方式一：字段叠加（覆盖主配置里已声明的字段） ----
+    build:                              # 覆盖 build 段
+      cluster: {}                       # 集群内 kaniko 构建（生产环境）
+    deploy:                             # 覆盖 deploy 段
+      kubeContext: prod-cluster
+    # ---- 方式二：JSON Patch 细粒度覆盖（optional） ----
+    patches:
+      - op: replace                     # add/remove/replace/move/copy/test（默认 replace）
+        path: /build/artifacts/0/docker/dockerfile  # 目标字段路径（必填）
+        value: docker/Dockerfile.prod   # 新值（可选）
+        # from: /build/artifacts/0/image  # copy/move 的来源路径
+
+  # 用 -p 手动激活，或用 -p name 激活、-p -name 反激活
+  - name: dev
+    activation:
+      - kubeContext: minikube
+    build:
+      local:
+        cli: {}

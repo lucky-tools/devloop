@@ -1,0 +1,5 @@
+build:
+  artifacts:
+  - image: gcr.io/k8s-devloop/example
+  local:
+    api: {}

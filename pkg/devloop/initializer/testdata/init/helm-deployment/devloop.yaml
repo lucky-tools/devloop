@@ -1,0 +1,9 @@
+apiVersion: devloop/v1
+kind: Config
+metadata:
+  name: "helm-deployment"
+build:
+  artifacts:
+  - image: devloop-helm
+    docker:
+      dockerfile: Dockerfile

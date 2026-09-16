@@ -1,0 +1,7 @@
+apiVersion: devloop/v1
+kind: Config
+build:
+  artifacts:
+  - image: squash
+    docker:
+      squash: true

@@ -1,0 +1,26 @@
+apiVersion: devloop/v1
+kind: Config
+build:
+  tagPolicy:
+    sha256: {}
+  cluster:
+    pullSecretName: e2esecret
+    namespace: VAR_CLUSTER_NAMESPACE
+profiles:
+  - name: create-build-step
+    build:
+      artifacts:
+        - image: devloop-in-cluster-builder
+          kaniko:
+            cache: {}
+    manifests:
+      kustomize:
+        path: build-step
+  - name: build-target
+    build:
+      artifacts:
+        - image: us-central1-docker.pkg.dev/k8s-devloop/testing/test-build-in-cluster
+          kaniko:
+            dockerfile: test-build/Dockerfile
+            cache: {}
+

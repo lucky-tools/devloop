@@ -1,0 +1,152 @@
+.comment {
+    color: #008000;
+}
+
+.key {
+    color: #811f3f;
+    position: relative;
+}
+
+.key.required {
+    font-weight: bold;
+}
+
+.value {
+    color: blue;
+}
+
+.example {
+    color: gray;
+    font-weight: 100;
+}
+
+.key, .value, .comment, .example {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 14px;
+}
+
+.key, .value, .example {
+    white-space: nowrap;
+}
+  
+table {
+    border-collapse: collapse;
+}
+
+td {
+    border-bottom: 1px solid #EEE;
+    padding: 1px 0 !important;
+    vertical-align: top;
+}
+
+td:first-child {
+    padding: 1px 5px !important;
+}
+
+tr.top td {
+    background-color: #EEE;
+}
+
+tr.top .comment {
+    color: gray;
+}
+
+td:first-child {
+    white-space: nowrap;
+    padding-right: 10px;
+}
+
+tr:hover td {
+    background: #DDD;
+}
+
+code {
+    font-family: unset;
+    font-size: 85%;
+    border: 1px dotted gray;
+    border-radius: 3px;
+    padding: 0 .2em;
+}
+
+em {
+    font-family: unset;
+    font-size: 85%;
+    border: 1px dotted gray;
+    border-radius: 3px;
+    padding: 0 .2em;
+}
+
+a.anchor{
+    position: relative;
+    display: inline;
+    visibility: hidden;
+    top: -70px;
+}
+
+@media (max-width: 768px) {
+    a.anchor {
+        top: -10px;
+    }
+}
+
+.stooltip__content {
+    background-color: #555;
+    border-radius: 5px;
+    color: #FFF;
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 100;
+    padding: 5px 6px;
+}
+
+.stooltip__content::before {
+    background-color: #555;
+    border-radius: 1px;
+    bottom: -3px;
+    content: '';
+    display: block;
+    height: 10px;
+    left: 9px;
+    position: absolute;
+    transform: rotate(45deg);
+    width: 10px;
+    z-index: -1;
+}
+
+.stooltip {
+    border-bottom: 10px solid transparent;
+    display: inline-block;
+    left: 0;
+    opacity: 0;
+    position: absolute;
+    top: -10px;
+    transform: translateY(-50%);
+    transition: opacity 0.3s;
+    visibility: hidden;
+}
+
+.stooltip__icon {
+    margin: 0 0 0 6px;
+}
+
+.key:hover > .stooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+.yaml-link {
+    color: #FFF;
+}
+
+.yaml-link:hover{
+    color: #72A1E5;
+}
+
+.yaml-link__separator {
+    cursor: default;
+}
+
+.tooltip-img-continaer {
+    margin: 10px 0 0;
+    max-width: 220px;
+}

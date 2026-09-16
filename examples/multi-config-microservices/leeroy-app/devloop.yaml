@@ -1,0 +1,22 @@
+apiVersion: devloop/v1
+kind: Config
+metadata:
+  name: app-config
+requires:
+- path: ../base
+build:
+  artifacts:
+  - image: leeroy-app
+    requires:
+    - image: base
+      alias: BASE
+manifests:
+  rawYaml:
+    - kubernetes/*
+deploy:
+  kubectl: {}
+portForward:
+- resourceType: deployment
+  resourceName: leeroy-app
+  port: http
+  localPort: 9001

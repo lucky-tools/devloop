@@ -1,0 +1,6 @@
+{{ partial "info-panel.html" . }}
+{{ if not .Params.notoc }}
+{{ with .TableOfContents }}
+{{ . }}
+{{ end }}
+{{ end }}

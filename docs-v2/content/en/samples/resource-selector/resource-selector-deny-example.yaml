@@ -1,0 +1,17 @@
+apiVersion: devloop/v1
+kind: Config
+build:
+  artifacts:
+    - image: my-image
+      context: my-image
+manifests:
+  rawYaml:
+  - my-manifests-*
+resourceSelector:
+  allow:
+    - groupKind: "StatefulSet.apps"
+      image: [".*"]
+      labels: [".*"]
+  deny:
+    - groupKind: "StatefulSet.apps"
+      labels: [".spec.volumeClaimTemplates.*.metadata.labels"]

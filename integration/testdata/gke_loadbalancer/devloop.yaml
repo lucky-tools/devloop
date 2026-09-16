@@ -1,0 +1,12 @@
+apiVersion: devloop/v1
+kind: Config
+build:
+  artifacts:
+    - image: gke-loadbalancer
+      context: ./
+manifests:
+  helm:
+    releases:
+    # seed test namespace in the release name.
+    - name: devloop-helm-{{.TEST_NS}}
+      chartPath: loadbalancer-helm

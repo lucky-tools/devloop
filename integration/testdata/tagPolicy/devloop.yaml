@@ -1,0 +1,41 @@
+apiVersion: devloop/v1
+kind: Config
+build:
+  artifacts:
+  - image: simple-build
+  local:
+    push: false
+
+profiles:
+- name: gitCommit
+  build:
+    tagPolicy:
+      gitCommit: {}
+- name: sha256
+  build:
+    tagPolicy:
+      sha256: {}
+- name: dateTime
+  build:
+    tagPolicy:
+      dateTime:
+        format: "2006-01-02"
+        # UTC does not require timezone data lookup
+        # Would have caught #1979
+        timezone: "America/Chicago"
+- name: envTemplate
+  build:
+    tagPolicy:
+      envTemplate:
+        template: "tag"
+- name: args
+- name: envTemplateCmd
+  build:
+    tagPolicy:
+      envTemplate:
+        template: '{{cmd "bash" "-c" "echo 1.0.0"}}'
+- name: envTemplateDefault
+  build:
+    tagPolicy:
+      envTemplate:
+        template: '{{default "bar" .FOO}}'

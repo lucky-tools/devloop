@@ -1,0 +1,6 @@
+build:
+  artifacts:
+  - image: gcr.io/k8s-devloop/devloop-example
+manifests:
+  rawYaml:
+  - k8s-pod

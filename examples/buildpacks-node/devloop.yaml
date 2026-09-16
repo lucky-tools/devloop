@@ -1,0 +1,6 @@
+apiVersion: devloop/v1
+kind: Config
+build:
+  artifacts:
+  - image: devloop-buildpacks-node
+    buildpacks: {}

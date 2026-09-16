@@ -1,0 +1,44 @@
+version: "2"
+linters:
+  default: none
+  enable:
+    - bodyclose
+    - dogsled
+    - gocritic
+    - goprintffuncname
+    - govet
+    - ineffassign
+    - misspell
+    - rowserrcheck
+    - staticcheck
+    - unconvert
+    - unparam
+    - unused
+    - whitespace
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - fs/assets/credits_generated
+  settings:
+    gocritic:
+      disabled-checks:
+        - appendAssign
+    staticcheck:
+      checks: ["-SA1019"]
+formatters:
+  enable:
+    - gofumpt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/lucky-tools/devloop
+  exclusions:
+    generated: lax
+    paths:
+      - fs/assets/credits_generated

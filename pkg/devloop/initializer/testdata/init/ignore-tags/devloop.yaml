@@ -1,0 +1,12 @@
+apiVersion: devloop/v1
+kind: Config
+metadata:
+  name: ignore-tags
+build:
+  artifacts:
+  - image: gcr.io/k8s-devloop/devloop-example
+    docker:
+      dockerfile: Dockerfile
+manifests:
+  rawYaml:
+    - k8s-pod.yaml

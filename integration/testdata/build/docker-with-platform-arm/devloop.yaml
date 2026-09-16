@@ -1,0 +1,15 @@
+apiVersion: devloop/v1
+kind: Config
+build:
+  artifacts:
+  - image: docker-with-platform-arm
+
+profiles:
+  - name: pod
+    manifests:
+      rawYaml:
+      - k8s/pod.yaml
+  - name: deployment
+    manifests:
+      rawYaml:
+      - k8s/deployment.yaml

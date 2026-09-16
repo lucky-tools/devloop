@@ -1,0 +1,16 @@
+apiVersion: devloop/v1
+kind: Config
+build:
+  artifacts:
+  - image: devloop-example
+    context: .
+    docker:
+      dockerfile: Dockerfile
+      noCache: true
+  tagPolicy:
+    gitCommit: {}
+  local:
+    concurrency: 1
+manifests:
+  rawYaml:
+  - k8s-*

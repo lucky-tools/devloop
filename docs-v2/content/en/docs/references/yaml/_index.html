@@ -1,0 +1,38 @@
+---
+title: "devloop.yaml"
+linkTitle: "devloop.yaml"
+weight: 20
+menu:
+  main:
+    weight: 30
+---
+
+{{% alert title="Announcement" color="primary" %}}
+Devloop will be removed from gcloud CLI releases after January 15, 2027. Going forward, Devloop can be installed following the instructions in the [Installing Devloop documentation](https://devloop.dev/docs/install/).
+
+On January 29, 2027 the Devloop GitHub repository will be archived. All existing releases will remain available to the users.{{% /alert %}}
+
+{{< alert title="💡 Tip" >}}
+The Cloud Code IDE extensions (see [install options]({{< relref "../../install/#managed-ide" >}})) provide authoring assistance for `devloop.yaml` files in the form of schema based validation, diagnostics, quick documentation, code completions, and snippets, that can make it easier to create and edit these files.
+
+You can now navigate the `devloop.yaml` reference from an inner element to its upper levels using the tooltip that appears on hover, clicking on the parent element you want to go: <div class="tooltip-img-continaer">![Tooltip with links to upper elements](/images/tooltip-click-note.png)</div>
+{{< /alert >}}
+
+<link href="https://fonts.googleapis.com/css?family=Roboto+Mono:400,700" rel="stylesheet">
+<link rel="stylesheet" type="text/css" href="main.css">
+<script type="module" src="main.js"></script>
+{{< alert title="Note" >}}
+<p id="version-info"></p>
+{{< /alert >}}
+<table id="table" data-version="{{% devloop-version %}}" latest="{{% devloop-version %}}"></table>
+
+<h3>YAML anchors</h3>
+<p>
+    Anchors can be defined by having top-level keys starting with a dot, e.g. <code>.common_stuff: &alias_name</code>.
+    You can then reuse the value using <code>*alias_name</code>.
+</p>
+
+<h3>Organizing multiple configurations</h3>
+<p>
+    Multiple configurations can define dependencies on each other to construct an arbitrarily nested tree of project component dependencies. Management of multiple configurations can be simplified by grouping them together in the same file (separated by --- in YAML).
+</p>

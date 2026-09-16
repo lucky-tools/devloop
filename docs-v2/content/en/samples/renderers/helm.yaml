@@ -1,0 +1,5 @@
+manifests:
+  helm:
+    releases:
+    - name: devloop-helm
+      chartPath: devloop-helm

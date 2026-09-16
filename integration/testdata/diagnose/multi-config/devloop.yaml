@@ -1,0 +1,12 @@
+apiVersion: devloop/v1
+kind: Config
+requires:
+- path: ./devloop2.yaml
+- path: ./devloop3.yaml
+build:
+  artifacts:
+  - image: app1
+    context: foo
+manifests:
+  rawYaml:
+  - /k8s/*

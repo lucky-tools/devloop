@@ -1,0 +1,11 @@
+apiVersion: devloop/v1
+kind: Config
+build:
+  artifacts:
+  - image: devloop-example
+  tagPolicy:
+    envTemplate:
+      template: "{{.FOO}}"
+manifests:
+  rawYaml:
+    - k8s-*

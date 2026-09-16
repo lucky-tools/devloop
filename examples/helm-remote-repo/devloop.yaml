@@ -1,0 +1,8 @@
+apiVersion: devloop/v1
+kind: Config
+manifests:
+  helm:
+    releases:
+    - name: redis-release
+      repo: https://charts.bitnami.com/bitnami 
+      remoteChart: redis

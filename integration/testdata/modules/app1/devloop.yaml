@@ -1,0 +1,24 @@
+apiVersion: devloop/v1
+kind: Config
+requires:
+  - path: ../app2
+build:
+  tagPolicy:
+    sha256: {}
+
+  artifacts:
+  - image: image1
+    custom:
+      buildCommand: ./build.sh
+      dependencies:
+        paths:
+        - "foo"
+    requires:
+    - image: image2
+
+manifests:
+  rawYaml:
+  - 'k8s.yaml'
+
+deploy:
+  kubectl: {}

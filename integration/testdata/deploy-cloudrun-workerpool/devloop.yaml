@@ -1,0 +1,11 @@
+apiVersion: devloop/v1 
+kind: Config
+metadata:
+   name: cloud-run-test-wp
+manifests:
+  rawYaml:
+    - workerpool.yaml
+deploy:
+  cloudrun:
+    projectid: k8s-devloop
+    region: us-central1

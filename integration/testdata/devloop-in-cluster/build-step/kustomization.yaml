@@ -1,0 +1,4 @@
+resources:
+  - k8s-job.yaml
+  - devloop-rbac.yaml
+namespace: VAR_CLUSTER_NAMESPACE

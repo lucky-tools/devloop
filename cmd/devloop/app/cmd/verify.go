@@ -1,0 +1,83 @@
+/*
+Copyright 2019 The Skaffold Authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package cmd
+
+import (
+	"context"
+	"io"
+
+	"github.com/spf13/cobra"
+
+	"github.com/lucky-tools/devloop/cmd/devloop/app/tips"
+	"github.com/lucky-tools/devloop/pkg/devloop/graph"
+	"github.com/lucky-tools/devloop/pkg/devloop/kubernetes/manifest"
+	"github.com/lucky-tools/devloop/pkg/devloop/output/log"
+	"github.com/lucky-tools/devloop/pkg/devloop/runner"
+	"github.com/lucky-tools/devloop/pkg/devloop/schema/latest"
+	"github.com/lucky-tools/devloop/pkg/devloop/schema/util"
+)
+
+// NewCmdVerify describes the CLI command to verify artifacts.
+func NewCmdVerify() *cobra.Command {
+	return NewCmd("verify").
+		WithDescription("Run verification tests against devloop deployments").
+		WithExample("Deploy with devloop and then verify deployments", "deploy -q | devloop verify").
+		WithCommonFlags().
+		WithHouseKeepingMessages().
+		NoArgs(doVerify)
+}
+
+func doVerify(ctx context.Context, out io.Writer) error {
+	return withRunner(ctx, out, func(r runner.Runner, configs []util.VersionedConfig) error {
+		buildArtifacts, err := getBuildArtifactsAndSetTagsForVerify(configs, r.ApplyDefaultRepo)
+		if err != nil {
+			tips.PrintUseRunVsDeploy(out)
+			return err
+		}
+		defer func() {
+			if err := r.Cleanup(context.Background(), out, false, manifest.NewManifestListByConfig(), opts.Command); err != nil {
+				log.Entry(ctx).Warn("verifier cleanup:", err)
+			}
+		}()
+
+		return r.VerifyAndLog(ctx, out, buildArtifacts)
+	})
+}
+
+func getBuildArtifactsAndSetTagsForVerify(configs []util.VersionedConfig, defaulterFn DefaultRepoFn) ([]graph.Artifact, error) {
+	verifyImgs := getVerifyImgs(configs)
+
+	allImgs := joinWithArtifactsFromBuildArtifactsFile(verifyImgs)
+
+	buildArtifacts, err := mergeBuildArtifacts(allImgs, preBuiltImages.Artifacts(), []*latest.Artifact{})
+	if err != nil {
+		return nil, err
+	}
+
+	return applyDefaultRepoToArtifacts(buildArtifacts, defaulterFn)
+}
+
+func getVerifyImgs(configs []util.VersionedConfig) map[string]bool {
+	imgs := make(map[string]bool)
+	for _, cfg := range configs {
+		for _, vtc := range cfg.(*latest.DevloopConfig).Verify {
+			imgs[vtc.Container.Image] = true
+		}
+	}
+
+	return imgs
+}

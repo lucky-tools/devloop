@@ -1,0 +1,32 @@
+apiVersion: devloop/v1
+kind: Config
+build:
+  tagPolicy:
+    sha256: {}
+  artifacts:
+  - image: us-central1-docker.pkg.dev/k8s-devloop/testing/devloop-helm
+manifests:
+  helm:
+    releases:
+    - name: devloop-helm
+      chartPath: devloop-helm
+profiles:
+- name: helm-render
+  manifests:
+    helm:
+      releases:
+      - name: devloop-helm
+        chartPath: devloop-helm
+        setValues:
+          pullPolicy: always
+- name: helm-render-with-global-flags
+  manifests:
+    helm:
+      flags:
+        global:
+        - "--debug"
+      releases:
+      - name: devloop-helm
+        chartPath: devloop-helm
+        setValues:
+          pullPolicy: always

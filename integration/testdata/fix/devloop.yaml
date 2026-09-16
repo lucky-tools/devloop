@@ -1,0 +1,15 @@
+apiVersion: devloop/v1
+kind: Config
+build:
+  artifacts:
+  - imageName: us-central1-docker.pkg.dev/k8s-devloop/testing/devloop-example
+    workspace: .
+  local: {}
+  tagPolicy: sha256
+deploy:
+  kubectl:
+    manifests:
+      - paths:
+        - k8s-*
+        parameters:
+          IMAGE_NAME: us-central1-docker.pkg.dev/k8s-devloop/testing

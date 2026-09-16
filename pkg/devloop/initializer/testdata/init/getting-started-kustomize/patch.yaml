@@ -1,0 +1,10 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devloop-kustomize
+spec:
+  template:
+    spec:
+      containers:
+      - name: devloop-kustomize
+        image: hello-world

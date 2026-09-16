@@ -1,0 +1,22 @@
+apiVersion: devloop/v1
+kind: Config
+metadata:
+  name: web-config
+requires:
+- path: ../base
+build:
+  artifacts:
+  - image: leeroy-web
+    requires:
+    - image: base
+      alias: BASE
+manifests:
+  rawYaml:
+    - kubernetes/*
+deploy:
+  kubectl: {}
+portForward:
+- resourceType: deployment
+  resourceName: leeroy-web
+  port: 8080
+  localPort: 9000

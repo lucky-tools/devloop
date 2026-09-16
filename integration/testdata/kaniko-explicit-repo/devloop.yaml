@@ -1,0 +1,8 @@
+apiVersion: devloop/v1
+kind: Config
+build:
+  artifacts:
+    - image: us-central1-docker.pkg.dev/k8s-devloop/testing/devloop-explicit-repo
+      kaniko: {}
+  cluster:
+    pullSecretName: e2esecret

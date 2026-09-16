@@ -1,0 +1,575 @@
+{
+  "api": {
+    "dev": "x",
+    "debug": "x",
+    "area": "Devloop API",
+    "maturity": "beta",
+    "description": "Control API, Event API and State API",
+    "url": "/docs/design/api"
+  },
+  "apply": {
+    "deploy": "x",
+    "area": "Deploy",
+    "feature": "Apply",
+    "maturity": "beta",
+    "description": "Use hydrated Kubernetes manifests to create resources on the cluster"
+  },
+  "build.buildpacks": {
+    "build": "x",
+    "area": "Build",
+    "feature": "Cloud Native Buildpacks support",
+    "maturity": "GA",
+    "description": "Devloop natively support for artifacts built with Cloud Native Buildpacks",
+    "examples": [
+      {
+        "name": "go buildpacks",
+        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/buildpacks"
+      },
+      {
+        "name": "java buildpacks",
+        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/buildpacks-java"
+      },
+      {
+        "name": "node buildpacks",
+        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/buildpacks-node"
+      },
+      {
+        "name": "python buildpacks",
+        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/buildpacks-python"
+      }
+    ]
+  },
+  "build.custom": {
+    "dev": "x",
+    "build": "x",
+    "run": "x",
+    "debug": "x",
+    "area": "Build",
+    "feature": "custom artifact Builder",
+    "maturity": "GA",
+    "description": "build locally using a custom build script",
+    "examples": [
+      {
+        "name": "buildx",
+        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/custom-buildx"
+      },
+      {
+        "name": "ko",
+        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/custom"
+      }
+    ]
+  },
+  "build.dependencies": {
+    "dev": "x",
+    "build": "x",
+    "run": "x",
+    "debug": "x",
+    "area": "Build",
+    "feature": "Build Artifact Dependencies",
+    "maturity": "GA",
+    "description": "Define build artifact dependencies"
+  },
+  "build.platforms": {
+    "dev": "x",
+    "build": "x",
+    "run": "x",
+    "debug": "x",
+    "render": "x",
+    "deploy": "x",
+    "area": "Build",
+    "feature": "Cross-arch and Multi-arch builds",
+    "maturity": "GA",
+    "description": "Build cross-architecture and Multi-architecture images"
+  },
+  "build.ko": {
+    "dev": "x",
+    "build": "x",
+    "run": "x",
+    "debug": "x",
+    "area": "Build",
+    "feature": "ko builder",
+    "maturity": "beta",
+    "description": "Build Go apps using ko",
+    "examples": [
+      {
+        "name": "ko",
+        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/ko"
+      }
+    ]
+  },
+  "build": {
+    "dev": "x",
+    "build": "x",
+    "run": "x",
+    "debug": "x",
+    "area": "Build",
+    "maturity": "GA",
+    "description": "Build images based on multiple build tools in a configurable way",
+    "url": "/docs/builders/",
+    "examples": [
+      {
+        "name": "docker",
+        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/docker-deploy"
+      },
+      {
+        "name": "jib/maven",
+        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/jib"
+      },
+      {
+        "name": "jib/gradle",
+        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/jib-gradle"
+      },
+      {
+        "name": "go buildpacks",
+        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/buildpacks"
+      },
+      {
+        "name": "java buildpacks",
+        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/buildpacks-java"
+      },
+      {
+        "name": "node buildpacks",
+        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/buildpacks-node"
+      },
+      {
+        "name": "python buildpacks",
+        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/buildpacks-python"
+      },
+      {
+        "name": "ko",
+        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/ko"
+      },
+      {
+        "name": "buildx",
+        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/custom-buildx"
+      }
+    ]
+  },
+  "completion": {
+    "area": "Completion",
+    "maturity": "GA",
+    "description": "generate completion scripts for bash, zsh"
+  },
+  "debug": {
+    "debug": "x",
+    "area": "Debug",
+    "maturity": "GA",
+    "description": "Language-aware reconfiguration of containers on the fly to become debuggable ",
+    "url": "/docs/workflows/debug"
+  },
+  "debug.go": {
+    "debug": "x",
+    "area": "Debug",
+    "feature": "debug go apps",
+    "maturity": "GA",
+    "description": "debug go apps"
+  },
+  "debug.java": {
+    "debug": "x",
+    "area": "Debug",
+    "feature": "debug java apps",
+    "maturity": "GA",
+    "description": "debug java apps"
+  },
+  "debug.node": {
+    "debug": "x",
+    "area": "Debug",
+    "feature": "debug node apps",
+    "maturity": "GA",
+    "description": "debug node apps"
+  },
+  "debug.NET": {
+    "debug": "x",
+    "area": "Debug",
+    "feature": "debug .NET apps",
+    "maturity": "beta",
+    "description": "debug .NET apps"
+  },
+  "debug.python": {
+    "debug": "x",
+    "area": "Debug",
+    "feature": "debug python apps",
+    "maturity": "beta",
+    "description": "debug python apps"
+  },
+  "default_repo": {
+    "dev": "x",
+    "build": "x",
+    "deploy": "x",
+    "run": "x",
+    "debug": "x",
+    "render": "x",
+    "area": "Default-repo",
+    "maturity": "GA",
+    "description": "specify a default image repository & rewrite image names to default repo",
+    "url": "/docs/environment/image-registries/"
+  },
+  "default_repo.preconcatentation": {
+    "dev": "x",
+    "build": "x",
+    "deploy": "x",
+    "run": "x",
+    "debug": "x",
+    "area": "Default-repo",
+    "feature": "preconcatentation strategy",
+    "maturity": "GA",
+    "description": "collision free rewriting strategy"
+  },
+  "default_repo.simple_prefix": {
+    "dev": "x",
+    "build": "x",
+    "deploy": "x",
+    "run": "x",
+    "debug": "x",
+    "area": "Default-repo",
+    "feature": "simple prefix replace strategy",
+    "maturity": "GA",
+    "description": "more intuitive prefix replacement strategy"
+  },
+  "cleanup": {
+    "dev": "x",
+    "deploy": "x",
+    "run": "x",
+    "debug": "x",
+    "area": "Cleanup",
+    "maturity": "GA",
+    "description": "`devloop delete` removes everything deployed `devloop run` from the cluster, and prunes locally",
+    "url": "/docs/cleanup"
+  },
+  "deploy": {
+    "dev": "x",
+    "deploy": "x",
+    "run": "x",
+    "debug": "x",
+    "area": "Deploy",
+    "maturity": "beta",
+    "description": "Deploy a set of deployables as your applications and replace the image name with the built images ",
+    "url": "/docs/deployers",
+    "examples": [
+      {
+        "name": "kubectl",
+        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/getting-started"
+      },
+      {
+        "name": "helm",
+        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/helm-deployment"
+      },
+      {
+        "name": "kustomize",
+        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/kustomize"
+      },
+      {
+        "name": "docker",
+        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/docker-deploy"
+      }
+    ]
+  },
+    "deploy.cloudrun": {
+    "dev": "x",
+    "deploy": "x",
+    "run": "x",
+    "area": "Deploy",
+    "feature": "Cloud Run Deployer",
+    "maturity": "beta",
+    "description": "Deploy applications to Google Cloud Run"
+  },
+  "deploy.docker": {
+    "dev": "x",
+    "deploy": "x",
+    "run": "x",
+    "debug": "x",
+    "area": "Deploy",
+    "feature": "Docker Deployer",
+    "maturity": "beta",
+    "description": "Deploy applications to the local Docker daemon",
+    "examples": [
+      {
+        "name": "docker",
+        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/docker-deploy"
+      }
+    ]
+  },
+  "deploy.status_check": {
+    "dev": "x",
+    "deploy": "x",
+    "run": "x",
+    "debug": "x",
+    "area": "Deploy",
+    "feature": "Status check",
+    "maturity": "beta",
+    "description": "User can wait for deployments to stabilize",
+    "url": "/docs/status-check/"
+  },
+  "render": {
+    "dev": "x",
+    "deploy": "x",
+    "run": "x",
+    "debug": "x",
+    "render": "x",
+    "area": "Render",
+    "maturity": "beta",
+    "description": "Renders a set of resources in your applications and replace the image name with the built images ",
+    "url": "/docs/renderers"
+  },
+  "dev": {
+    "dev": "x",
+    "area": "Dev",
+    "maturity": "GA",
+    "description": "Continuous development",
+    "url": "/docs/workflows/dev"
+  },
+  "fix.cmd": {
+    "area": "devloop fix",
+    "maturity": "beta",
+    "description": "Upgrade an older devloop config to the current version"
+  },
+  "generate_pipeline.tekton": {
+    "deploy": "x",
+    "area": "Generate tekton pipelines",
+    "maturity": "alpha",
+    "description": "User can generate a starter tekton pipeline using devloop"
+  },
+  "verify": {
+    "area": "devloop verify",
+    "maturity": "GA",
+    "description": "User can run post deployment tests via devloop monitored test containers"
+  },
+  "global_config": {
+    "dev": "x",
+    "build": "x",
+    "deploy": "x",
+    "run": "x",
+    "debug": "x",
+    "render": "x",
+    "area": "Global config",
+    "maturity": "GA",
+    "description": "store user preferences in a separate preferences file",
+    "url": "/docs/design/global-config/"
+  },
+  "init": {
+    "area": "Init",
+    "maturity": "beta",
+    "description": "Initialize a devloop.yaml file based on the contents of the current directory",
+    "url": "/docs/init"
+  },
+  "init.dockerfiles": {
+    "area": "Init",
+    "feature": "init for Dockerfiles ",
+    "maturity": "beta",
+    "description": "devloop init recognizes Dockerfiles"
+  },
+  "init.interactive": {
+    "area": "Init",
+    "feature": "interactive",
+    "maturity": "beta",
+    "description": "devloop init interactive for CLI users"
+  },
+  "init.json_api": {
+    "area": "Init",
+    "feature": "JSON based",
+    "maturity": "beta",
+    "description": "devloop init JSON based API for IDE integrations"
+  },
+  "init.k8s_manifests": {
+    "area": "Init",
+    "feature": "init for Kubernetes manifests",
+    "maturity": "beta",
+    "description": "devloop init parses images from Kubernetes manifests"
+  },
+  "init.generate_manifests": {
+    "area": "Init",
+    "feature": "generate manifests",
+    "maturity": "beta",
+    "description": "devloop init will try to generate kubernetes manifests for your project"
+  },
+  "insecure_registry": {
+    "dev": "x",
+    "build": "x",
+    "debug": "x",
+    "area": "Insecure registry handling",
+    "maturity": "GA",
+    "description": "Target registries for built images which are not secure",
+    "url": "/docs/environment/image-registries/#insecure-image-registries"
+  },
+  "hooks": {
+    "dev": "x",
+    "build": "x",
+    "deploy": "x",
+    "run": "x",
+    "debug": "x",
+    "area": "Lifecycle Hooks",
+    "maturity": "beta",
+    "description": "Run code triggered by different events during the devloop process lifecycle.",
+    "url": "/docs/lifecycle-hooks/",
+    "examples": [
+      {
+        "name": "hooks",
+        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/lifecycle-hooks"
+      }
+    ]
+  },
+  "logging": {
+    "dev": "x",
+    "deploy": "x",
+    "run": "x",
+    "debug": "x",
+    "area": "Log tailing",
+    "maturity": "GA",
+    "description": "automated log tailing of deployed pods",
+    "url": "/docs/log-tailing"
+  },
+  "portforward": {
+    "dev": "x",
+    "debug": "x",
+    "area": "Port-forwarding",
+    "maturity": "GA",
+    "description": "Port forward application to localhost",
+    "url": "/docs/port-forwarding/"
+  },
+  "profiles": {
+    "dev": "x",
+    "build": "x",
+    "deploy": "x",
+    "run": "x",
+    "debug": "x",
+    "render": "x",
+    "area": "Profiles",
+    "maturity": "GA",
+    "description": "Create different pipeline configurations based on overrides and patches defined in one or more profiles",
+    "url": "/docs/environment/profiles/",
+    "examples": [
+      {
+        "name": "profiles",
+        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/profiles"
+      },
+      {
+        "name": "profile patches",
+        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/profile-patches"
+      }
+    ]
+  },
+  "run.cmd": {
+    "run": "x",
+    "area": "devloop run",
+    "maturity": "GA",
+    "description": "One-off build & deployment of the devloop application",
+    "url": "/docs/workflows/ci-cd"
+  },
+  "sync.infer": {
+    "dev": "x",
+    "debug": "x",
+    "area": "Filesync",
+    "feature": "sync.infer",
+    "maturity": "GA",
+    "description": "mark files as \"syncable\" - infer the destinations based on the Dockerfile"
+  },
+  "sync": {
+    "dev": "x",
+    "debug": "x",
+    "area": "Filesync",
+    "maturity": "GA",
+    "description": "Instead of rebuilding, copy the changed files in the running container",
+    "url": "/docs/filesync"
+  },
+  "tagpolicy.latest": {
+    "dev": "x",
+    "build": "x",
+    "run": "x",
+    "debug": "x",
+    "area": "Tagpolicy",
+    "feature": "sha256 (== \"latest\") tagger",
+    "maturity": "GA",
+    "description": "tag with latest, use image digest / image ID for deployment"
+  },
+  "tagpolicy": {
+    "dev": "x",
+    "build": "x",
+    "run": "x",
+    "debug": "x",
+    "area": "Tagpolicy",
+    "maturity": "GA",
+    "description": "Automated tagging",
+    "url": "/docs/taggers",
+    "examples": [
+      {
+        "name": "envTemplate",
+        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/tagging-with-environment-variables"
+      }
+    ]
+  },
+  "templating": {
+    "deploy": "x",
+    "area": "Templating",
+    "maturity": "GA",
+    "description": "certain fields of devloop.yaml can be parametrized with environment and built-in variables",
+    "url": "/docs/environment/templating/",
+    "examples": [
+      {
+        "name": "templated fields",
+        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/templated-fields"
+      }
+    ]
+  },
+  "test": {
+    "dev": "x",
+    "run": "x",
+    "test": "x",
+    "area": "Test",
+    "maturity": "GA",
+    "description": "Run tests as part of your pipeline",
+    "url": "/docs/testers",
+    "examples": [
+      {
+        "name": "custom test",
+        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/custom-tests"
+      },
+      {
+        "name": "structure test",
+        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/structure-tests"
+      }
+    ]
+  },
+  "test.structure": {
+    "dev": "x",
+    "run": "x",
+    "test": "x",
+    "area": "Test",
+    "maturity": "GA",
+    "description": "Run structure tests as part of your pipeline",
+    "url": "/docs/testers/structure",
+    "examples": [
+      {
+        "name": "structure test",
+        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/structure-tests"
+      }
+    ]
+  },
+  "test.custom": {
+    "dev": "x",
+    "run": "x",
+    "test": "x",
+    "area": "Test",
+    "feature": "custom tester",
+    "maturity": "beta",
+    "description": "Run custom test command locally",
+    "url": "/docs/testers/custom",
+    "examples": [
+      {
+        "name": "custom test",
+        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/custom-tests"
+      }
+    ]
+  },
+  "triggers": {
+    "dev": "x",
+    "debug": "x",
+    "area": "Trigger",
+    "maturity": "GA",
+    "description": "Feature area: Trigger configured actions when source files change"
+  },
+  "version": {
+    "area": "version",
+    "maturity": "GA",
+    "description": "get the version string of the current devloop binary"
+  }
+}

@@ -1,0 +1,4 @@
+apiVersion: v1
+description: Devloop example with Helm
+name: devloop-helm
+version: 0.1.0

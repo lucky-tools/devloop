@@ -1,0 +1,18 @@
+apiVersion: devloop/v1
+kind: Config
+metadata:
+  name: microservices
+build:
+  artifacts:
+  - image: gcr.io/k8s-devloop/leeroy-app
+    context: leeroy-app
+    docker:
+      dockerfile: Dockerfile
+  - image: gcr.io/k8s-devloop/leeroy-web
+    context: leeroy-web
+    docker:
+      dockerfile: Dockerfile
+manifests:
+  rawYaml:
+    - leeroy-app/kubernetes/deployment.yaml
+    - leeroy-web/kubernetes/deployment.yaml

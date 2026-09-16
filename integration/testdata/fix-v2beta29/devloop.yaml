@@ -1,0 +1,20 @@
+apiVersion: devloop/v1
+kind: Config
+build:
+  artifacts:
+  - image: devloop-helm
+manifests:
+ helm:
+   releases:
+     - name: devloop-helm
+       chartPath: charts
+       namespace: repro-ns
+       recreatePods: false
+       useHelmSecrets: false
+       wait: false
+profiles:
+ - name: devloop-helm-v2
+   patches:
+      - op: replace
+        path: /manifests/helm/releases/0/artifactOverrides/image
+        value: devloop-helm-v2

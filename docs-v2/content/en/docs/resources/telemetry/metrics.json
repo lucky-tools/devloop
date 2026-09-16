@@ -1,0 +1,102 @@
+{
+  "definitions": {
+    "creds": {
+      "properties": {
+        "Project ID": {
+          "description": "ID of the Google Cloud project to upload metrics to.",
+          "x-intellij-html-description": "<p>ID of the Google Cloud project to upload metrics to.</p>"
+        }
+      },
+      "description": "contains the Google Cloud project ID.",
+      "x-intellij-html-description": "<p>contains the Google Cloud project ID.</p>"
+    },
+    "devIteration": {
+      "properties": {
+        "Error Code": {
+          "description": "error that may have occurred during the (sync/build/deploy).",
+          "x-intellij-html-description": "<p>error that may have occurred during the (sync/build/deploy).</p>"
+        },
+        "Intent": {
+          "description": "cause of initiating the dev iteration (sync, build, deploy).",
+          "x-intellij-html-description": "<p>cause of initiating the dev iteration (sync, build, deploy).</p>"
+        }
+      },
+      "description": "describes how an iteration and started and if an error happened.",
+      "x-intellij-html-description": "<p>describes how an iteration and started and if an error happened.</p>"
+    },
+    "errHandler": {
+      "description": "prints errors to logrus.",
+      "x-intellij-html-description": "<p>prints errors to logrus.</p>"
+    },
+    "devloopMeter": {
+      "properties": {
+        "Arch": {
+          "description": "Architecture running Devloop e.g. amd64, arm64, etc.",
+          "x-intellij-html-description": "<p>Architecture running Devloop e.g. amd64, arm64, etc.</p>"
+        },
+        "Build Artifacts": {
+          "description": "Number of artifacts built in the current execution as defined in devloop.yaml.",
+          "x-intellij-html-description": "<p>Number of artifacts built in the current execution as defined in devloop.yaml.</p>"
+        },
+        "Build Dependencies": {
+          "description": "Enum values for all the builders using build dependencies.",
+          "x-intellij-html-description": "<p>Enum values for all the builders using build dependencies.</p>"
+        },
+        "Builders": {
+          "description": "Enum values for all the builders used to build the artifacts built.",
+          "x-intellij-html-description": "<p>Enum values for all the builders used to build the artifacts built.</p>"
+        },
+        "Command": {
+          "description": "Command that is used to execute devloop `dev, build, render, run, etc.` without any command-line arguments.",
+          "x-intellij-html-description": "<p>Command that is used to execute devloop <code>dev, build, render, run, etc.</code> without any command-line arguments.</p>"
+        },
+        "Deployers": {
+          "description": "All the deployers used in the Devloop execution.",
+          "x-intellij-html-description": "<p>All the deployers used in the Devloop execution.</p>"
+        },
+        "Dev Iterations": {
+          "description": "Error results of the various dev iterations and the reasons they were triggered. The triggers can be one of sync, build, or deploy.",
+          "x-intellij-html-description": "<p>Error results of the various dev iterations and the reasons they were triggered. The triggers can be one of sync, build, or deploy.</p>"
+        },
+        "Duration": {
+          "description": "Time Devloop took to finish executing in milliseconds.",
+          "x-intellij-html-description": "<p>Time Devloop took to finish executing in milliseconds.</p>"
+        },
+        "Enum Flags": {
+          "description": "Enum values for flags passed into Devloop that have a pre-defined list of valid values e.g. `'–cache-artifacts=false', '–mute-logs=[\"build\", \"deploy\"]'`.",
+          "x-intellij-html-description": "<p>Enum values for flags passed into Devloop that have a pre-defined list of valid values e.g. <code>'–cache-artifacts=false', '–mute-logs=[&quot;build&quot;, &quot;deploy&quot;]'</code>.</p>"
+        },
+        "Error Code": {
+          "description": "Devloop reports [error codes](/docs/references/api/grpc/#statuscode) and these are monitored in order to determine the most frequent errors.",
+          "x-intellij-html-description": "<p>Devloop reports <a href=\"/docs/references/api/grpc/#statuscode\">error codes</a> and these are monitored in order to determine the most frequent errors.</p>"
+        },
+        "Exit Code": {
+          "description": "Exit code returned by Devloop at the end of execution.",
+          "x-intellij-html-description": "<p>Exit code returned by Devloop at the end of execution.</p>"
+        },
+        "OS": {
+          "description": "OS running Devloop e.g. Windows, Linux, Darwin, etc.",
+          "x-intellij-html-description": "<p>OS running Devloop e.g. Windows, Linux, Darwin, etc.</p>"
+        },
+        "Platform Type": {
+          "description": "Where Devloop is deploying to (sync, build, or Google Cloud Build).",
+          "x-intellij-html-description": "<p>Where Devloop is deploying to (sync, build, or Google Cloud Build).</p>"
+        },
+        "Start Time": {
+          "description": "Start time of the Devloop program, used to track how long Devloop took to finish executing.",
+          "x-intellij-html-description": "<p>Start time of the Devloop program, used to track how long Devloop took to finish executing.</p>"
+        },
+        "Sync Type": {
+          "description": "Sync type used in the build configuration: infer, auto, and/or manual.",
+          "x-intellij-html-description": "<p>Sync type used in the build configuration: infer, auto, and/or manual.</p>"
+        },
+        "Version": {
+          "description": "Version of Devloop being used \"v1.18.0, v1.19.1, etc.\".",
+          "x-intellij-html-description": "<p>Version of Devloop being used &quot;v1.18.0, v1.19.1, etc.&quot;.</p>"
+        }
+      },
+      "description": "describes the data used to determine operational metrics.",
+      "x-intellij-html-description": "<p>describes the data used to determine operational metrics.</p>"
+    }
+  }
+}

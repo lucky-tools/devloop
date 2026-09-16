@@ -1,0 +1,159 @@
+name: PR integration tests (linux)
+
+# Triggers the workflow on push or pull request events
+on: [push, pull_request]
+
+permissions: read-all
+
+concurrency:
+  group: build-${{ github.event.pull_request.number || github.ref }}-${{github.workflow}}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+jobs:
+
+  build:
+    name: PR integration tests (linux)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        kustomize_version: [5.6.0]
+        ko_version: [0.17.1]
+        kompose_version: [1.35.0]
+        kpt_version: [1.0.0-beta.57]
+        minikube_version: [1.35.0]
+        gcloud_sdk_version: [520.0.0]
+        container_structure_tests_version: [1.19.3]
+        java: [21]
+        integration_test_partitions: [0, 1, 2, 3]
+    steps:
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        fetch-depth: 0
+
+    - name: Set up Go
+      uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+      with:
+        go-version: 1.27.0
+      id: go
+
+    - name: Set up Java
+      uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+      with:
+        distribution: 'temurin'
+        java-version: ${{ matrix.java }}
+
+    - name: Clean up disk space
+      run: |
+        echo "--- Disk space before cleanup ---"
+        df -h
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /usr/local/lib/android
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /usr/share/swift
+        sudo rm -rf /usr/local/.ghcup
+        sudo rm -rf /usr/share/code
+        sudo rm -rf /usr/share/miniconda
+        sudo rm -rf /usr/share/az_deps
+        # Remove unused Docker images, containers, networks, and build cache
+        # The '|| true' prevents the workflow from failing if no items are found to prune.
+        docker system prune -a --force || true
+        docker builder prune -a --force || true
+       
+        echo "--- Disk space after cleanup ---"
+        df -h
+
+    # Retrieve build locations with `go env`
+    # <https://markphelps.me/posts/speed-up-your-go-builds-with-actions-cache/>
+    - id: go-cache-paths
+      run: |
+        echo "go-build=$(go env GOCACHE)" >> $GITHUB_OUTPUT
+        echo "go-mod=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
+
+    - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: |
+          ${{ steps.go-cache-paths.outputs.go-build }}
+          ${{ steps.go-cache-paths.outputs.go-mod }}
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    # Skip integration tests for `docs`-only changes (only works for PR-based dev workflows like Devloop's).
+    # NOTE: grep output is stored in env var with `|| true` as the run command cannot fail or action will fail
+    - name: Check if only docs changes were made in this PR
+      run: |
+        echo ${{ github.event.before }}
+        echo ${{ github.event.after }}
+        NON_DOCS_FILES_CHANGED=$(git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.sha }}| grep -v '^docs/' || true) 
+        echo "NON_DOCS_FILES_CHANGED=${#NON_DOCS_FILES_CHANGED}" >> $GITHUB_ENV  # get the char len of diff output (used later)
+
+    - name: Install Kustomize
+      if: ${{ env.NON_DOCS_FILES_CHANGED != 0 }}
+      run: |
+        wget -O kustomize.tar.gz https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v${{ matrix.kustomize_version }}/kustomize_v${{ matrix.kustomize_version }}_linux_amd64.tar.gz
+        sudo tar -xvf kustomize.tar.gz -C /usr/local/bin/
+
+    - name: Install Ko
+      if: ${{ env.NON_DOCS_FILES_CHANGED != 0 }}
+      run: |
+        wget -O ko.tar.gz https://github.com/google/ko/releases/download/v${{ matrix.ko_version }}/ko_${{ matrix.ko_version }}_Linux_x86_64.tar.gz
+        sudo tar -xvf ko.tar.gz -C /usr/local/bin/
+
+    - name: Install Kompose
+      if: ${{ env.NON_DOCS_FILES_CHANGED != 0 }}
+      run: |
+        wget -O kompose https://github.com/kubernetes/kompose/releases/download/v${{ matrix.kompose_version }}/kompose-linux-amd64 && chmod +x kompose
+        sudo mv kompose /usr/local/bin/
+
+    - name: Install Kpt
+      if: ${{ env.NON_DOCS_FILES_CHANGED != 0 }}
+      run: |
+        wget -O kpt https://github.com/GoogleContainerTools/kpt/releases/download/v${{ matrix.kpt_version }}/kpt_linux_amd64 && chmod +x kpt
+        sudo mv kpt /usr/local/bin/
+
+    - name: Install GCloud
+      if: ${{ env.NON_DOCS_FILES_CHANGED != 0 }}
+      run: |
+        wget -O gcloud.tar.gz https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${{ matrix.gcloud_sdk_version }}-linux-x86_64.tar.gz
+        tar -xvf gcloud.tar.gz -C ${HOME}/
+        ${HOME}/google-cloud-sdk/install.sh --usage-reporting=false --bash-completion=false --disable-installation-options
+        echo "${HOME}/google-cloud-sdk/bin" >> $GITHUB_PATH
+
+    - name: Configure GCloud with Docker
+      if: ${{ env.NON_DOCS_FILES_CHANGED != 0 }}
+      run:  gcloud auth configure-docker
+
+    - name: Install Container Structure Test
+      if: ${{ env.NON_DOCS_FILES_CHANGED != 0 }}
+      run: |
+        wget -O container-structure-test https://github.com/GoogleContainerTools/container-structure-test/releases/download/v${{ matrix.container_structure_tests_version }}/container-structure-test-linux-amd64 && chmod +x container-structure-test
+        sudo mv container-structure-test /usr/local/bin/
+
+    - name: Setup other files and permissions
+      if: ${{ env.NON_DOCS_FILES_CHANGED != 0 }}
+      run: |
+        sudo chown $(whoami):docker ${HOME}/.docker -R
+        sudo chmod g+rw ${HOME}/.docker -R
+        echo '{}' > ${HOME}/.docker/config.json
+        mkdir -p ${HOME}/.m2/ && cp ./hack/maven/settings.xml ${HOME}/.m2/settings.xml
+        
+    - name: Install Minikube and start cluster
+      if: ${{ env.NON_DOCS_FILES_CHANGED != 0 }}
+      run: |
+        curl -Lo minikube https://github.com/kubernetes/minikube/releases/download/v${{ matrix.minikube_version }}/minikube-linux-amd64
+        sudo install minikube /usr/local/bin/minikube
+        minikube start --profile=minikube --driver=docker
+
+    - name: Make and install Devloop binary from current PR
+      if: ${{ env.NON_DOCS_FILES_CHANGED != 0 }} # non docs files were changed, devloop build needed
+      run: |
+        make
+        sudo install "${HOME}/work/devloop/devloop/out/devloop" /usr/local/bin/devloop
+
+    - name: Run integration tests
+      if: ${{ env.NON_DOCS_FILES_CHANGED != 0 }}
+      run: |
+        devloop config set --global collect-metrics false
+        IT_PARTITION=${{ matrix.integration_test_partitions }} make integration-tests

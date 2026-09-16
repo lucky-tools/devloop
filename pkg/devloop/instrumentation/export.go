@@ -1,0 +1,436 @@
+/*
+Copyright 2021 The Skaffold Authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package instrumentation
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"math/rand"
+	"os"
+	"path/filepath"
+	"strconv"
+	"time"
+
+	mexporter "github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric"
+	texporter "github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace"
+	"github.com/mitchellh/go-homedir"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
+	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
+	"go.opentelemetry.io/otel/metric"
+	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/metric/metricdata"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
+	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/api/option"
+
+	"github.com/lucky-tools/devloop/fs"
+	"github.com/lucky-tools/devloop/pkg/devloop/constants"
+	"github.com/lucky-tools/devloop/pkg/devloop/output/log"
+	"github.com/lucky-tools/devloop/pkg/devloop/user"
+	"github.com/lucky-tools/devloop/proto/v1"
+)
+
+func ExportMetrics(exitCode int) error {
+	if !ShouldExportMetrics || meter.Command == "" {
+		log.Entry(context.TODO()).Debug("exporting metrics disabled")
+		return nil
+	}
+	home, err := homedir.Dir()
+	if err != nil {
+		return fmt.Errorf("retrieving home directory: %w", err)
+	}
+	meter.ExitCode = exitCode
+	meter.Duration = time.Since(meter.StartTime)
+	return exportMetrics(context.Background(),
+		filepath.Join(home, constants.DefaultDevloopDir, constants.DefaultMetricFile),
+		meter)
+}
+
+func exportMetrics(ctx context.Context, filename string, meter devloopMeter) error {
+	log.Entry(ctx).Debug("exporting metrics")
+	exp, err := initExporter()
+	if exp == nil {
+		return err
+	}
+	res := resource.NewWithAttributes(
+		semconv.SchemaURL,
+		semconv.ServiceName("devloop"),
+		semconv.ServiceVersion(meter.Version),
+	)
+
+	meterProvider := sdkmetric.NewMeterProvider(
+		sdkmetric.WithResource(res),
+		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(exp)),
+	)
+
+	otel.SetMeterProvider(meterProvider)
+
+	b, err := os.ReadFile(filename)
+	fileExists := err == nil
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	var meters []devloopMeter
+	err = json.Unmarshal(b, &meters)
+	// each meter contains around 20 datapoints, and each datapoint requires a request to firelog api
+	// we send at most 10 meters stored in devloop metrics as too many request may result in the firelog server returning 429.
+	if len(meters) >= 10 {
+		meters = meters[:10]
+	}
+	if err != nil {
+		meters = []devloopMeter{}
+	}
+	meters = append(meters, meter)
+	if !isOnline {
+		b, _ = json.Marshal(meters)
+		return os.WriteFile(filename, b, 0o666)
+	}
+
+	start := time.Now()
+	for _, m := range meters {
+		createMetrics(ctx, m)
+	}
+	if err := meterProvider.Shutdown(ctx); err != nil {
+		log.Entry(ctx).Debugf("error uploading metrics: %s", err)
+		log.Entry(ctx).Debugf("writing to file %s instead", filename)
+		b, _ = json.Marshal(meters)
+		return os.WriteFile(filename, b, 0o666)
+	}
+	log.Entry(ctx).Debugf("metrics uploading complete in %s", time.Since(start).String())
+
+	if fileExists {
+		return os.Remove(filename)
+	}
+	return nil
+}
+
+func initCloudMonitoringExporterMetrics() (sdkmetric.Exporter, error) {
+	b, err := fs.AssetsFS.ReadFile("assets/secrets_generated/keys.json")
+	if err != nil {
+		// No keys have been set in this version so do not attempt to write metrics
+		if os.IsNotExist(err) {
+			return devStdOutExporter()
+		}
+		return nil, err
+	}
+
+	var c creds
+	err = json.Unmarshal(b, &c)
+	if c.ProjectID == "" || err != nil {
+		return nil, fmt.Errorf("no project id found in metrics credentials")
+	}
+
+	formatter := func(desc metricdata.Metrics) string {
+		return fmt.Sprintf("custom.googleapis.com/devloop/%s", desc.Name)
+	}
+
+	otel.SetErrorHandler(errHandler{})
+	return mexporter.New(
+		mexporter.WithProjectID(c.ProjectID),
+		mexporter.WithMetricDescriptorTypeFormatter(formatter),
+		mexporter.WithMonitoringClientOptions(option.WithCredentialsJSON(b)))
+}
+
+func devStdOutExporter() (sdkmetric.Exporter, error) {
+	// export metrics to std out if local env is set.
+	if _, ok := os.LookupEnv("DEVLOOP_EXPORT_TO_STDOUT"); ok {
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		exporter, err := stdoutmetric.New(stdoutmetric.WithEncoder(enc))
+		return exporter, err
+	}
+	return nil, nil
+}
+
+func createMetrics(ctx context.Context, meter devloopMeter) {
+	m := otel.Meter("devloop")
+
+	// A metric is uniquely identified by the metric name and the labels and corresponding values
+	// This random number is used as a label to differentiate the metrics per user so if two users
+	// run `devloop build` at the same time they will both have their metrics recorded
+	randLabel := attribute.String("randomizer", strconv.Itoa(rand.Intn(75000)))
+
+	labels := []attribute.KeyValue{
+		attribute.String("version", meter.Version),
+		attribute.String("os", meter.OS),
+		attribute.String("arch", meter.Arch),
+		attribute.String("command", meter.Command),
+		attribute.String("error", meter.ErrorCode.String()),
+		attribute.String("platform_type", meter.PlatformType),
+		attribute.String("config_count", strconv.Itoa(meter.ConfigCount)),
+		attribute.String("cluster_type", meter.ClusterType),
+		attribute.String("ci_cd_platform", meter.CISystem),
+		randLabel,
+	}
+
+	if allowedUser := user.IsAllowedUser(meter.User); allowedUser {
+		labels = append(labels, attribute.String("user", meter.User))
+	}
+	platformLabel := attribute.String("host_os_arch", fmt.Sprintf("%s/%s", meter.OS, meter.Arch))
+	runCounter := NewInt64ValueRecorder(m, "launches", metric.WithDescription("Devloop Invocations"))
+	runCounter.Record(ctx, 1, labels...)
+
+	durationRecorder := NewFloat64ValueRecorder(m, "launch/duration",
+		metric.WithDescription("durations of devloop commands in seconds"))
+	durationRecorder.Record(ctx, meter.Duration.Seconds(), labels...)
+	if meter.Command != "" {
+		commandMetrics(ctx, meter, m, labels...)
+		flagMetrics(ctx, meter, m, labels...)
+		hooksMetrics(ctx, meter, m, labels...)
+		if doesBuild.Contains(meter.Command) {
+			builderMetrics(ctx, meter, m, platformLabel, labels...)
+		}
+		if doesDeploy.Contains(meter.Command) {
+			deployerMetrics(ctx, meter, m, labels...)
+		}
+		if doesDeploy.Contains(meter.Command) || meter.Command == "render" {
+			resourceSelectorMetrics(ctx, meter, m, labels...)
+		}
+	}
+
+	if meter.ErrorCode != 0 {
+		errorMetrics(ctx, meter, m, append(labels, platformLabel)...)
+	}
+}
+
+func flagMetrics(ctx context.Context, meter devloopMeter, m metric.Meter, labels ...attribute.KeyValue) {
+	flagCounter := NewInt64ValueRecorder(m, "flags", metric.WithDescription("Tracks usage of enum flags"))
+	for k, v := range meter.EnumFlags {
+		l := []attribute.KeyValue{
+			attribute.String("flag_name", k),
+			attribute.String("flag_value", v),
+			attribute.String("command", meter.Command),
+			attribute.String("error", meter.ErrorCode.String()),
+		}
+		l = append(l, labels...)
+		flagCounter.Record(ctx, 1, l...)
+	}
+}
+
+func commandMetrics(ctx context.Context, meter devloopMeter, m metric.Meter, labels ...attribute.KeyValue) {
+	commandCounter := NewInt64ValueRecorder(m, meter.Command,
+		metric.WithDescription(fmt.Sprintf("Number of times %s is used", meter.Command)))
+	labels = append(labels, attribute.String("error", meter.ErrorCode.String()))
+	commandCounter.Record(ctx, 1, labels...)
+
+	if meter.Command == "dev" || meter.Command == "debug" {
+		iterationCounter := NewInt64ValueRecorder(m, fmt.Sprintf("%s/iterations", meter.Command),
+			metric.WithDescription(fmt.Sprintf("Number of iterations in a %s session", meter.Command)))
+
+		counts := make(map[string]map[proto.StatusCode]int)
+
+		for _, iteration := range meter.DevIterations {
+			if _, ok := counts[iteration.Intent]; !ok {
+				counts[iteration.Intent] = make(map[proto.StatusCode]int)
+			}
+			m := counts[iteration.Intent]
+			m[iteration.ErrorCode]++
+		}
+		randomizer := attribute.String("randomizer2", strconv.Itoa(rand.Intn(75000)))
+		for intention, errorCounts := range counts {
+			for errorCode, count := range errorCounts {
+				iterationCounter.Record(ctx, int64(count),
+					append(labels,
+						attribute.String("intent", intention),
+						attribute.String("error", errorCode.String()), randomizer,
+					)...)
+			}
+		}
+	}
+}
+
+func deployerMetrics(ctx context.Context, meter devloopMeter, m metric.Meter, labels ...attribute.KeyValue) {
+	deployerCounter := NewInt64ValueRecorder(m, "deployer", metric.WithDescription("Deployers used"))
+	for _, deployer := range meter.Deployers {
+		deployerCounter.Record(ctx, 1, append(labels, attribute.String("deployer", deployer))...)
+	}
+}
+
+func resourceSelectorMetrics(ctx context.Context, meter devloopMeter, m metric.Meter, labels ...attribute.KeyValue) {
+	if len(meter.ResourceFilters) > 0 {
+		resourceFilters := NewInt64ValueRecorder(m, "resource-filters", metric.WithDescription("The resource filters defined for rendering and/or deployment"))
+		for _, resourceFilter := range meter.ResourceFilters {
+			resourceFilters.Record(ctx, 1, append(labels, attribute.String("source", resourceFilter.Source), attribute.String("type", resourceFilter.Type))...)
+		}
+	}
+}
+
+func builderMetrics(ctx context.Context, meter devloopMeter, m metric.Meter, platformLabel attribute.KeyValue, labels ...attribute.KeyValue) {
+	builderCounter := NewInt64ValueRecorder(m, "builders", metric.WithDescription("Builders used"))
+	artifactCounter := NewInt64ValueRecorder(m, "artifacts", metric.WithDescription("Number of artifacts used"))
+	dependenciesCounter := NewInt64ValueRecorder(m, "artifact-dependencies", metric.WithDescription("Number of artifacts with dependencies"))
+	platformsCounter := NewInt64ValueRecorder(m, "artifact-with-platforms", metric.WithDescription("Number of artifacts with target platforms specified"))
+	for builder, count := range meter.Builders {
+		bLabel := attribute.String("builder", builder)
+		builderCounter.Record(ctx, 1, append(labels, bLabel)...)
+		artifactCounter.Record(ctx, int64(count), append(labels, bLabel)...)
+		dependenciesCounter.Record(ctx, int64(meter.BuildDependencies[builder]), append(labels, bLabel)...)
+		platformsCounter.Record(ctx, int64(meter.BuildWithPlatforms[builder]), append(labels, platformLabel, bLabel)...)
+	}
+
+	if len(meter.ResolvedBuildTargetPlatforms) > 0 {
+		platforms := NewInt64ValueRecorder(m, "build-platforms", metric.WithDescription("The resolved build target platforms for each run"))
+		for _, buildPlatform := range meter.ResolvedBuildTargetPlatforms {
+			platforms.Record(ctx, 1, append(labels, platformLabel, attribute.String("os_arch", buildPlatform))...)
+		}
+	}
+
+	if len(meter.CliBuildTargetPlatforms) > 0 {
+		platforms := NewInt64ValueRecorder(m, "cli-platforms", metric.WithDescription("The build target platforms specified via CLI flag --platform"))
+		platforms.Record(ctx, 1, append(labels, platformLabel, attribute.String("os_arch", meter.CliBuildTargetPlatforms))...)
+	}
+
+	if len(meter.DeployNodePlatforms) > 0 {
+		platforms := NewInt64ValueRecorder(m, "node-platforms", metric.WithDescription("The kubernetes cluster node platforms"))
+		platforms.Record(ctx, 1, append(labels, platformLabel, attribute.String("os_arch", meter.DeployNodePlatforms))...)
+	}
+}
+
+func hooksMetrics(ctx context.Context, meter devloopMeter, m metric.Meter, labels ...attribute.KeyValue) {
+	hooksCounter := NewInt64ValueRecorder(m, "hooks", metric.WithDescription("Lifecycle hooks configured"))
+
+	for hook, count := range meter.Hooks {
+		hLabel := attribute.String("hookPhase", string(hook))
+		hooksCounter.Record(ctx, int64(count), append(labels, hLabel)...)
+	}
+}
+
+func errorMetrics(ctx context.Context, meter devloopMeter, m metric.Meter, labels ...attribute.KeyValue) {
+	errCounter := NewInt64ValueRecorder(m, "errors", metric.WithDescription("Devloop errors"))
+	errCounter.Record(ctx, 1, append(labels, attribute.String("error", meter.ErrorCode.String()))...)
+
+	labels = append(labels, attribute.String("command", meter.Command))
+
+	switch meter.ErrorCode {
+	case proto.StatusCode_UNKNOWN_ERROR:
+		unknownErrCounter := NewInt64ValueRecorder(m, "errors/unknown", metric.WithDescription("Unknown Devloop Errors"))
+		unknownErrCounter.Record(ctx, 1, labels...)
+	case proto.StatusCode_TEST_UNKNOWN:
+		unknownCounter := NewInt64ValueRecorder(m, "test/unknown", metric.WithDescription("Unknown test Devloop Errors"))
+		unknownCounter.Record(ctx, 1, labels...)
+	case proto.StatusCode_DEPLOY_UNKNOWN:
+		unknownCounter := NewInt64ValueRecorder(m, "deploy/unknown", metric.WithDescription("Unknown deploy Devloop Errors"))
+		unknownCounter.Record(ctx, 1, labels...)
+	case proto.StatusCode_BUILD_UNKNOWN:
+		unknownCounter := NewInt64ValueRecorder(m, "build/unknown", metric.WithDescription("Unknown build Devloop Errors"))
+		unknownCounter.Record(ctx, 1, labels...)
+	}
+}
+
+type TraceExporterConfig struct {
+	writer io.Writer
+}
+
+type TraceExporterOption func(te *TraceExporterConfig)
+
+func WithWriter(w io.Writer) TraceExporterOption {
+	return func(teconf *TraceExporterConfig) {
+		teconf.writer = w
+	}
+}
+
+func initTraceExporter(opts ...TraceExporterOption) (trace.TracerProvider, func(context.Context) error, error) {
+	teconf := TraceExporterConfig{
+		writer: os.Stdout,
+	}
+
+	for _, opt := range opts {
+		opt(&teconf)
+	}
+
+	switch os.Getenv("DEVLOOP_TRACE") {
+	case "stdout":
+		log.Entry(context.TODO()).Debug("using stdout trace exporter")
+		return initIOWriterTracer(teconf.writer)
+	case "gcp-adc":
+		log.Entry(context.TODO()).Debug("using cloud trace exporter w/ application default creds")
+		tp, shutdown, err := initCloudTraceExporterApplicationDefaultCreds()
+		return tp, func(context.Context) error { shutdown(); return nil }, err
+	case "jaeger":
+		log.Entry(context.TODO()).Debug("using jaeger trace exporter")
+		tp, shutdown, err := initJaegerTraceExporter()
+		return tp, func(context.Context) error { shutdown(); return nil }, err
+	}
+
+	if otelTraceExporterVal, ok := os.LookupEnv("OTEL_TRACES_EXPORTER"); ok {
+		log.Entry(context.TODO()).Debugf("using otel default exporter - OTEL_TRACES_EXPORTER=%s", otelTraceExporterVal)
+		return nil, func(context.Context) error { return nil }, nil
+	}
+
+	return nil, func(context.Context) error { return nil }, fmt.Errorf("error initializing trace exporter")
+}
+
+// initIOWriterTracer creates and registers trace provider instance that writes to an io.Writer interface
+func initIOWriterTracer(w io.Writer) (*sdktrace.TracerProvider, func(context.Context) error, error) {
+	exp, err := stdouttrace.New(
+		stdouttrace.WithWriter(w),
+		stdouttrace.WithPrettyPrint(),
+	)
+	if err != nil {
+		return nil, func(context.Context) error { return nil }, err
+	}
+	bsp := sdktrace.NewBatchSpanProcessor(exp)
+	tp := sdktrace.NewTracerProvider(
+		sdktrace.WithSampler(sdktrace.AlwaysSample()),
+		sdktrace.WithSpanProcessor(bsp),
+	)
+	return tp, tp.Shutdown, nil
+}
+
+func initCloudTraceExporterApplicationDefaultCreds() (trace.TracerProvider, func(), error) {
+	otel.SetErrorHandler(errHandler{})
+	exporter, err := texporter.New()
+	if err != nil {
+		return nil, func() {}, err
+	}
+	tp := sdktrace.NewTracerProvider(sdktrace.WithBatcher(exporter))
+
+	return tp, func() {
+		tp.Shutdown(context.Background())
+	}, nil
+}
+
+// initJaegerTraceExporter returns an OpenTelemetry TracerProvider configured to use
+// the Jaeger exporter that will send spans to the provided url. The returned
+// TracerProvider will also use a Resource configured with all the information
+// about the application.
+func initJaegerTraceExporter() (trace.TracerProvider, func(), error) {
+	// Create the Jaeger exporter
+	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint("http://localhost:14268/api/traces")))
+	if err != nil {
+		return nil, func() {}, err
+	}
+	tp := sdktrace.NewTracerProvider(
+		// Always be sure to batch in production.
+		sdktrace.WithBatcher(exp),
+		sdktrace.WithSampler(sdktrace.AlwaysSample()),
+		// Record information about this application in an Resource.
+		sdktrace.WithResource(resource.NewWithAttributes(
+			semconv.SchemaURL,
+			semconv.ServiceNameKey.String("devloop-trace"),
+			attribute.Int64("ID", 1), // TODO(aaron-prindle) verify this value makes sense
+		)),
+	)
+	return tp, func() {}, nil
+}

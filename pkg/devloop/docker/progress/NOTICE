@@ -1,0 +1,3 @@
+Devloop
+
+This directory is a fork of the subset of Docker's implementation: https://github.com/moby/moby/tree/master/client/pkg.

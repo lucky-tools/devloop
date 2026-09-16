@@ -1,0 +1,12 @@
+apiVersion: devloop/v1
+kind: Config
+build:
+  artifacts:
+  - image: devloop-jib-1
+    jib:
+      # project can be the relative directory
+      project: project1
+  - image: devloop-jib-2
+    jib:
+      # project can be [groupId]:artifactId
+      project: :devloop-project-2

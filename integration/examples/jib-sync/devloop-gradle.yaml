@@ -1,0 +1,17 @@
+apiVersion: devloop/v1
+kind: Config
+build:
+  artifacts:
+  - image: test-file-sync
+    jib:
+      type: gradle
+      args: 
+      - -Psync
+      fromImage: gcr.io/distroless/java21-debian12:debug
+    sync:
+      auto: true
+
+portForward:
+- resourceType: pod
+  resourceName: test-file-sync
+  port: 8080

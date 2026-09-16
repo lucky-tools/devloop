@@ -1,0 +1,15 @@
+apiVersion: devloop/v1
+kind: Config
+
+build:
+  artifacts:
+    - image: local-db-updater # <- Image build by Devloop.
+      # ...
+
+customActions:
+  - name: update-infra
+    containers:
+      - name: update-db-schema
+        image: local-db-updater # <- Image build by Devloop.
+      - name: setup-external-proxy
+        image: gcr.io/my-registry/proxy:latest

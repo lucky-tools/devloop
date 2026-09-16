@@ -1,0 +1,24 @@
+apiVersion: devloop/v1
+kind: Config
+metadata:
+  name: my-app
+
+build:
+  artifacts:
+    - image: devloop-templated
+      custom:
+        buildCommand: "./build.sh"
+        dependencies:
+          paths:
+          - "go.mod"
+          - "**.go"
+manifests:
+  helm:
+    releases:
+      - name: devloop-templated
+        chartPath: charts
+        setValues:
+          image: devloop-templated
+        setValueTemplates:
+          imageRepo: "{{.IMAGE_REPO}}"
+          imageTag: "{{.IMAGE_TAG}}"

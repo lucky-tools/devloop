@@ -1,0 +1,14 @@
+apiVersion: devloop/v1
+kind: Config
+build:
+  artifacts:
+  - image: ko://github.com/googlecontainertools/devloop/examples/custom
+    custom:
+      buildCommand: ./build.sh
+      dependencies:
+        paths:
+        - "**/*.go"
+        - go.*
+        - .ko.yaml
+  tagPolicy:
+    sha256: {}

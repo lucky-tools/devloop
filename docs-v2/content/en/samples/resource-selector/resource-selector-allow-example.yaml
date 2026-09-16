@@ -1,0 +1,14 @@
+apiVersion: devloop/v1
+kind: Config
+build:
+  artifacts:
+    - image: my-image
+      context: my-image
+manifests:
+  rawYaml:
+  - my-manifests-*
+resourceSelector:
+  allow:
+    - groupKind: "CloudBuildTrigger.cloudbuild.cnrm.cloud.google.com"
+      image: [".*", ".spec.build.step.*.name"]
+      labels: [".*"]

@@ -1,0 +1,10 @@
+apiVersion: devloop/v1
+kind: Config
+build:
+  artifacts:
+  - image: devloop-helm
+manifests:
+  helm:
+    releases:
+    - name: devloop-helm
+      chartPath: charts

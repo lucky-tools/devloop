@@ -1,0 +1,21 @@
+apiVersion: devloop/v1
+kind: Config
+profiles:
+  - name: build-artifact
+    build:
+      artifacts:
+        - image: kaniko-insecure
+          context: app
+          kaniko:
+            cache: {}
+      cluster:
+        pullSecretName: e2esecret
+  - name: deploy-insecure-registry
+    build:
+      artifacts:
+        - image: devreg
+          context: insecure-registry
+          docker: {}
+    manifests:
+      rawYaml:
+      - insecure-registry/reg.yaml

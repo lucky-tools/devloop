@@ -1,0 +1,26 @@
+apiVersion: devloop/v1
+kind: Config
+build:
+  tagPolicy:
+    sha256: {}
+  artifacts:
+  - image: devloop-helm
+manifests:
+  helm:
+    releases:
+    - name: devloop-helm
+      chartPath: devloop-helm
+      #wait: true
+      #valuesFiles:
+      #- helm-devloop-values.yaml
+      skipBuildDependencies: true # Skip helm dep build
+      #recreatePods will pass --recreate-pods to helm upgrade
+      #recreatePods: true
+      #overrides builds an override values.yaml file to run with the helm deploy
+      #overrides:
+      # some:
+      #   key: someValue
+      #setValues get appended to the helm deploy with --set.
+      #setValues:
+      # some:
+      #   key: someValue

@@ -1,0 +1,158 @@
+### Example: Jib Sync
+
+[![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.svg)](https://ssh.cloud.google.com/cloudshell/editor?cloudshell_git_repo=https://github.com/lucky-tools/devloop&cloudshell_open_in_editor=README.md&cloudshell_workspace=examples/jib-sync)
+
+[Jib](https://github.com/GoogleContainerTools/jib) is one of the supported builders in Devloop. Jib
+has special sync support using the `auto` configuration.
+
+## Running the example
+
+Run the maven or gradle version of the example.
+
+#### Gradle
+```
+$ devloop dev -f devloop-gradle.yaml
+```
+
+#### Maven
+```
+$ devloop dev -f devloop-maven.yaml
+```
+
+You can now see sync in action:
+1. See the original response from the `HelloController` in the spring application 
+  ```
+  $ curl localhost:8080
+  text-to-replace
+  ```
+1. Edit the hello controller `src/main/java/hello/HelloController.java`
+  ```diff
+  +       return "some-new-text\n";
+  -       return "text-to-replace\n";
+  ```
+1. Give devloop a few seconds to synchronize the file to the container, and give Spring
+   Boot Developer Tools a chance to reload your application.
+1. See the updated response from the `HelloController`
+  ```
+  $ curl localhost:8080
+  some-new-text
+  ```
+1. You've now seen auto sync in action!
+
+## How it works
+
+This example contains both maven and gradle build configs and separate devloop.yamls.
+
+- **gradle**: `devloop-gradle.yaml`
+- **maven**: `devloop-maven.yaml`
+
+use the `-f` flag to specify the correct buildfile when running (or rename your preferred option to `devloop.yaml`)
+```
+$ devloop -f devloop-gradle.yaml ...
+```
+
+We configure it in `devloop.yaml`, by enabling sync on the jib artifact.
+
+```yaml
+build:
+  artifacts:
+  - image: devloop-example
+    context: .
+    jib: {}
+    sync: 
+      auto: true
+```
+
+This example is designed around the functionality available in [Spring Boot Developer Tools](https://docs.spring.io/spring-boot/docs/current/reference/html/using-spring-boot.html#using-boot-devtools) for developing against running applications.
+
+Some additional steps are required for this to work:
+- Sync requires `tar` on the running container to copy files over. The default base image that Jib uses `gcr.io/distroless/java` does not include `tar` or any utilities. During development, you must use a base image that includes `tar`, in this example we use the `debug` flavor of distroless: `gcr.io/distroless/java:debug` 
+
+This can be done directly in the artifact configuration by overriding the `fromImage` property.
+
+```yaml
+build:
+  artifacts:
+  - image: devloop-example
+    context: .
+    jib: 
+      fromImage: gcr.io/distroless/java:debug
+    sync: 
+      auto: true
+```
+
+
+- You must include the `spring-boot-devtools` dependency at the `compile/implementation` scope, which is contrary to the configuration outlined in the [official docs](https://docs.spring.io/spring-boot/docs/current/reference/html/using-spring-boot.html#using-boot-devtools). Because jib is unaware of any special spring only configuration in your builds, we recommend using profiles to turn on or off devtools support in your jib container builds.
+
+`maven`
+```xml
+<profiles>
+  <profile>
+    <id>sync</id>
+    <dependencies>
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-devtools</artifactId>
+        <!-- <optional>true</optional> not required -->
+      </dependency>
+    </dependencies>
+  </profile>
+</profiles>
+```
+
+`gradle`
+```groovy
+dependencies {
+  ...
+  if (project.hasProperty('sync')) {
+    implementation "org.springframework.boot:spring-boot-devtools"
+    // do not use developmentOnly
+  }
+}
+```
+
+To activate these profiles, we add `-Psync` to the maven/gradle build command. This can be done directly in the artifact configuration
+
+`devloop.yaml`
+```
+build:
+  artifacts:
+  - image: devloop-example
+    context: .
+    jib: 
+      args: 
+      - -Psync
+    sync: 
+      auto: true
+```
+
+You can also take advantage of [devloop profiles](https://devloop.dev/docs/environment/profiles/) to control when to activate sync on your project.
+
+`devloop.yaml`
+```
+build:
+  artifacts:
+  - image: test-file-sync
+    jib: {}
+
+profiles:
+- name: sync
+  patches:
+    # assuming jib is the first artifact (index 0) in your build.artifacts list
+  - op: add
+    # we want to activate sync on our devloop artifact
+    path: /build/artifacts/0/sync
+    value:
+      - auto: true
+  - op: add
+    # we activate the sync profile in our java builds
+    path: /build/artifacts/0/jib/args
+    value:
+    - -Psync
+```
+
+devloop profiles can be activated using the the `-p` flag when running
+
+```
+$ devloop -p sync ...
+```

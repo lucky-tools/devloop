@@ -1,0 +1,44 @@
+apiVersion: devloop/v1
+kind: Config
+build:
+  artifacts:
+    - image: devloop-helm
+      docker:
+        buildArgs:
+          "key1": "{{.AAA}}"
+    - image: devloop-ko
+      ko:
+        dependencies:
+          paths:
+            - "**/*.go"
+            - go.*
+        fromImage: gcr.io/distroless/static-debian11:nonroot
+        env:
+          - "first={{.AAA}}"
+        labels:
+          xxx: "{{.AAA}}"
+
+manifests:
+  kustomize:
+    paths:
+      - "{{.AAA}}"
+      - "{{.AAA}}"
+  helm:
+    releases:
+      - name: "{{.AAA}}"
+        chartPath: "{{.AAA}}"
+        valuesFiles:
+          - "{{.AAA}}"
+        namespace: "{{.AAA}}"
+        setValues:
+          aaa: "{{.AAA}}"
+          bbb: "{{.AAA}}"
+        setValueTemplates:
+          image:
+            tag: "{{.AAA}}"
+deploy:
+  kubectl:
+    defaultNamespace: "{{.AAA}}"
+portForward:
+  - namespace: "{{.AAA}}"
+    resourceName: "{{.AAA}}"

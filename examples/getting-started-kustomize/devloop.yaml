@@ -1,0 +1,27 @@
+apiVersion: devloop/v1
+kind: Config
+metadata:
+  name: getting-started-kustomize
+build:
+  artifacts:
+  - image: devloop-kustomize
+    context: app
+    docker:
+      dockerfile: Dockerfile
+manifests:
+  kustomize:
+    paths:
+    - overlays/dev
+deploy:
+  kubectl: {}
+profiles:
+- name: prod
+  manifests:
+    kustomize:
+      paths:
+      - overlays/prod
+- name: staging
+  manifests:
+    kustomize:
+      paths:
+      - overlays/staging

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: getting-started-custom
+spec:
+  containers:
+  - name: getting-started-custom
+    image: ko://github.com/googlecontainertools/devloop/examples/custom

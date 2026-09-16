@@ -1,0 +1,4 @@
+test:
+  - image: gcr.io/k8s-devloop/devloop-example
+    structureTests:
+      - './structure-test/*'

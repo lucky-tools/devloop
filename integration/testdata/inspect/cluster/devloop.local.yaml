@@ -1,0 +1,16 @@
+apiVersion: devloop/v1
+kind: Config
+build:
+  artifacts:
+  - image: foo
+  local:
+    concurrency: 1
+    tryImportMissing: false
+profiles:
+- name: cluster
+  build:
+    cluster:
+      concurrency: 1
+      pullSecretName: kaniko-secret1
+      randomDockerConfigSecret: false
+      randomPullSecret: false

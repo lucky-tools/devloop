@@ -1,0 +1,20 @@
+apiVersion: devloop/v1
+kind: Config
+build:
+  tagPolicy:
+    sha256: {}
+
+  artifacts:
+  - image: image3
+    docker:
+      noCache: true
+      buildArgs:
+        SLEEP: "2"
+        FAIL: "0"
+
+manifests:
+  rawYaml:
+  - 'k8s.yaml'
+
+deploy:
+  kubectl: {}

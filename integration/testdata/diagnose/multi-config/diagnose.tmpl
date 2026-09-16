@@ -1,0 +1,60 @@
+apiVersion: devloop/v1
+kind: Config
+metadata:
+  name: cfg2
+build:
+  artifacts:
+  - image: app2
+    context: {{.Root}}/foo2
+    docker:
+      dockerfile: Dockerfile
+  tagPolicy:
+    gitCommit: {}
+  local:
+    concurrency: 1
+manifests:
+  rawYaml:
+  - /k8s/*
+deploy:
+  logs:
+    prefix: container
+---
+apiVersion: devloop/v1
+kind: Config
+metadata:
+  name: cfg3
+build:
+  artifacts:
+  - image: app3
+    context: {{.Root}}/foo3
+    docker:
+      dockerfile: Dockerfile
+  tagPolicy:
+    gitCommit: {}
+  local:
+    concurrency: 1
+manifests:
+  rawYaml:
+  - /k8s/*
+deploy:
+  logs:
+    prefix: container
+---
+apiVersion: devloop/v1
+kind: Config
+build:
+  artifacts:
+  - image: app1
+    context: {{.Root}}/foo
+    docker:
+      dockerfile: Dockerfile
+  tagPolicy:
+    gitCommit: {}
+  local:
+    concurrency: 1
+manifests:
+  rawYaml:
+  - /k8s/*
+deploy:
+  logs:
+    prefix: container

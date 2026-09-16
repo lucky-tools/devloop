@@ -1,0 +1,7 @@
+version: '3'
+services:
+  compose:
+    build: .
+    image: "us-central1-docker.pkg.dev/k8s-devloop/testing/compose"
+    ports:
+     - "5000:5000"

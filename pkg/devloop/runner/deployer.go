@@ -1,0 +1,372 @@
+/*
+Copyright 2021 The Skaffold Authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package runner
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"os"
+	"strconv"
+	"time"
+
+	"github.com/lucky-tools/devloop/pkg/devloop/config"
+	"github.com/lucky-tools/devloop/pkg/devloop/deploy"
+	"github.com/lucky-tools/devloop/pkg/devloop/deploy/cloudrun"
+	"github.com/lucky-tools/devloop/pkg/devloop/deploy/docker"
+	kptV2 "github.com/lucky-tools/devloop/pkg/devloop/deploy/kpt"
+	"github.com/lucky-tools/devloop/pkg/devloop/deploy/kubectl"
+	"github.com/lucky-tools/devloop/pkg/devloop/deploy/label"
+	"github.com/lucky-tools/devloop/pkg/devloop/kubernetes/manifest"
+	"github.com/lucky-tools/devloop/pkg/devloop/kubernetes/status"
+	"github.com/lucky-tools/devloop/pkg/devloop/output/log"
+	"github.com/lucky-tools/devloop/pkg/devloop/runner/runcontext"
+	"github.com/lucky-tools/devloop/pkg/devloop/schema/latest"
+	"github.com/lucky-tools/devloop/pkg/devloop/util"
+	"github.com/lucky-tools/devloop/pkg/devloop/util/stringslice"
+)
+
+var DefaultStatusCheckDeadline = 10 * time.Minute
+
+// deployerCtx encapsulates a given devloop run context along with additional deployer constructs.
+type deployerCtx struct {
+	*runcontext.RunContext
+	deploy latest.DeployConfig
+}
+
+func (d *deployerCtx) GetKubeContext() string {
+	// if the kubeContext is not overridden by CLI flag or env. variable then use the value provided in config.
+	if d.RunContext.IsDefaultKubeContext() && d.deploy.KubeContext != "" {
+		return d.deploy.KubeContext
+	}
+	return d.RunContext.GetKubeContext()
+}
+
+func (d *deployerCtx) StatusCheck() *bool {
+	// runcontext StatusCheck method returns the value set by the cli flag `--status-check`
+	// which overrides the value set in the individual configs.
+	if cliValue := d.RunContext.StatusCheck(); cliValue != nil {
+		return cliValue
+	}
+	return d.deploy.StatusCheck
+}
+
+// JsonParseType returns the JsonParseType field from the underlying deployConfig struct
+func (d *deployerCtx) JSONParseConfig() latest.JSONParseConfig {
+	return d.deploy.Logs.JSONParse
+}
+
+// GetDeployer creates a deployer from a given RunContext and deploy pipeline definitions.
+func GetDeployer(ctx context.Context, runCtx *runcontext.RunContext, labeller *label.DefaultLabeller, hydrationDir string) (deploy.Deployer, error) {
+	pipelines := runCtx.Pipelines
+	scf := runCtx.StatusCheckCRDsFile()
+	var rsl manifest.ResourceSelectorList
+	var gks []manifest.GroupKindSelector
+	if scf != "" {
+		b, err := os.ReadFile(scf)
+		if err != nil {
+			return nil, err
+		}
+		err = json.Unmarshal(b, &rsl)
+		if err != nil {
+			return nil, err
+		}
+	}
+	for _, selector := range rsl.Selectors {
+		gks = append(gks, &selector)
+	}
+
+	if runCtx.Opts.Apply {
+		nonHelmDeployFound := false
+		cloudRunDeployFound := false
+
+		for _, d := range pipelines.Deployers() {
+			if d.DockerDeploy != nil || d.KptDeploy != nil || d.KubectlDeploy != nil {
+				nonHelmDeployFound = true
+			}
+
+			if d.CloudRunDeploy != nil {
+				cloudRunDeployFound = true
+			}
+		}
+		if cloudRunDeployFound {
+			if nonHelmDeployFound {
+				// Cloud Run doesn't support multiple deployers in the config.
+				return nil, errors.New("devloop apply called with both Cloud Run and Kubernetes deployers. Mixing deployment targets is not allowed" +
+					" when using the Cloud Run deployer")
+			}
+			return getCloudRunDeployer(runCtx, labeller, pipelines.Deployers(), "")
+		}
+		return getDefaultDeployer(runCtx, labeller, gks)
+	}
+
+	var deployers []deploy.Deployer
+	localDeploy := false
+	remoteDeploy := false
+	for _, configName := range pipelines.AllOrderedConfigNames() {
+		pl := pipelines.GetForConfigName(configName)
+		d := pl.Deploy
+		dCtx := &deployerCtx{runCtx, d}
+
+		if d.DockerDeploy != nil {
+			localDeploy = true
+			d, err := docker.NewDeployer(ctx, runCtx, labeller, d.DockerDeploy, runCtx.PortForwardResources(), configName)
+			if err != nil {
+				return nil, err
+			}
+			// Override the cluster on the runcontext.
+			// This is used to determine whether we should push images, and we want to avoid that unless explicitly asked for.
+			// Safe to do because we explicitly disallow simultaneous remote and local deployments.
+			runCtx.Cluster = config.Cluster{
+				Local:      true,
+				PushImages: false,
+				LoadImages: false,
+			}
+			deployers = append(deployers, d)
+		}
+
+		if d.KubectlDeploy != nil {
+			deployer, err := kubectl.NewDeployer(dCtx, labeller, d.KubectlDeploy, runCtx.Artifacts(), configName, gks)
+			if err != nil {
+				return nil, err
+			}
+
+			deployers = append(deployers, deployer)
+		}
+
+		if d.KptDeploy != nil {
+			if d.KptDeploy.Dir == "" {
+				log.Entry(context.TODO()).Infof("manifests are deployed from render path %v\n", hydrationDir)
+				d.KptDeploy.Dir = hydrationDir
+			}
+			deployer, err := kptV2.NewDeployer(dCtx, labeller, d.KptDeploy, runCtx.Opts, configName, gks)
+			if err != nil {
+				return nil, err
+			}
+			if len(deployers) > 0 {
+				return nil, fmt.Errorf("kpt deployer mixed in with other deployers not supported yet. Please use only kpt deployer")
+			}
+			deployers = append(deployers, deployer)
+		}
+		if d.CloudRunDeploy != nil {
+			deployer, err := getCloudRunDeployer(dCtx.RunContext, labeller, runCtx.DeployConfigs(), configName)
+			if err != nil {
+				return nil, err
+			}
+			deployers = append(deployers, deployer)
+		}
+	}
+
+	if localDeploy && remoteDeploy {
+		return nil, errors.New("docker deployment not supported alongside cluster deployments")
+	}
+
+	return deploy.NewDeployerMux(deployers, runCtx.IterativeStatusCheck()), nil
+}
+
+/*
+The "default deployer" is used in `devloop apply`, which uses a `kubectl` deployer to actuate resources
+on a cluster regardless of provided deployer configuration in the devloop.yaml.
+The default deployer will honor a select set of deploy configuration from an existing devloop.yaml:
+  - deploy.StatusCheckDeadlineSeconds
+  - deploy.Logs.Prefix
+  - deploy.Kubectl.Flags
+  - deploy.Kubectl.DefaultNamespace
+
+For a multi-config project, we do not currently support resolving conflicts between differing sets of this deploy configuration.
+Therefore, in this function we do implicit validation of the provided configuration, and fail if any conflict cannot be resolved.
+*/
+func getDefaultDeployer(runCtx *runcontext.RunContext, labeller *label.DefaultLabeller, selectors []manifest.GroupKindSelector) (deploy.Deployer, error) {
+	deployCfgs := runCtx.DeployConfigs()
+
+	var kFlags *latest.KubectlFlags
+	var logPrefix string
+	var defaultNamespace *string
+	var kubeContext string
+	statusCheckTimeout := -1
+	var statusCheck *bool
+	for _, d := range deployCfgs {
+		if d.KubeContext != "" {
+			if kubeContext != "" && kubeContext != d.KubeContext {
+				return nil, errors.New("cannot resolve active Kubernetes context - multiple contexts configured in devloop.yaml")
+			}
+			kubeContext = d.KubeContext
+		}
+		if d.StatusCheck != nil {
+			if statusCheck == nil {
+				statusCheck = d.StatusCheck
+			} else if statusCheck != d.StatusCheck {
+				// if we get conflicting values for status check from different devloop configs, we turn status check off
+				statusCheck = util.Ptr(false)
+			}
+		}
+		if d.StatusCheckDeadlineSeconds != 0 && d.StatusCheckDeadlineSeconds != int(status.DefaultStatusCheckDeadline.Seconds()) {
+			if statusCheckTimeout != -1 && statusCheckTimeout != d.StatusCheckDeadlineSeconds {
+				return nil, fmt.Errorf("found multiple status check timeouts in devloop.yaml (not supported in `devloop apply`): %d, %d", statusCheckTimeout, d.StatusCheckDeadlineSeconds)
+			}
+			statusCheckTimeout = d.StatusCheckDeadlineSeconds
+		}
+		if d.Logs.Prefix != "" {
+			if logPrefix != "" && logPrefix != d.Logs.Prefix {
+				return nil, fmt.Errorf("found multiple log prefixes in devloop.yaml (not supported in `devloop apply`): %s, %s", logPrefix, d.Logs.Prefix)
+			}
+			logPrefix = d.Logs.Prefix
+		}
+		var currentDefaultNamespace *string
+		var currentKubectlFlags latest.KubectlFlags
+		if d.KubectlDeploy != nil {
+			currentDefaultNamespace = d.KubectlDeploy.DefaultNamespace
+			currentKubectlFlags = d.KubectlDeploy.Flags
+		}
+		if kFlags == nil {
+			kFlags = &currentKubectlFlags
+		}
+		if err := validateKubectlFlags(kFlags, currentKubectlFlags); err != nil {
+			return nil, err
+		}
+		if currentDefaultNamespace != nil {
+			if defaultNamespace != nil && *defaultNamespace != *currentDefaultNamespace {
+				return nil, fmt.Errorf("found multiple namespaces in devloop.yaml (not supported in `devloop apply`): %s, %s", *defaultNamespace, *currentDefaultNamespace)
+			}
+			defaultNamespace = currentDefaultNamespace
+		}
+	}
+	if kFlags == nil {
+		kFlags = &latest.KubectlFlags{}
+	}
+	k := &latest.KubectlDeploy{
+		Flags:            *kFlags,
+		DefaultNamespace: defaultNamespace,
+	}
+	dCtx := &deployerCtx{runCtx, latest.DeployConfig{StatusCheck: statusCheck, KubeContext: kubeContext, DeployType: latest.DeployType{KubectlDeploy: k}}}
+	defaultDeployer, err := kubectl.NewDeployer(dCtx, labeller, k, runCtx.Artifacts(), "", selectors)
+	if err != nil {
+		return nil, fmt.Errorf("instantiating default kubectl deployer: %w", err)
+	}
+	return defaultDeployer, nil
+}
+
+func validateKubectlFlags(flags *latest.KubectlFlags, additional latest.KubectlFlags) error {
+	errStr := "conflicting sets of kubectl deploy flags not supported in `devloop apply` (flag: %s)"
+	if additional.DisableValidation != flags.DisableValidation {
+		return fmt.Errorf(errStr, strconv.FormatBool(additional.DisableValidation))
+	}
+	for _, flag := range additional.Apply {
+		if !stringslice.Contains(flags.Apply, flag) {
+			return fmt.Errorf(errStr, flag)
+		}
+	}
+	for _, flag := range additional.Delete {
+		if !stringslice.Contains(flags.Delete, flag) {
+			return fmt.Errorf(errStr, flag)
+		}
+	}
+	for _, flag := range additional.Global {
+		if !stringslice.Contains(flags.Global, flag) {
+			return fmt.Errorf(errStr, flag)
+		}
+	}
+	return nil
+}
+
+/* The Cloud Run deployer for apply. Used when Cloud Run is specified. */
+func getCloudRunDeployer(runCtx *runcontext.RunContext, labeller *label.DefaultLabeller, deployers []latest.DeployConfig, configName string) (*cloudrun.Deployer, error) {
+	var region string
+	regionFlag := false
+	var defaultProject string
+	projectFlag := false
+	if runCtx.Opts.CloudRunLocation != "" {
+		region = runCtx.Opts.CloudRunLocation
+		regionFlag = true
+	}
+	if runCtx.Opts.CloudRunProject != "" {
+		defaultProject = runCtx.Opts.CloudRunProject
+		projectFlag = true
+	}
+	var enableStatusCheck *bool
+	for _, d := range deployers {
+		if d.CloudRunDeploy != nil {
+			crDeploy := d.CloudRunDeploy
+			if !regionFlag {
+				// No region flag was provided, so take it from the config.
+				if region != "" && region != crDeploy.Region {
+					return nil, fmt.Errorf("expected all Cloud Run deploys to be in the same region, found deploys to %s and %s", region, crDeploy.Region)
+				}
+
+				region = crDeploy.Region
+			}
+			if !projectFlag {
+				// No project flag was specified so take it from the config.
+				if defaultProject != "" && defaultProject != crDeploy.ProjectID {
+					return nil, fmt.Errorf("expected all Cloud Run deploys to use the same project, found deploys to projects %s and %s", defaultProject, crDeploy.ProjectID)
+				}
+				defaultProject = crDeploy.ProjectID
+			}
+			if d.StatusCheck != nil {
+				if enableStatusCheck == nil {
+					enableStatusCheck = d.StatusCheck
+				} else if enableStatusCheck != d.StatusCheck {
+					// if we get conflicting values for status check from different devloop configs, we turn status check off
+					enableStatusCheck = util.Ptr(false)
+				}
+			}
+		}
+	}
+	statusCheckDeadline := maxStatusCheckDeadline(deployers)
+	tolerateFailures := runCtx.StatusCheckTolerateFailures()
+	// The runctx.StatusCheck() method returns the value set by the cli flag `--status-check`,
+	// which overrides the value set in the individual configs.
+	if cliStatusCheck := runCtx.StatusCheck(); cliStatusCheck != nil {
+		enableStatusCheck = cliStatusCheck
+	}
+
+	lifecycleHooks := latest.CloudRunDeployHooks{}
+	if configName != "" {
+		currentPipeline := runCtx.Pipelines.GetForConfigName(configName)
+		lifecycleHooks = currentPipeline.Deploy.CloudRunDeploy.LifecycleHooks
+	}
+
+	return cloudrun.NewDeployer(
+		runCtx,
+		labeller,
+		&latest.CloudRunDeploy{
+			Region:         region,
+			ProjectID:      defaultProject,
+			LifecycleHooks: lifecycleHooks,
+		},
+		configName,
+		statusCheckDeadline,
+		tolerateFailures,
+		enableStatusCheck)
+}
+
+// maxStatusCheckDeadline goes through each of the Deploy Configs and finds the
+// max. If none have the field set, it uses the default.
+func maxStatusCheckDeadline(deployConfigs []latest.DeployConfig) time.Duration {
+	c := 0
+	// set the group status check deadline to maximum of any individually specified value
+	for _, d := range deployConfigs {
+		if d.StatusCheckDeadlineSeconds > c {
+			c = d.StatusCheckDeadlineSeconds
+		}
+	}
+	if c == 0 {
+		return DefaultStatusCheckDeadline
+	}
+	return time.Duration(c) * time.Second
+}

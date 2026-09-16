@@ -1,0 +1,8 @@
+apiVersion: devloop/v1
+kind: Config
+build:
+  artifacts:
+  - image: devloop-buildpacks
+    buildpacks:
+      env:
+      - GOPROXY={{.GOPROXY}}

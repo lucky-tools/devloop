@@ -1,0 +1,12 @@
+apiVersion: devloop/v1
+kind: Config
+metadata:
+  name: hello
+build:
+  artifacts:
+  - image: devloop-example
+    docker:
+      dockerfile: Dockerfile
+manifests:
+  rawYaml:
+  - k8s-pod.yaml

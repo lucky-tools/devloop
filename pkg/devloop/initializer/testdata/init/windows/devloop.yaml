@@ -1,0 +1,13 @@
+apiVersion: devloop/v1
+kind: Config
+metadata:
+  name: windows
+build:
+  artifacts:
+  - image: gcr.io/k8s-devloop/leeroy-web
+    context: apps/web
+    docker:
+      dockerfile: build/Dockerfile
+manifests:
+  rawYaml:
+    - apps/web/deployment.yaml

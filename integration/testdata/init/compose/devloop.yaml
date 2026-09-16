@@ -1,0 +1,13 @@
+apiVersion: devloop/v1
+kind: Config
+metadata:
+  name: compose
+build:
+  artifacts:
+  - image: us-central1-docker.pkg.dev/k8s-devloop/testing/compose
+    docker:
+      dockerfile: Dockerfile
+manifests:
+  rawYaml:
+  - compose-deployment.yaml
+  - compose-service.yaml

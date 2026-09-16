@@ -1,0 +1,34 @@
+### Example: Running custom tests on built images
+
+[![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.svg)](https://ssh.cloud.google.com/cloudshell/editor?cloudshell_git_repo=https://github.com/lucky-tools/devloop&cloudshell_open_in_editor=README.md&cloudshell_workspace=examples/custom-tests)
+
+This example shows how to run _custom tests_ on newly built images in the devloop dev loop. 
+
+Custom tests are associated with single image artifacts. When test dependencies change, no build will happen but tests would get re-run. Tests are configured in the `devloop.yaml` in the `test` stanza, e.g.
+
+```yaml
+test:
+    - image: devloop-example
+      custom:
+      - command: <command>
+        timeoutSeconds: <timeout in seconds>
+        dependencies: <dependencies for this command>
+          paths: <file dependencies>
+          - <paths glob>
+```
+
+As tests take time, you might prefer to configure tests using [profiles](https://devloop.dev/docs/environment/profiles/) so that they can be automatically enabled or disabled, e.g.
+If the `command` exits with a non-zero return code then the test will have failed, and deployment will not continue.
+
+```yaml
+profiles:
+  - name: test
+    test:
+    - image: devloop-example
+      custom:
+        - command: <command>
+          timeoutSeconds: <timeout in seconds>
+          dependencies: <dependencies for this command>
+            paths: <file dependencies>
+            - <paths glob>
+```

@@ -1,0 +1,14 @@
+apiVersion: devloop/v1
+kind: Config
+build:
+  tagPolicy:
+    gitCommit: {}
+  artifacts:
+  - image: test-file-sync
+    context: .
+    sync:
+      infer:
+      - '**/foo*'
+manifests:
+  rawYaml:
+    - pod.yaml

@@ -1,0 +1,11 @@
+apiVersion: devloop/v1
+kind: Config
+build:
+  local:
+    cli:
+      useBuildKit: true
+    push: false
+  artifacts:
+  - image: ssh
+    docker:
+      ssh: "default"

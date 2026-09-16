@@ -1,0 +1,10 @@
+apiVersion: devloop/v1
+kind: Config
+build:
+  artifacts:
+  - image: gcr.io/k8s-devloop/devloop-custom
+    custom:
+      buildCommand: ./build.sh
+      dependencies:
+        paths:
+        - .
