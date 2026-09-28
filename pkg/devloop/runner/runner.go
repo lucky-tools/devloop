@@ -59,6 +59,7 @@ type Runner interface {
 	Test(context.Context, io.Writer, []graph.Artifact) error
 	Verify(context.Context, io.Writer, []graph.Artifact) error
 	VerifyAndLog(context.Context, io.Writer, []graph.Artifact) error
+	Sync(context.Context, io.Writer, []*latest.Artifact, []graph.Artifact) error
 
 	Exec(context.Context, io.Writer, []graph.Artifact, string) error
 }

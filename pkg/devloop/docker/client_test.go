@@ -84,7 +84,7 @@ func TestNewEnvClient(t *testing.T) {
 				t.Override(&util.DefaultExecCommand, test.command)
 			}
 
-			env, _, err := newEnvAPIClient()
+			env, _, err := newEnvAPIClient(nil)
 
 			t.CheckErrorAndDeepEqual(test.shouldErr, err, []string(nil), env)
 		})
@@ -188,7 +188,7 @@ DOCKER_HOST`),
 			t.Override(&util.DefaultExecCommand, test.command)
 			t.Override(&cluster.GetClient, func() cluster.Client { return fakeMinikubeClient{} })
 
-			env, _, err := newMinikubeAPIClient(context.Background(), "minikube")
+			env, _, err := newMinikubeAPIClient(context.Background(), "minikube", nil)
 
 			t.CheckErrorAndDeepEqual(test.shouldErr, err, test.expectedEnv, env)
 		})

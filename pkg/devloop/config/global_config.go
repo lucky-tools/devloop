@@ -21,6 +21,12 @@ package config
 type GlobalConfig struct {
 	Global         *ContextConfig   `yaml:"global,omitempty"`
 	ContextConfigs []*ContextConfig `yaml:"kubeContexts"`
+
+	// EncryptionKey is the base64-encoded AES-256 key used to encrypt and
+	// decrypt secrets in devloop.yaml (e.g. the ssh password in
+	// DOCKER_HOST). It is generated automatically by `devloop encrypt`
+	// and does not need to be set by hand.
+	EncryptionKey string `yaml:"encryption-key,omitempty"`
 }
 
 // ContextConfig is the context-specific config information provided in

@@ -43,7 +43,6 @@ type Builder struct {
 
 	cfg                docker.Config
 	localDocker        docker.LocalDaemon
-	dockerDaemon       docker.LocalDaemon
 	localCluster       bool
 	pushImages         bool
 	deleteLocalImage   bool
@@ -88,23 +87,11 @@ func NewBuilder(ctx context.Context, bCtx BuilderContext, buildCfg *latest.Local
 		return nil, fmt.Errorf("getting docker client: %w", err)
 	}
 
-	// The daemon used to build docker artifacts. For the API backend it is
-	// determined by `build.local.api.host` (or the local socket), never by
-	// DOCKER_HOST / docker context / minikube detection. For the CLI backend it
-	// is the default daemon, used only for metadata (image ID, extra env).
-	var dockerDaemon docker.LocalDaemon
-	if buildCfg.CLI == nil {
-		host := ""
-		if buildCfg.API != nil {
-			host = buildCfg.API.Host
-		}
-		dockerDaemon, err = docker.NewLocalDaemonFromHost(host, bCtx)
-		if err != nil {
-			return nil, fmt.Errorf("getting docker client for host %q: %w", host, err)
-		}
-	} else {
-		dockerDaemon = localDocker
-	}
+	// localDocker is the single daemon used to build and tag docker artifacts. It
+	// is resolved via docker.NewAPIClient (DOCKER_HOST / docker context / minikube),
+	// the same source used by the CLI backend and the deploy/sync path.
+	// When `api.useBuildKit` is enabled the build itself is handled by buildkitd
+	// (addressed via DOCKER_HOST too), so localDocker is only used for metadata.
 
 	cluster := bCtx.GetCluster()
 	pushFlag := bCtx.PushImages()
@@ -134,7 +121,6 @@ func NewBuilder(ctx context.Context, bCtx BuilderContext, buildCfg *latest.Local
 		cfg:                bCtx,
 		kubeContext:        bCtx.GetKubeContext(),
 		localDocker:        localDocker,
-		dockerDaemon:       dockerDaemon,
 		localCluster:       cluster.Local,
 		pushImages:         pushImages,
 		deleteLocalImage:   deleteLocalImage,
@@ -166,12 +152,16 @@ func newPerArtifactBuilder(b *Builder, a *latest.Artifact) (artifactBuilder, err
 			if !b.pushImages {
 				return nil, fmt.Errorf("`api.useBuildKit` builds and pushes directly to a registry via buildkit; it requires push to be enabled (set `build.local.push: true` or use `--push`)")
 			}
-			return dockerbuilder.NewBuildKitBuilder(b.cfg, b.local.API.BuildKitHost, b.artifactStore, b.sourceDependencies), nil
+			key, err := config.GetOrCreateEncryptionKey(b.cfg.GlobalConfig())
+			if err != nil {
+				return nil, err
+			}
+			return dockerbuilder.NewBuildKitBuilder(b.cfg, key, b.artifactStore, b.sourceDependencies), nil
 		}
 		if b.local.CLI != nil {
 			return dockerbuilder.NewCLIBuilder(b.localDocker, b.cfg, b.pushImages, b.buildkit, b.local.CLI.BuildKitBuilder, b.local.CLI.CacheTag, b.artifactStore, b.sourceDependencies), nil
 		}
-		return dockerbuilder.NewAPIBuilder(b.dockerDaemon, b.cfg, b.pushImages, b.artifactStore, b.sourceDependencies), nil
+		return dockerbuilder.NewAPIBuilder(b.localDocker, b.cfg, b.pushImages, b.artifactStore, b.sourceDependencies), nil
 
 	case a.JibArtifact != nil:
 		return jib.NewArtifactBuilder(b.localDocker, b.cfg, b.pushImages, b.skipTests, b.artifactStore), nil

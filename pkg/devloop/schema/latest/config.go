@@ -349,27 +349,23 @@ type LocalBuild struct {
 // either the Docker Engine HTTP API (`api`) or the Docker CLI (`cli`).
 type DockerBuildBackend struct {
 	// API builds Docker artifacts against the Docker Engine HTTP API.
-	// If neither `api` nor `cli` is specified, `api` is used with the local Docker daemon.
+	// If neither `api` nor `cli` is specified, `api` is used with the daemon
+	// resolved from `DOCKER_HOST`, `docker context`, or minikube detection.
 	API *DockerAPIBackend `yaml:"api,omitempty" yamltags:"oneOf=dockerBackend"`
 
 	// CLI builds Docker artifacts via the `docker` command-line interface (`docker build` / `docker buildx`).
 	CLI *DockerCLIBackend `yaml:"cli,omitempty" yamltags:"oneOf=dockerBackend"`
 }
 
-// DockerAPIBackend builds Docker artifacts against the Docker Engine HTTP API.
+// DockerAPIBackend builds Docker artifacts against the Docker Engine HTTP API,
+// or against buildkitd when `useBuildKit` is enabled. The daemon (or buildkitd)
+// is resolved from the `DOCKER_HOST` environment variable, `docker context`, or
+// minikube detection. For `ssh://` URLs the password must be encrypted with the
+// global encryption key (see `devloop encrypt`), e.g. `ssh://user:enc:<ciphertext>@host`.
 type DockerAPIBackend struct {
-	// Host is the address of the Docker daemon to build against, e.g.
-	// `unix:///var/run/docker.sock` (default), `tcp://host:port`, `ssh://user@host`, or `npipe://...`.
-	// The `DOCKER_HOST` environment variable, `docker context`, and minikube detection are not used.
-	Host string `yaml:"host,omitempty"`
-
 	// UseBuildKit builds multi-platform images with buildkit via the buildkitd Go client
 	// instead of the Docker Engine API. Requires push to a registry.
 	UseBuildKit bool `yaml:"useBuildKit,omitempty"`
-
-	// BuildKitHost is the address of the buildkitd daemon used when `useBuildKit` is enabled.
-	// Empty means the buildkit default address (`unix:///run/buildkit/buildkitd.sock`).
-	BuildKitHost string `yaml:"buildKitHost,omitempty"`
 }
 
 // DockerCLIBackend builds Docker artifacts via the `docker` command-line interface.
@@ -823,6 +819,11 @@ type DockerDeploy struct {
 	// UseCompose tells devloop whether or not to deploy using `docker-compose`.
 	UseCompose bool `yaml:"useCompose,omitempty"`
 
+	// UseAPI tells devloop to sync files into running containers using the
+	// Docker Engine API (`PUT /containers/{id}/archive`) instead of spawning
+	// the `docker exec` CLI. Requires no `tar` binary inside the container.
+	UseAPI bool `yaml:"useAPI,omitempty"`
+
 	// Images are the container images to run in Docker.
 	Images []string `yaml:"images" yamltags:"required"`
 }
@@ -1048,6 +1049,10 @@ type Sync struct {
 
 	// LifecycleHooks describes a set of lifecycle hooks that are executed before and after each file sync action on the target artifact's containers.
 	LifecycleHooks SyncHooks `yaml:"hooks,omitempty"`
+
+	// Restart when set to `true` restarts the container after files are synced into it.
+	// Available for the local docker deployer.
+	Restart bool `yaml:"restart,omitempty"`
 }
 
 // SyncRule specifies which local files to sync to remote folders.

@@ -9,22 +9,22 @@
 
 ### Information
 
-- Skaffold version: <!-- run `skaffold version` -->
+- Devloop version: <!-- run `devloop version` -->
 - Operating system: <!-- name and version -->
-- Installed via: <!-- skaffold.dev | Google Cloud SDK | Cloud Code | Chocolatey | Snap | Homebrew | ...-->
-- Contents of skaffold.yaml:
+- Installed via: <!-- devloop.dev | Google Cloud SDK | Cloud Code | Chocolatey | Snap | Homebrew | ...-->
+- Contents of devloop.yaml:
 
 ```yaml
-<paste your skaffold.yaml here>
+<paste your devloop.yaml here>
 ```
 
 ### Steps to reproduce the behavior
 
-1. a clonable repository with the sample skaffold project
-2. `skaffold <command>`
+1. a clonable repository with the sample devloop project
+2. `devloop <command>`
 3. ...
 
 <!--
-The logs from `skaffold ... -vdebug` can be very helpful.
+The logs from `devloop ... -vdebug` can be very helpful.
 Please remove or elide any confidential information.
 -->

@@ -80,7 +80,7 @@ func TestBuildKitSolveOpt(t *testing.T) {
 		})
 		t.Override(&docker.BuildKitAuthProvider, func() (session.Attachable, error) { return nil, nil })
 
-		builder := NewBuildKitBuilder(mockConfig{runMode: config.RunModes.Dev}, "", mockArtifactResolver{make(map[string]string)}, nil)
+		builder := NewBuildKitBuilder(mockConfig{runMode: config.RunModes.Dev}, nil, mockArtifactResolver{make(map[string]string)}, nil)
 
 		artifact := &latest.Artifact{
 			Workspace: ".",

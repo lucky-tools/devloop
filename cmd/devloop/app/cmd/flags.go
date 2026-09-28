@@ -373,7 +373,7 @@ var flagRegistry = []Flag{
 		Value:         &opts.CustomTag,
 		DefValue:      "",
 		FlagAddMethod: "StringVar",
-		DefinedOn:     []string{"build", "debug", "dev", "run", "deploy", "render"},
+		DefinedOn:     []string{"build", "debug", "dev", "run", "deploy", "render", "sync"},
 	},
 	{
 		Name:          "platform",
@@ -566,7 +566,7 @@ The build result from a previous 'devloop build --file-output' run can be used h
 		Value:         &fromBuildOutputFile,
 		DefValue:      "",
 		FlagAddMethod: "Var",
-		DefinedOn:     []string{"deploy", "render", "test", "verify", "exec"},
+		DefinedOn:     []string{"deploy", "render", "test", "verify", "exec", "sync"},
 	},
 
 	{
@@ -576,7 +576,7 @@ The build result from a previous 'devloop build --file-output' run can be used h
 		Value:         &preBuiltImages,
 		DefValue:      nil,
 		FlagAddMethod: "Var",
-		DefinedOn:     []string{"deploy", "render", "test"},
+		DefinedOn:     []string{"deploy", "render", "test", "sync"},
 	},
 
 	{

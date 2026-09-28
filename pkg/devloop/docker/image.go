@@ -312,6 +312,7 @@ func (l *localDaemon) ConfigFile(ctx context.Context, image string) (*v1.ConfigF
 			return nil, err
 		}
 	} else {
+		log.Entry(ctx).Debugf("could not inspect config for %q from local docker (%v); falling back to remote registry", image, err)
 		cfg, err = RetrieveRemoteConfig(image, l.cfg, v1.Platform{})
 		if err != nil {
 			return nil, err

@@ -59,8 +59,8 @@ build:
       useBuildKit: true                   # 使用 docker buildx 构建（需先安装 buildkit 并创建 builder）
       buildKitBuilder: buildkit           # buildkit builder 名（optional；缺省用 buildkit 默认 builder）
       cacheTag: cache                   # buildkit 缓存 tag（optional；缺省用 tagPolicy 生成的 tag）
-    # api:                              # 用 Docker Engine HTTP API 构建（不走 DOCKER_HOST/docker context）
-    #   host: tcp://192.168.1.10:2376   # daemon 地址（unix:///... 默认、tcp://、ssh://、npipe://）
+    # api:                              # 用 Docker Engine HTTP API 构建（daemon 来自 DOCKER_HOST / docker context）
+    #   useBuildKit: true                 # 用 buildkitd Go client 构建并直接推送到仓库（daemon 也来自 DOCKER_HOST）
   # 透明 buildkit 支持（可选）：用 docker buildx + 远程/daemon-less BuildKit 构建。
   # 前置：本机需先创建 builder：
   #   docker buildx create --driver docker-container --name buildkit   # 本地 builder
@@ -120,9 +120,10 @@ build:
         hooks:                          # sync 前后生命周期钩子（optional）
           before: []
           after: []
-      requires:                         # 本 artifact 依赖的其它 artifact（optional）
-        - image: my-base-image          # 依赖的镜像名
-          alias: BASE_IMAGE             # 在 builder 里替换的别名（默认=image）
+        # restart: true                 # sync 后重启容器（仅 docker deployer，optional）
+      # requires:                     # 本 artifact 依赖的其它 artifact（optional，需先定义被依赖的 artifact）
+      #   - image: my-base-image      # 依赖的镜像名
+      #     alias: BASE_IMAGE         # 在 builder 里替换的别名（默认=image）
       hooks:                            # 构建前后钩子（optional）
         before:                         # 构建前
           - command: [echo, before-build]   # 命令（必填）
@@ -310,7 +311,14 @@ manifests:
 # deploy：部署阶段
 # =============================================================================
 deploy:
-  kubectl: {}                           # 用 kubectl apply 部署（deployer 之一）
+  kubectl:                              # 用 kubectl apply 部署（deployer 之一）
+    hooks:                              # 部署前后钩子（optional，挂在 kubectl deployer 下）
+      before:
+        - host:                         # 主机钩子（oneOf：host / container）
+            command: [echo, deploy-start]
+      after:
+        - host:
+            command: [echo, deploy-done]
   # kubectl:
   #   defaultNamespace: imk             # 默认命名空间
   #   flags:
@@ -337,11 +345,6 @@ deploy:
     prefix: auto                        # 日志前缀：container/podAndContainer/auto/none
     jsonParse:                          # JSON 日志解析（optional）
       fields: [message, level]
-  hooks:                                # 部署前后钩子（optional）
-    before:
-      - command: [echo, deploy-start]
-    after:
-      - command: [echo, deploy-done]
 
 # =============================================================================
 # portForward：端口转发（optional）

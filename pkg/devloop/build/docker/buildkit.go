@@ -41,19 +41,35 @@ import (
 // mode and returns the image digest.
 type BuildKitBuilder struct {
 	cfg                docker.Config
-	buildKitHost       string
+	key                []byte
 	artifacts          ArtifactResolver
 	sourceDependencies TransitiveSourceDependenciesResolver
 }
 
 // NewBuildKitBuilder returns a new instance of a buildkit-backed docker artifact builder.
-func NewBuildKitBuilder(cfg docker.Config, buildKitHost string, ar ArtifactResolver, dr TransitiveSourceDependenciesResolver) *BuildKitBuilder {
+// The buildkitd address is resolved from DOCKER_HOST / docker context at build time.
+func NewBuildKitBuilder(cfg docker.Config, key []byte, ar ArtifactResolver, dr TransitiveSourceDependenciesResolver) *BuildKitBuilder {
 	return &BuildKitBuilder{
 		cfg:                cfg,
-		buildKitHost:       buildKitHost,
+		key:                key,
 		artifacts:          ar,
 		sourceDependencies: dr,
 	}
+}
+
+// newBuildKitClient builds a buildkit client, injecting a native ssh dialer when
+// buildKitHost is an ssh:// URL carrying a plain-text or encrypted password.
+// Otherwise it falls back to the default buildkit client, which does not
+// understand ssh URLs.
+func newBuildKitClient(ctx context.Context, buildKitHost string, key []byte) (*client.Client, error) {
+	dialer, ok, err := docker.SSHBuildKitDialer(buildKitHost, key)
+	if err != nil {
+		return nil, err
+	}
+	if ok {
+		return client.New(ctx, buildKitHost, client.WithContextDialer(dialer))
+	}
+	return client.New(ctx, buildKitHost)
 }
 
 // SupportedPlatforms reports that the buildkit backend builds for any platform.
@@ -80,7 +96,7 @@ func (b *BuildKitBuilder) Build(ctx context.Context, out io.Writer, a *latest.Ar
 		return "", err
 	}
 
-	cli, err := client.New(ctx, b.buildKitHost)
+	cli, err := newBuildKitClient(ctx, docker.ResolveDockerHost(ctx), b.key)
 	if err != nil {
 		return "", newBuildError(fmt.Errorf("creating buildkit client: %w", err), b.cfg)
 	}

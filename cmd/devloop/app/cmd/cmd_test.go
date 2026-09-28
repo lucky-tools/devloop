@@ -19,6 +19,8 @@ package cmd
 import (
 	"testing"
 
+	"github.com/spf13/cobra"
+
 	"github.com/lucky-tools/devloop/pkg/devloop/update"
 	"github.com/lucky-tools/devloop/testutil"
 )
@@ -48,6 +50,60 @@ func TestPreReleaseVersion(t *testing.T) {
 		testutil.Run(t, test.description, func(t *testutil.T) {
 			actual := preReleaseVersion(test.versionStr)
 			t.CheckDeepEqual(test.expected, actual)
+		})
+	}
+}
+
+func TestSetFlagsFromEnvVariables(t *testing.T) {
+	buildCmd := func() (*cobra.Command, *string) {
+		var val string
+		root := &cobra.Command{Use: "root"}
+		sub := &cobra.Command{Use: "sub"}
+		sub.Flags().StringVar(&val, "images", "", "images to deploy")
+		root.AddCommand(sub)
+		return root, &val
+	}
+
+	tests := []struct {
+		name        string
+		skipChanged bool
+		preSet      string
+		envVal      string
+		want        string
+	}{
+		{
+			name:   "applies env var at startup",
+			envVal: "fund-download:latest",
+			want:   "fund-download:latest",
+		},
+		{
+			name:        "applies env var when flag unchanged after config",
+			skipChanged: true,
+			envVal:      "fund-download:latest",
+			want:        "fund-download:latest",
+		},
+		{
+			name:        "skips already-changed flag",
+			skipChanged: true,
+			preSet:      "cli-value",
+			envVal:      "fund-download:latest",
+			want:        "cli-value",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv("DEVLOOP_IMAGES", tt.envVal)
+			root, val := buildCmd()
+			if tt.preSet != "" {
+				if err := root.Commands()[0].Flags().Set("images", tt.preSet); err != nil {
+					t.Fatalf("pre-setting flag: %v", err)
+				}
+			}
+			setFlagsFromEnvVariables(root, tt.skipChanged)
+			if *val != tt.want {
+				t.Errorf("flag value = %q, want %q", *val, tt.want)
+			}
 		})
 	}
 }

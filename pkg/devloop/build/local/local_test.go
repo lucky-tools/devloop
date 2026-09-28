@@ -314,9 +314,6 @@ func TestLocalRun(t *testing.T) {
 			t.Override(&docker.NewAPIClient, func(context.Context, docker.Config) (docker.LocalDaemon, error) {
 				return fDockerDaemon, nil
 			})
-			t.Override(&docker.NewLocalDaemonFromHost, func(string, docker.Config) (docker.LocalDaemon, error) {
-				return fDockerDaemon, nil
-			})
 			t.Override(&docker.EvalBuildArgsWithEnv, func(_ config.RunMode, _ string, _ string, args map[string]*string, _ map[string]*string, _ map[string]string) (map[string]*string, error) {
 				return args, nil
 			})

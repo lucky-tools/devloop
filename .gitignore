@@ -15,9 +15,7 @@ docs/resources
 docs/node_modules
 docs/themes
 docs/package-lock.json
-pkg/skaffold/output/debug.test
 fs/assets/schemas_generated
 fs/assets/check.txt
 secrets/keys.json
 integration/testdata/dev/foo
-pkg/skaffold/build/app.tar

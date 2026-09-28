@@ -73,7 +73,12 @@ type Config interface {
 // NewAPIClientImpl guesses the docker client to use based on current Kubernetes context.
 func NewAPIClientImpl(ctx context.Context, cfg Config) (LocalDaemon, error) {
 	dockerAPIClientOnce.Do(func() {
-		env, apiClient, err := newAPIClient(ctx, cfg.GetKubeContext(), cfg.MinikubeProfile())
+		key, err := config.GetOrCreateEncryptionKey(cfg.GlobalConfig())
+		if err != nil {
+			dockerAPIClientErr = err
+			return
+		}
+		env, apiClient, err := newAPIClient(ctx, cfg.GetKubeContext(), cfg.MinikubeProfile(), key)
 		dockerAPIClient = NewLocalDaemon(apiClient, env, cfg.Prune(), cfg)
 		dockerAPIClientErr = err
 	})
@@ -86,24 +91,42 @@ func NewAPIClientImpl(ctx context.Context, cfg Config) (LocalDaemon, error) {
 // kubecontext API Server to minikube profiles
 
 // newAPIClient guesses the docker client to use based on current Kubernetes context.
-func newAPIClient(ctx context.Context, kubeContext string, minikubeProfile string) ([]string, client.APIClient, error) {
+func newAPIClient(ctx context.Context, kubeContext string, minikubeProfile string, key []byte) ([]string, client.APIClient, error) {
 	if minikubeProfile != "" { // skip validation if explicitly specifying minikubeProfile.
-		return newMinikubeAPIClient(ctx, minikubeProfile)
+		return newMinikubeAPIClient(ctx, minikubeProfile, key)
 	}
 	if cluster.GetClient().IsMinikube(ctx, kubeContext) {
-		return newMinikubeAPIClient(ctx, kubeContext)
+		return newMinikubeAPIClient(ctx, kubeContext, key)
 	}
-	return newEnvAPIClient()
+	return newEnvAPIClient(key)
 }
 
 // connectionHelperOpts returns client options that connect to the given host
 // through a Docker connection helper when one is registered for the host's
 // scheme (currently only ssh://). The bool result reports whether a helper was
 // found; when false, the caller should connect to host directly.
-func connectionHelperOpts(host string) ([]client.Opt, bool) {
+func connectionHelperOpts(host string, key []byte) ([]client.Opt, bool, error) {
+	// ssh:// URLs that embed a password are dialed natively, since the Docker
+	// CLI connection helper rejects plain-text passwords and disables the tty
+	// needed for an interactive password prompt. The password must be encrypted
+	// with the global encryption key (see `devloop encrypt`).
+	spec, ok, err := parseSSHPasswordURL(host, key)
+	if err != nil {
+		return nil, false, err
+	}
+	if ok {
+		// WithHost must come before WithDialContext: WithHost calls
+		// sockets.ConfigureTransport, which for an "http://" scheme replaces the
+		// transport's DialContext with the default net.Dialer. Applying the ssh
+		// dialer last ensures it survives and the dummy host is never dialed.
+		return []client.Opt{
+			client.WithHost(sshDummyHost),
+			client.WithDialContext(nativeSSHDialer(spec)),
+		}, true, nil
+	}
 	helper, err := connhelper.GetConnectionHelper(host)
 	if err != nil || helper == nil {
-		return nil, false
+		return nil, false, nil
 	}
 	httpClient := &http.Client{
 		Transport: &http.Transport{
@@ -114,16 +137,20 @@ func connectionHelperOpts(host string) ([]client.Opt, bool) {
 		client.WithHTTPClient(httpClient),
 		client.WithHost(helper.Host),
 		client.WithDialContext(helper.Dialer),
-	}, true
+	}, true, nil
 }
 
 // newEnvAPIClient returns a docker client based on the environment variables set.
 // It will "negotiate" the highest possible API version supported by both the client
 // and the server if there is a mismatch.
-func newEnvAPIClient() ([]string, client.APIClient, error) {
+func newEnvAPIClient(key []byte) ([]string, client.APIClient, error) {
 	opts := []client.Opt{client.WithHTTPHeaders(getUserAgentHeader())}
 	if host := os.Getenv("DOCKER_HOST"); host != "" {
-		if helperOpts, ok := connectionHelperOpts(host); ok {
+		helperOpts, ok, err := connectionHelperOpts(host, key)
+		if err != nil {
+			return nil, nil, err
+		}
+		if ok {
 			opts = append(opts, helperOpts...)
 		} else {
 			opts = append(opts, client.FromEnv)
@@ -140,7 +167,11 @@ func newEnvAPIClient() ([]string, client.APIClient, error) {
 			s := strings.TrimSpace(string(out))
 			// output can be empty if user uses docker as alias for podman
 			if len(s) > 0 {
-				if helperOpts, ok := connectionHelperOpts(s); ok {
+				helperOpts, ok, err := connectionHelperOpts(s, key)
+				if err != nil {
+					return nil, nil, err
+				}
+				if ok {
 					opts = append(opts, helperOpts...)
 				} else {
 					opts = append(opts, client.WithHost(s))
@@ -158,32 +189,19 @@ func newEnvAPIClient() ([]string, client.APIClient, error) {
 	return nil, cli, nil
 }
 
-// NewLocalDaemonFromHost creates a LocalDaemon connected to the given Docker daemon
-// host. Unlike NewAPIClient, it does not consult the DOCKER_HOST environment variable,
-// `docker context`, or minikube detection; the daemon is determined solely by `host`.
-// An empty host means the platform default local socket (client.DefaultDockerHost).
-var NewLocalDaemonFromHost = newLocalDaemonFromHost
-
-func newLocalDaemonFromHost(host string, cfg Config) (LocalDaemon, error) {
-	apiClient, err := newClientFromHost(host)
+// ResolveDockerHost returns the Docker daemon host the process is configured to
+// use: the DOCKER_HOST environment variable if set, otherwise the host from the
+// active docker context. It does not apply minikube detection. An empty result
+// means the caller should fall back to its platform default.
+func ResolveDockerHost(ctx context.Context) string {
+	if host := os.Getenv("DOCKER_HOST"); host != "" {
+		return host
+	}
+	out, err := util.RunCmdOut(ctx, exec.Command("docker", "context", "inspect", "--format", "{{.Endpoints.docker.Host}}"))
 	if err != nil {
-		return nil, err
+		return ""
 	}
-	return NewLocalDaemon(apiClient, nil, cfg.Prune(), cfg), nil
-}
-
-// newClientFromHost builds a docker API client pointed at the given host.
-func newClientFromHost(host string) (client.APIClient, error) {
-	opts := []client.Opt{client.WithHTTPHeaders(getUserAgentHeader()), client.WithAPIVersionNegotiation()}
-	if host == "" {
-		host = client.DefaultDockerHost
-	}
-	if helperOpts, ok := connectionHelperOpts(host); ok {
-		opts = append(opts, helperOpts...)
-	} else {
-		opts = append(opts, client.WithHost(host))
-	}
-	return client.New(opts...)
+	return strings.TrimSpace(string(out))
 }
 
 type ExitCoder interface {
@@ -192,7 +210,7 @@ type ExitCoder interface {
 
 // newMinikubeAPIClient returns a docker client using the environment variables
 // provided by minikube.
-func newMinikubeAPIClient(ctx context.Context, minikubeProfile string) ([]string, client.APIClient, error) {
+func newMinikubeAPIClient(ctx context.Context, minikubeProfile string, key []byte) ([]string, client.APIClient, error) {
 	env, err := getMinikubeDockerEnv(ctx, minikubeProfile)
 	if err != nil {
 		// When minikube uses the infamous `none` driver, `minikube docker-env` will exit with
@@ -202,7 +220,7 @@ func newMinikubeAPIClient(ctx context.Context, minikubeProfile string) ([]string
 		if errors.As(err, &exitError) && (exitError.ExitCode() == minikubeDriverConfictExitCode || exitError.ExitCode() == oldMinikubeBadUsageExitCode || exitError.ExitCode() == minikubeExGuestUnavailable) {
 			// Let's ignore the error and fall back to local docker daemon.
 			log.Entry(context.TODO()).Warnf("Could not get minikube docker env, falling back to local docker daemon: %s", err)
-			return newEnvAPIClient()
+			return newEnvAPIClient(key)
 		}
 
 		return nil, nil, err

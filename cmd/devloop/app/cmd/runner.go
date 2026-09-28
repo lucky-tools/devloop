@@ -101,6 +101,13 @@ func runContext(ctx context.Context, out io.Writer, opts config.DevloopOptions) 
 		}
 	}
 
+	// Re-resolve flags from the environment now that the config's `env` field has
+	// been applied, so that variables such as `DEVLOOP_IMAGES` can bind to flags
+	// such as `--images`. Flags already set on the command line are left untouched.
+	if devloopRootCmd != nil {
+		setFlagsFromEnvVariables(devloopRootCmd, true)
+	}
+
 	runCtx, err := runcontext.GetRunContext(ctx, opts, configs)
 	if err != nil {
 		return nil, nil, fmt.Errorf("getting run context: %w", err)

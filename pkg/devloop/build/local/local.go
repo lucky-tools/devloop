@@ -50,9 +50,6 @@ func (b *Builder) PreBuild(_ context.Context, out io.Writer) error {
 
 func (b *Builder) PostBuild(ctx context.Context, _ io.Writer) error {
 	defer b.localDocker.Close()
-	if b.dockerDaemon != b.localDocker {
-		defer b.dockerDaemon.Close()
-	}
 	if b.prune {
 		if b.mode == config.RunModes.Build {
 			b.localPruner.synchronousCleanupOldImages(ctx, b.builtImages)
@@ -95,13 +92,13 @@ func (b *Builder) buildArtifact(ctx context.Context, out io.Writer, a *latest.Ar
 	if b.pushImages {
 		// delete the local image after it has been pushed to the registry
 		if b.deleteLocalImage {
-			b.deleteLocalImageAfterPush(ctx, out, tag, b.daemonFor(a))
+			b.deleteLocalImageAfterPush(ctx, out, tag, b.localDocker)
 		}
 
 		// only track images for pruning when building with docker
 		// if the local image was deleted after push, there's nothing left to track for pruning
 		if a.DockerArtifact != nil && !b.deleteLocalImage {
-			imageID, err := b.getImageIDForTag(ctx, tag, b.daemonFor(a))
+			imageID, err := b.getImageIDForTag(ctx, tag, b.localDocker)
 			if err != nil && !b.buildkit {
 				log.Entry(ctx).Warn("unable to inspect image: built images may not be cleaned up correctly by devloop")
 			}
@@ -124,7 +121,7 @@ func (b *Builder) buildArtifact(ctx context.Context, out io.Writer, a *latest.Ar
 		go func() {
 			if len(artifacts) > 0 {
 				bgCtx := context.Background()
-				id, err := b.getImageIDForTag(bgCtx, artifacts[0].Tag, b.daemonFor(a))
+				id, err := b.getImageIDForTag(bgCtx, artifacts[0].Tag, b.localDocker)
 				if err != nil {
 					log.Entry(bgCtx).Debugf("failed to get image ID for tag %s, err: %v", artifacts[0].Tag, err)
 					return
@@ -137,7 +134,7 @@ func (b *Builder) buildArtifact(ctx context.Context, out io.Writer, a *latest.Ar
 		}()
 	}
 	b.builtImages = append(b.builtImages, imageID)
-	return build.TagWithImageID(ctx, tag, imageID, b.daemonFor(a))
+	return build.TagWithImageID(ctx, tag, imageID, b.localDocker)
 }
 
 func (b *Builder) runBuildForArtifact(ctx context.Context, out io.Writer, a *latest.Artifact, tag string, platforms platform.Matcher) (string, error) {
@@ -173,16 +170,6 @@ func (b *Builder) getImageIDForTag(ctx context.Context, tag string, daemon docke
 		return "", err
 	}
 	return insp.ID, nil
-}
-
-// daemonFor returns the docker daemon that the given artifact is built against.
-// Docker artifacts may target a different daemon (build.local.api.host); other
-// builders always use the default daemon.
-func (b *Builder) daemonFor(a *latest.Artifact) docker.LocalDaemon {
-	if a.DockerArtifact != nil {
-		return b.dockerDaemon
-	}
-	return b.localDocker
 }
 
 // deleteLocalImageAfterPush removes the local image for the given tag once it

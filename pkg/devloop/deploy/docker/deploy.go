@@ -99,6 +99,8 @@ func NewDeployer(ctx context.Context, cfg dockerutil.Config, labeller *label.Def
 		dbg = debugger.NewDebugManager(cfg.GetInsecureRegistries(), debugHelpersRegistry)
 	}
 
+	useAPI := d != nil && d.UseAPI
+
 	return &Deployer{
 		configName:         configName,
 		cfg:                d,
@@ -113,7 +115,7 @@ func NewDeployer(ctx context.Context, cfg dockerutil.Config, labeller *label.Def
 		debugger:           dbg,
 		logger:             l,
 		monitor:            &status.NoopMonitor{},
-		syncer:             pkgsync.NewContainerSyncer(),
+		syncer:             pkgsync.NewContainerSyncer(client.RawClient(), useAPI),
 		labeller:           labeller,
 	}, nil
 }

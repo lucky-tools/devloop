@@ -50,6 +50,8 @@ func TestParseExamples(t *testing.T) {
 	parseConfigFiles(t, "../../../../examples")
 	parseConfigFiles(t, "../../../../integration/examples")
 	parseConfigFiles(t, "../../../../integration/testdata/regressions")
+	parseAdditionalConfigFiles(t, "../../../../examples")
+	parseAdditionalConfigFiles(t, "../../../../integration/examples")
 }
 
 // Samples are devloop.yaml fragments that are used
@@ -120,6 +122,30 @@ func parseConfigFiles(t *testing.T, root string) {
 			checkDevloopConfig(t, []byte(strings.Join(data, "\n---\n")))
 		})
 	}
+}
+
+// parseAdditionalConfigFiles validates the non-default `devloop*.yaml` config files
+// (e.g. `devloop-gradle.yaml`, `devloop-maven.yaml`, `devloop-kustomize-args.yaml`,
+// `devloop.example.yaml`) individually. These are alternative entry points rather than
+// parts of a single multi-config module, so unlike `parseConfigFiles` they are not
+// joined together.
+func parseAdditionalConfigFiles(t *testing.T, root string) {
+	paths, err := walk.From(root).WhenNameMatches("devloop*.yaml").When(notDevloopYaml).CollectPaths()
+	if err != nil {
+		t.Fatalf("unable to list additional devloop configuration files in %q", root)
+	}
+
+	for _, path := range paths {
+		testutil.Run(t, filepath.Base(path), func(t *testutil.T) {
+			buf, err := os.ReadFile(path)
+			t.CheckNoError(err)
+			checkDevloopConfig(t, buf)
+		})
+	}
+}
+
+func notDevloopYaml(_ string, info walk.Dirent) (bool, error) {
+	return info.Name() != "devloop.yaml", nil
 }
 
 func addHeader(buf []byte) []byte {

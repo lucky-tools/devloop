@@ -25,7 +25,7 @@ jobs:
       with:
         fetch-depth: 0
 
-    # Skip tests for `docs`-only changes (only works for PR-based dev workflows like Skaffold's).
+    # Skip tests for `docs`-only changes (only works for PR-based dev workflows like Devloop's).
     # NOTE: grep output is stored in env var with `|| true` as the run command cannot fail or action will fail
     - name: Check if only docs changes were made in this PR
       run: |

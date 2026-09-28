@@ -40,6 +40,7 @@ func RetrieveConfigFile(ctx context.Context, tagged string, cfg Config) (*v1.Con
 	}
 	if err != nil {
 		// No local Docker is available
+		log.Entry(ctx).Debugf("could not retrieve config for %q from local docker (%v); falling back to remote registry", tagged, err)
 		cf, err = RetrieveRemoteConfig(tagged, cfg, v1.Platform{})
 	}
 	if err != nil {

@@ -18,8 +18,8 @@ package update
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/blang/semver"
 
@@ -38,7 +38,7 @@ var (
 	isConfigUpdateCheckEnabled = config.IsUpdateCheckEnabled
 )
 
-const LatestVersionURL = "https://storage.googleapis.com/devloop/releases/latest/VERSION"
+const LatestVersionURL = "https://api.github.com/repos/lucky-tools/devloop/releases/latest"
 
 // CheckVersion returns an update message when update check is enabled and devloop binary in not latest
 func CheckVersion(config string) (string, error) {
@@ -74,7 +74,7 @@ func isUpdateCheckEnabled(configfile string) bool {
 	return EnableCheck && isConfigUpdateCheckEnabled(configfile)
 }
 
-// getLatestAndCurrentVersion uses a VERSION file stored on GCS to determine the latest released version
+// getLatestAndCurrentVersion uses the GitHub Releases API to determine the latest released version
 // and returns it with the current version of Devloop
 func getLatestAndCurrentVersion() (semver.Version, semver.Version, error) {
 	none := semver.Version{}
@@ -85,7 +85,7 @@ func getLatestAndCurrentVersion() (semver.Version, semver.Version, error) {
 	log.Entry(context.TODO()).Tracef("latest devloop version: %s", versionString)
 	latest, err := version.ParseVersion(versionString)
 	if err != nil {
-		return none, none, fmt.Errorf("parsing latest version from GCS: %w", err)
+		return none, none, fmt.Errorf("parsing latest version from GitHub: %w", err)
 	}
 	current, err := version.ParseVersion(version.Get().Version)
 	if err != nil {
@@ -97,9 +97,15 @@ func getLatestAndCurrentVersion() (semver.Version, semver.Version, error) {
 func DownloadLatestVersion() (string, error) {
 	versionBytes, err := util.Download(LatestVersionURL)
 	if err != nil {
-		return "", fmt.Errorf("getting latest version info from GCS: %w", err)
+		return "", fmt.Errorf("getting latest version info from GitHub: %w", err)
 	}
-	return strings.TrimSuffix(string(versionBytes), "\n"), nil
+	var release struct {
+		TagName string `json:"tag_name"`
+	}
+	if err := json.Unmarshal(versionBytes, &release); err != nil {
+		return "", fmt.Errorf("parsing latest release info from GitHub: %w", err)
+	}
+	return release.TagName, nil
 }
 
 func releaseURL(v semver.Version) string {

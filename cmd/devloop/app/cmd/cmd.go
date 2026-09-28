@@ -53,6 +53,11 @@ var (
 	timestamps        bool
 	shutdownAPIServer func() error
 
+	// devloopRootCmd is the root cobra command. It is kept so flags can be
+	// re-resolved from the environment after the config's `env` field has been
+	// applied (see setFlagsFromEnvVariables).
+	devloopRootCmd *cobra.Command
+
 	// for testing
 	updateCheck = update.CheckVersion
 )
@@ -155,6 +160,7 @@ func NewDevloopCommand(out, errOut io.Writer) *cobra.Command {
 				NewCmdDeploy(),
 				NewCmdDelete(),
 				NewCmdRender(),
+				NewCmdSync(),
 				NewCmdApply(),
 				NewCmdVerify(),
 			},
@@ -180,6 +186,7 @@ func NewDevloopCommand(out, errOut io.Writer) *cobra.Command {
 	rootCmd.AddCommand(NewCmdSchema())
 	rootCmd.AddCommand(NewCmdFilter())
 	rootCmd.AddCommand(NewCmdExec())
+	rootCmd.AddCommand(NewCmdEncrypt())
 
 	rootCmd.AddCommand(NewCmdGeneratePipeline())
 	rootCmd.AddCommand(NewCmdInspect())
@@ -196,7 +203,8 @@ func NewDevloopCommand(out, errOut io.Writer) *cobra.Command {
 	rootCmd.PersistentFlags().MarkHidden("force-colors")
 
 	setEnvVariablesFromFile()
-	setFlagsFromEnvVariables(rootCmd)
+	devloopRootCmd = rootCmd
+	setFlagsFromEnvVariables(rootCmd, false)
 
 	return rootCmd
 }
@@ -226,20 +234,27 @@ func setEnvVariablesFromFile() {
 }
 
 // Each flag can also be set with an env variable whose name starts with `DEVLOOP_`.
-func setFlagsFromEnvVariables(rootCmd *cobra.Command) {
-	rootCmd.PersistentFlags().VisitAll(func(f *pflag.Flag) {
-		envVar := FlagToEnvVarName(f)
-		if val, present := os.LookupEnv(envVar); present {
-			rootCmd.PersistentFlags().Set(f.Name, val)
-		}
-	})
-	for _, cmd := range rootCmd.Commands() {
-		cmd.Flags().VisitAll(func(f *pflag.Flag) {
+// When skipChanged is true, flags that were already set (for example on the command
+// line, or from the process environment at startup) are left untouched, so that the
+// precedence is CLI > OS env > config `env` field.
+func setFlagsFromEnvVariables(rootCmd *cobra.Command, skipChanged bool) {
+	apply := func(fs *pflag.FlagSet) {
+		fs.VisitAll(func(f *pflag.Flag) {
+			if skipChanged && f.Changed {
+				return
+			}
 			envVar := FlagToEnvVarName(f)
 			if val, present := os.LookupEnv(envVar); present {
-				cmd.Flags().Set(f.Name, val)
+				if err := fs.Set(f.Name, val); err != nil {
+					log.Entry(context.TODO()).Warnf("could not set flag %q from environment variable %q: %v", f.Name, envVar, err)
+				}
 			}
 		})
+	}
+
+	apply(rootCmd.PersistentFlags())
+	for _, cmd := range rootCmd.Commands() {
+		apply(cmd.Flags())
 	}
 }
 

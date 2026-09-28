@@ -1,6 +1,6 @@
 apiVersion: devloop/v1
 kind: Config
-deploy:
+manifests:
   kustomize:
     buildArgs:
       - "--load-restrictor LoadRestrictionsNone"

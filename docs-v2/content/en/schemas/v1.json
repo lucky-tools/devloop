@@ -1664,16 +1664,6 @@
     },
     "DockerAPIBackend": {
       "properties": {
-        "buildKitHost": {
-          "type": "string",
-          "description": "address of the buildkitd daemon used when `useBuildKit` is enabled. Empty means the buildkit default address (`unix:///run/buildkit/buildkitd.sock`).",
-          "x-intellij-html-description": "address of the buildkitd daemon used when <code>useBuildKit</code> is enabled. Empty means the buildkit default address (<code>unix:///run/buildkit/buildkitd.sock</code>)."
-        },
-        "host": {
-          "type": "string",
-          "description": "address of the Docker daemon to build against, e.g. `unix:///var/run/docker.sock` (default), `tcp://host:port`, `ssh://user@host`, or `npipe://...`. The `DOCKER_HOST` environment variable, `docker context`, and minikube detection are not used.",
-          "x-intellij-html-description": "address of the Docker daemon to build against, e.g. <code>unix:///var/run/docker.sock</code> (default), <code>tcp://host:port</code>, <code>ssh://user@host</code>, or <code>npipe://...</code>. The <code>DOCKER_HOST</code> environment variable, <code>docker context</code>, and minikube detection are not used."
-        },
         "useBuildKit": {
           "type": "boolean",
           "description": "builds multi-platform images with buildkit via the buildkitd Go client instead of the Docker Engine API. Requires push to a registry.",
@@ -1682,14 +1672,12 @@
         }
       },
       "preferredOrder": [
-        "host",
-        "useBuildKit",
-        "buildKitHost"
+        "useBuildKit"
       ],
       "additionalProperties": false,
       "type": "object",
-      "description": "builds Docker artifacts against the Docker Engine HTTP API.",
-      "x-intellij-html-description": "builds Docker artifacts against the Docker Engine HTTP API."
+      "description": "builds Docker artifacts against the Docker Engine HTTP API, or against buildkitd when `useBuildKit` is enabled. The daemon (or buildkitd) is resolved from the `DOCKER_HOST` environment variable, `docker context`, or minikube detection. For `ssh://` URLs the password must be encrypted with the global encryption key (see `devloop encrypt`), e.g. `ssh://user:enc:<ciphertext>@host`.",
+      "x-intellij-html-description": "builds Docker artifacts against the Docker Engine HTTP API, or against buildkitd when <code>useBuildKit</code> is enabled. The daemon (or buildkitd) is resolved from the <code>DOCKER_HOST</code> environment variable, <code>docker context</code>, or minikube detection. For <code>ssh://</code> URLs the password must be encrypted with the global encryption key (see <code>devloop encrypt</code>), e.g. <code>ssh://user:enc:&lt;ciphertext&gt;@host</code>."
     },
     "DockerArtifact": {
       "properties": {
@@ -1883,6 +1871,12 @@
           "x-intellij-html-description": "container images to run in Docker.",
           "default": "[]"
         },
+        "useAPI": {
+          "type": "boolean",
+          "description": "tells devloop to sync files into running containers using the Docker Engine API (`PUT /containers/{id}/archive`) instead of spawning the `docker exec` CLI. Requires no `tar` binary inside the container.",
+          "x-intellij-html-description": "tells devloop to sync files into running containers using the Docker Engine API (<code>PUT /containers/{id}/archive</code>) instead of spawning the <code>docker exec</code> CLI. Requires no <code>tar</code> binary inside the container.",
+          "default": "false"
+        },
         "useCompose": {
           "type": "boolean",
           "description": "tells devloop whether or not to deploy using `docker-compose`.",
@@ -1892,6 +1886,7 @@
       },
       "preferredOrder": [
         "useCompose",
+        "useAPI",
         "images"
       ],
       "additionalProperties": false,
@@ -3198,8 +3193,8 @@
           "properties": {
             "api": {
               "$ref": "#/definitions/DockerAPIBackend",
-              "description": "builds Docker artifacts against the Docker Engine HTTP API. If neither `api` nor `cli` is specified, `api` is used with the local Docker daemon.",
-              "x-intellij-html-description": "builds Docker artifacts against the Docker Engine HTTP API. If neither <code>api</code> nor <code>cli</code> is specified, <code>api</code> is used with the local Docker daemon."
+              "description": "builds Docker artifacts against the Docker Engine HTTP API. If neither `api` nor `cli` is specified, `api` is used with the daemon resolved from `DOCKER_HOST`, `docker context`, or minikube detection.",
+              "x-intellij-html-description": "builds Docker artifacts against the Docker Engine HTTP API. If neither <code>api</code> nor <code>cli</code> is specified, <code>api</code> is used with the daemon resolved from <code>DOCKER_HOST</code>, <code>docker context</code>, or minikube detection."
             },
             "concurrency": {
               "type": "integer",
@@ -3970,13 +3965,20 @@
           "type": "array",
           "description": "manual sync rules indicating the source and destination.",
           "x-intellij-html-description": "manual sync rules indicating the source and destination."
+        },
+        "restart": {
+          "type": "boolean",
+          "description": "when set to `true` restarts the container after files are synced into it. Available for the local docker deployer.",
+          "x-intellij-html-description": "when set to <code>true</code> restarts the container after files are synced into it. Available for the local docker deployer.",
+          "default": "false"
         }
       },
       "preferredOrder": [
         "manual",
         "infer",
         "auto",
-        "hooks"
+        "hooks",
+        "restart"
       ],
       "additionalProperties": false,
       "type": "object",
