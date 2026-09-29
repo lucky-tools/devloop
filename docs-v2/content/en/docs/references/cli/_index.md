@@ -78,6 +78,7 @@ Pipeline Building Blocks:
   deploy              Deploy pre-built artifacts
   delete              Delete any resources deployed by Devloop
   render              Generate rendered Kubernetes manifests
+  sync                Sync files to running containers
   apply               Apply hydrated manifests to a cluster
   verify              Run verification tests against devloop deployments
 
@@ -88,6 +89,7 @@ Other Commands:
   completion          Output shell completion for the given shell (bash, fish or zsh)
   config              Interact with the global Devloop config file (defaults to `$HOME/.devloop/config`)
   diagnose            Run a diagnostic on Devloop
+  encrypt             Encrypt a value with the global Devloop encryption key
   exec                Execute a custom action
   fix                 Update old configuration to a newer schema version
   schema              List JSON schemas used to validate devloop.yaml configuration
@@ -1382,6 +1384,32 @@ Env vars:
 * `DEVLOOP_SYNC_REMOTE_CACHE` (same as `--sync-remote-cache`)
 * `DEVLOOP_YAML_ONLY` (same as `--yaml-only`)
 
+### devloop encrypt
+
+Encrypt a value with the global Devloop encryption key
+
+```
+
+
+Examples:
+  # Encrypt an ssh password for use in devloop.yaml
+  devloop encrypt secret-password
+
+Options:
+    -c, --config='':
+	File for global configurations (defaults to $HOME/.devloop/config)
+
+Usage:
+  devloop encrypt [options]
+
+Use "devloop options" for a list of global command-line options (applies to all commands).
+
+
+```
+Env vars:
+
+* `DEVLOOP_CONFIG` (same as `--config`)
+
 ### devloop exec
 
 Execute a custom action
@@ -2025,6 +2053,60 @@ Use "devloop options" for a list of global command-line options (applies to all 
 
 
 ```
+
+### devloop sync
+
+Sync files to running containers
+
+```
+
+
+Examples:
+  # Sync files using tags from a previous build
+  devloop sync --build-artifacts=tags.json
+
+Options:
+    --assume-yes=false:
+	If true, devloop will skip yes/no confirmation from the user and default to yes
+
+    -a, --build-artifacts=:
+	File containing pre-built images to use instead of rebuilding artifacts. A sample file looks like the following: {   "builds":[     {       "imageName":"registry/image1",       "tag":"registry/image1:tag"     },{       "imageName":"registry/image2",       "tag":"registry/image2:tag"     }] } The build result from a previous 'devloop build --file-output' run can be used here
+
+    -f, --filename='devloop.yaml':
+	Path or URL to the Devloop config file
+
+    -i, --images=:
+	A list of pre-built images to deploy, either tagged images or NAME=TAG pairs
+
+    -m, --module=[]:
+	Filter Devloop configs to only the provided named modules
+
+    --remote-cache-dir='':
+	Specify the location of the remote cache (default $HOME/.devloop/remote-cache)
+
+    --sync-remote-cache='always':
+	Controls how Devloop manages the remote config cache (see `remote-cache-dir`). One of `always` (default), `missing`, or `never`. `always` syncs remote repositories to latest on access. `missing` only clones remote repositories if they do not exist locally. `never` means the user takes responsibility for updating remote repositories.
+
+    -t, --tag='':
+	The optional custom tag to use for images which overrides the current Tagger configuration
+
+Usage:
+  devloop sync [options]
+
+Use "devloop options" for a list of global command-line options (applies to all commands).
+
+
+```
+Env vars:
+
+* `DEVLOOP_ASSUME_YES` (same as `--assume-yes`)
+* `DEVLOOP_BUILD_ARTIFACTS` (same as `--build-artifacts`)
+* `DEVLOOP_FILENAME` (same as `--filename`)
+* `DEVLOOP_IMAGES` (same as `--images`)
+* `DEVLOOP_MODULE` (same as `--module`)
+* `DEVLOOP_REMOTE_CACHE_DIR` (same as `--remote-cache-dir`)
+* `DEVLOOP_SYNC_REMOTE_CACHE` (same as `--sync-remote-cache`)
+* `DEVLOOP_TAG` (same as `--tag`)
 
 ### devloop test
 

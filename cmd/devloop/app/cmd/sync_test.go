@@ -48,16 +48,14 @@ func TestSync(t *testing.T) {
 	artifacts := []*latest.Artifact{{ImageName: "gcr.io/devloop/example"}}
 
 	mock := &mockSyncRunner{}
-	mockCreateRunner := func(context.Context, io.Writer, config.DevloopOptions) (runner.Runner, []util.VersionedConfig, *runcontext.RunContext, error) {
-		return mock, []util.VersionedConfig{&latest.DevloopConfig{
-			Pipeline: latest.Pipeline{
-				Build: latest.BuildConfig{Artifacts: artifacts},
-			},
-		}}, nil, nil
-	}
-
 	testutil.Run(t, "sync runs with artifacts and resolved tags", func(t *testutil.T) {
-		t.Override(&createRunner, mockCreateRunner)
+		t.Override(&createRunner, func(context.Context, io.Writer, config.DevloopOptions) (runner.Runner, []util.VersionedConfig, *runcontext.RunContext, error) {
+			return mock, []util.VersionedConfig{&latest.DevloopConfig{
+				Pipeline: latest.Pipeline{
+					Build: latest.BuildConfig{Artifacts: artifacts},
+				},
+			}}, nil, nil
+		})
 		t.Override(&opts.CustomTag, "tag")
 
 		err := doSync(context.Background(), io.Discard)
