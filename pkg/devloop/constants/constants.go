@@ -48,10 +48,10 @@ const (
 
 	DefaultKustomizationPath = "."
 
-	DefaultBusyboxImage = "gcr.io/k8s-devloop/devloop-helpers/busybox"
+	DefaultBusyboxImage = "gcr.io/k8s-skaffold/skaffold-helpers/busybox"
 
 	// DefaultDebugHelpersRegistry is the default location used for the helper images for `debug`.
-	DefaultDebugHelpersRegistry = "gcr.io/k8s-devloop/devloop-debug-support"
+	DefaultDebugHelpersRegistry = "gcr.io/k8s-skaffold/skaffold-debug-support"
 
 	DefaultDevloopDir = ".devloop"
 	DefaultCacheFile  = "cache"
