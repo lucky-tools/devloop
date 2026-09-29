@@ -1,7 +1,10 @@
 name: PR unit tests (windows)
 
 # Triggers the workflow on push or pull request events
-on: [push, pull_request]
+on:
+  push:
+    branches: [master]
+  pull_request:
 
 permissions: read-all
 

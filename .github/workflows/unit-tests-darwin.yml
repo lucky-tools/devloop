@@ -1,7 +1,10 @@
 name: PR unit tests (darwin)
 
 # Triggers the workflow on push or pull request events
-on: [push, pull_request]
+on:
+  push:
+    branches: [master]
+  pull_request:
 
 permissions: read-all
 
@@ -46,9 +49,12 @@ jobs:
     # NOTE: grep output is stored in env var with `|| true` as the run command cannot fail or action will fail
     - name: Check if only docs changes were made in this PR
       run: |
-        echo ${{ github.event.before }}
-        echo ${{ github.event.after }}
-        NON_DOCS_FILES_CHANGED=$(git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.sha }}| grep -v '^docs/' || true) 
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          BASE=${{ github.event.pull_request.base.sha }}
+        else
+          BASE=${{ github.event.before }}
+        fi
+        NON_DOCS_FILES_CHANGED=$(git diff --name-only "$BASE..${{ github.sha }}" | grep -v '^docs/' || true)
         echo "NON_DOCS_FILES_CHANGED=${#NON_DOCS_FILES_CHANGED}" >> $GITHUB_ENV  # get the char len of diff output (used later)
 
     - name: Run unit tests
