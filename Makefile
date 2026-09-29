@@ -134,7 +134,7 @@ quicktest:
 
 .PHONY: integration-tests
 integration-tests:
-	@ ./hack/gotest.sh -v $(REPOPATH)/v2/integration -timeout 50m $(INTEGRATION_TEST_ARGS)
+	@ ./hack/gotest.sh -v $(REPOPATH)/integration -timeout 50m $(INTEGRATION_TEST_ARGS)
 
 .PHONY: integration
 integration: install integration-tests
