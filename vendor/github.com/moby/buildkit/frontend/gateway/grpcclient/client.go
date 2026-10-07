@@ -14,6 +14,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/containerd/containerd/v2/defaults"
 	distreference "github.com/distribution/reference"
 	"github.com/moby/buildkit/client/llb"
 	"github.com/moby/buildkit/client/llb/sourceresolver"
@@ -1116,7 +1117,7 @@ func (ctr *container) Start(ctx context.Context, req client.StartRequest) (clien
 
 	msg, _ := msgs.Recv(ctx)
 	if msg == nil {
-		return nil, errors.Errorf("failed to receive started message")
+		return nil, errors.New("failed to receive started message")
 	}
 	started := msg.GetStarted()
 	if started == nil {
@@ -1377,7 +1378,7 @@ func (r *reference) ToState() (st llb.State, err error) {
 	}
 
 	if r.def == nil {
-		return st, errors.Errorf("gateway did not return reference with definition")
+		return st, errors.New("gateway did not return reference with definition")
 	}
 
 	defop, err := llb.NewDefinitionOp(r.def)
@@ -1451,8 +1452,8 @@ func grpcClientConn(ctx context.Context) (context.Context, *grpc.ClientConn, err
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithUnaryInterceptor(grpcerrors.UnaryClientInterceptor),
 		grpc.WithStreamInterceptor(grpcerrors.StreamClientInterceptor),
-		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(16 << 20)),
-		grpc.WithDefaultCallOptions(grpc.MaxCallSendMsgSize(16 << 20)),
+		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(defaults.DefaultMaxRecvMsgSize)),
+		grpc.WithDefaultCallOptions(grpc.MaxCallSendMsgSize(defaults.DefaultMaxSendMsgSize)),
 	}
 
 	//nolint:staticcheck // ignore SA1019 NewClient has different behavior and needs to be tested
