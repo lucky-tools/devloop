@@ -72,7 +72,7 @@ func pullImage(ctx context.Context, identifier string, opts PullOptions) (name.R
 		}
 	}
 
-	var options []remote.Option
+	options := []remote.Option{remote.WithContext(ctx)}
 	if opts.Username != "" || opts.Password != "" {
 		options = append(options, remote.WithAuth(&authn.Basic{Username: opts.Username, Password: opts.Password}))
 	} else {

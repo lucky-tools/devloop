@@ -105,14 +105,14 @@ func toUnstructured(manifests manifest.ManifestList) ([]unstructured.Unstructure
 // for the correct group/version/resource and namespace. Namespaced resources
 // without an explicit namespace fall back to the deployer's default namespace
 // (matching `kubectl apply`'s behaviour).
-func (c *CLI) resourceInterface(clients *ssaClients, obj *unstructured.Unstructured) (dynamic.ResourceInterface, string, error) {
+func (c *CLI) resourceInterface(clients *ssaClients, obj *unstructured.Unstructured) (dynamic.ResourceInterface, error) {
 	gvk := obj.GroupVersionKind()
 	namespaced, gvr, err := deployutil.GroupVersionResource(clients.disco, gvk)
 	if err != nil {
-		return nil, "", fmt.Errorf("resolving %s: %w", gvk.String(), err)
+		return nil, fmt.Errorf("resolving %s: %w", gvk.String(), err)
 	}
 	if !namespaced {
-		return clients.dyn.Resource(gvr), "", nil
+		return clients.dyn.Resource(gvr), nil
 	}
 	ns := obj.GetNamespace()
 	if ns == "" {
@@ -121,7 +121,7 @@ func (c *CLI) resourceInterface(clients *ssaClients, obj *unstructured.Unstructu
 			ns = "default"
 		}
 	}
-	return clients.dyn.Resource(gvr).Namespace(ns), ns, nil
+	return clients.dyn.Resource(gvr).Namespace(ns), nil
 }
 
 // resourceName returns kubectl's `<resource>.<group>` display form, e.g.
@@ -147,7 +147,7 @@ func (c *CLI) applySSA(ctx context.Context, out io.Writer, manifests manifest.Ma
 	}
 	for i := range objs {
 		obj := &objs[i]
-		ri, _, err := c.resourceInterface(clients, obj)
+		ri, err := c.resourceInterface(clients, obj)
 		if err != nil {
 			return err
 		}
@@ -192,7 +192,7 @@ func (c *CLI) deleteSSA(ctx context.Context, manifests manifest.ManifestList) er
 	}
 	for i := range objs {
 		obj := &objs[i]
-		ri, _, err := c.resourceInterface(clients, obj)
+		ri, err := c.resourceInterface(clients, obj)
 		if err != nil {
 			return err
 		}
@@ -224,7 +224,7 @@ func (c *CLI) waitForDeletionsSSA(ctx context.Context, out io.Writer, manifests 
 	targets := make([]target, 0, len(objs))
 	for i := range objs {
 		obj := &objs[i]
-		ri, _, err := c.resourceInterface(clients, obj)
+		ri, err := c.resourceInterface(clients, obj)
 		if err != nil {
 			return err
 		}

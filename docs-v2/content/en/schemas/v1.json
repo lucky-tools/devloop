@@ -3041,13 +3041,20 @@
           "description": "Kubernetes manifests in remote clusters.",
           "x-intellij-html-description": "Kubernetes manifests in remote clusters.",
           "default": "[]"
+        },
+        "useAPI": {
+          "type": "boolean",
+          "description": "uses client-go server-side apply to deploy manifests directly against the Kubernetes API server instead of shelling out to `kubectl`. Requires no `kubectl` binary on the host. When enabled, the kubectl `flags` are ignored.",
+          "x-intellij-html-description": "uses client-go server-side apply to deploy manifests directly against the Kubernetes API server instead of shelling out to <code>kubectl</code>. Requires no <code>kubectl</code> binary on the host. When enabled, the kubectl <code>flags</code> are ignored.",
+          "default": "false"
         }
       },
       "preferredOrder": [
         "flags",
         "remoteManifests",
         "defaultNamespace",
-        "hooks"
+        "hooks",
+        "useAPI"
       ],
       "additionalProperties": false,
       "type": "object",

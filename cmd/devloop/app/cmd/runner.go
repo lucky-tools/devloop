@@ -104,7 +104,7 @@ func runContext(ctx context.Context, out io.Writer, opts config.DevloopOptions) 
 }
 
 // withFallbackConfig will try to automatically generate a config if root `devloop.yaml` file does not exist.
-func withFallbackConfig(ctx context.Context, out io.Writer, opts config.DevloopOptions, getCfgs func(context.Context, config.DevloopOptions) (parser.DevloopConfigSet, error)) (parser.DevloopConfigSet, error) {
+func withFallbackConfig(ctx context.Context, _ io.Writer, opts config.DevloopOptions, getCfgs func(context.Context, config.DevloopOptions) (parser.DevloopConfigSet, error)) (parser.DevloopConfigSet, error) {
 	configs, err := getCfgs(ctx, opts)
 	if err == nil {
 		return configs, nil

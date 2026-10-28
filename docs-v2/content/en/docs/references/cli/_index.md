@@ -23,7 +23,7 @@ Pipeline building blocks for CI/CD:
 
 Getting started with a new project:
 
-* [devloop fix](#devloop-fix) - to upgrade from older devloop.yaml schema version to newer devloop.yaml schema version 
+* [devloop fix](#devloop-fix) - to upgrade from older devloop.yaml schema version to newer devloop.yaml schema version
 
 Other Commands:
 
@@ -67,32 +67,31 @@ To edit this file above edit index_header - the rest of the file is autogenerate
 
 
 End-to-end Pipelines:
-  run                 Run a pipeline
-  dev                 Run a pipeline in development mode
-  debug               Run a pipeline in debug mode
+  run            Run a pipeline
+  dev            Run a pipeline in development mode
+  debug          Run a pipeline in debug mode
 
 Pipeline Building Blocks:
-  build               Build the artifacts
-  test                Run tests against your built application images
-  deploy              Deploy pre-built artifacts
-  delete              Delete any resources deployed by Devloop
-  render              Generate rendered Kubernetes manifests
-  sync                Sync files to running containers
-  apply               Apply hydrated manifests to a cluster
-  verify              Run verification tests against devloop deployments
-
-Getting Started With a New Project:
-  init                Generate configuration for deploying an application
+  build          Build the artifacts
+  test           Run tests against your built application images
+  deploy         Deploy pre-built artifacts
+  restart        Update image tags and rolling-restart workloads without re-applying manifests
+  delete         Delete any resources deployed by Devloop
+  render         Generate rendered Kubernetes manifests
+  sync           Sync files to running containers
+  apply          Apply hydrated manifests to a cluster
+  verify         Run verification tests against devloop deployments
 
 Other Commands:
-  completion          Output shell completion for the given shell (bash, fish or zsh)
-  config              Interact with the global Devloop config file (defaults to `$HOME/.devloop/config`)
-  diagnose            Run a diagnostic on Devloop
-  encrypt             Encrypt a value with the global Devloop encryption key
-  exec                Execute a custom action
-  fix                 Update old configuration to a newer schema version
-  schema              List JSON schemas used to validate devloop.yaml configuration
-  version             Print the version information
+  completion     Output shell completion for the given shell (bash, fish or zsh)
+  config         Interact with the global Devloop config file (defaults to `$HOME/.devloop/config`)
+  diagnose       Run a diagnostic on Devloop
+  encrypt        Encrypt a value with the global Devloop encryption key
+  exec           Execute a custom action
+  fix            Update old configuration to a newer schema version
+  pull           Pull an image from a registry and save it as a tarball
+  schema         List JSON schemas used to validate devloop.yaml configuration
+  version        Print the version information
 
 Use "devloop <command> --help" for more information about a given command.
 Use "devloop options" for a list of global command-line options (applies to all commands).
@@ -1574,6 +1573,51 @@ The following options can be passed to any command:
 
 ```
 
+### devloop pull
+
+Pull an image from a registry and save it as a tarball
+
+```
+
+
+Examples:
+  # Pull from a local HTTP registry
+  devloop pull localhost:5000/app:latest --insecure
+
+  # Pull with credentials and a custom output path
+  devloop pull localhost:5000/app:latest -o app.tar --username admin --password secret
+
+Options:
+    -c, --config='':
+	File for global configurations (defaults to $HOME/.devloop/config)
+
+    --insecure=false:
+	Allow pulling from an insecure registry (plain HTTP and/or untrusted TLS)
+
+    -o, --output='':
+	Path to write the image tarball to (defaults to a name derived from the image tag)
+
+    --password='':
+	Registry password for basic authentication
+
+    --username='':
+	Registry username for basic authentication
+
+Usage:
+  devloop pull [options]
+
+Use "devloop options" for a list of global command-line options (applies to all commands).
+
+
+```
+Env vars:
+
+* `DEVLOOP_CONFIG` (same as `--config`)
+* `DEVLOOP_INSECURE` (same as `--insecure`)
+* `DEVLOOP_OUTPUT` (same as `--output`)
+* `DEVLOOP_PASSWORD` (same as `--password`)
+* `DEVLOOP_USERNAME` (same as `--username`)
+
 ### devloop render
 
 Generate rendered Kubernetes manifests
@@ -1699,6 +1743,60 @@ Env vars:
 * `DEVLOOP_SYNC_REMOTE_CACHE` (same as `--sync-remote-cache`)
 * `DEVLOOP_TAG` (same as `--tag`)
 * `DEVLOOP_WAIT_FOR_CONNECTION` (same as `--wait-for-connection`)
+
+### devloop restart
+
+Update image tags and rolling-restart workloads without re-applying manifests
+
+```
+
+
+Examples:
+  # Update my-app to tag v2 and rolling-restart its workloads
+  devloop restart --images my-app=v2
+
+Options:
+    --assume-yes=false:
+	If true, devloop will skip yes/no confirmation from the user and default to yes
+
+    -a, --build-artifacts=:
+	File containing pre-built images to use instead of rebuilding artifacts. A sample file looks like the following: {   "builds":[     {       "imageName":"registry/image1",       "tag":"registry/image1:tag"     },{       "imageName":"registry/image2",       "tag":"registry/image2:tag"     }] } The build result from a previous 'devloop build --file-output' run can be used here
+
+    -f, --filename='devloop.yaml':
+	Path or URL to the Devloop config file
+
+    -i, --images=:
+	A list of pre-built images to deploy, either tagged images or NAME=TAG pairs
+
+    -m, --module=[]:
+	Filter Devloop configs to only the provided named modules
+
+    --remote-cache-dir='':
+	Specify the location of the remote cache (default $HOME/.devloop/remote-cache)
+
+    --sync-remote-cache='always':
+	Controls how Devloop manages the remote config cache (see `remote-cache-dir`). One of `always` (default), `missing`, or `never`. `always` syncs remote repositories to latest on access. `missing` only clones remote repositories if they do not exist locally. `never` means the user takes responsibility for updating remote repositories.
+
+    -t, --tag='':
+	The optional custom tag to use for images which overrides the current Tagger configuration
+
+Usage:
+  devloop restart [options]
+
+Use "devloop options" for a list of global command-line options (applies to all commands).
+
+
+```
+Env vars:
+
+* `DEVLOOP_ASSUME_YES` (same as `--assume-yes`)
+* `DEVLOOP_BUILD_ARTIFACTS` (same as `--build-artifacts`)
+* `DEVLOOP_FILENAME` (same as `--filename`)
+* `DEVLOOP_IMAGES` (same as `--images`)
+* `DEVLOOP_MODULE` (same as `--module`)
+* `DEVLOOP_REMOTE_CACHE_DIR` (same as `--remote-cache-dir`)
+* `DEVLOOP_SYNC_REMOTE_CACHE` (same as `--sync-remote-cache`)
+* `DEVLOOP_TAG` (same as `--tag`)
 
 ### devloop run
 

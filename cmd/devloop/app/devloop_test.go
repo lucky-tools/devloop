@@ -38,7 +38,6 @@ func TestMainHelp(t *testing.T) {
 
 		t.CheckNoError(err)
 		t.CheckContains("End-to-end Pipelines", output.String())
-		t.CheckContains("Getting Started With a New Project", output.String())
 		t.CheckEmpty(errOutput.String())
 	})
 }
@@ -68,7 +67,6 @@ func TestDevloopCmdline_MainHelp(t *testing.T) {
 
 		t.CheckNoError(err)
 		t.CheckContains("End-to-end Pipelines", output.String())
-		t.CheckContains("Getting Started With a New Project", output.String())
 		t.CheckEmpty(errOutput.String())
 	})
 }
