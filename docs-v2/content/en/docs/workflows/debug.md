@@ -361,7 +361,7 @@ Some language runtimes require additional support files to enable debugging.
 For these languages, a special set of [runtime-specific images](https://github.com/GoogleContainerTools/container-debug-support)
 are configured as _init-containers_ to populate a shared-volume that is mounted into
 each of the appropriate containers.  These images are hosted at
-`gcr.io/k8s-devloop/devloop-debug-support`; alternative locations can be
+`gcr.io/k8s-skaffold/skaffold-debug-support`; alternative locations can be
 specified in [Devloop's global configuration]({{< relref "/docs/design/global-config.md" >}}).
 
 For images that are successfully recognized, Devloop adds a `debug.cloud.google.com/config`

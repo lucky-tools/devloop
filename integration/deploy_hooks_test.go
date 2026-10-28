@@ -56,7 +56,7 @@ metadata:
 spec:
   containers:
   - name: getting-started
-    image: us-central1-docker.pkg.dev/k8s-devloop/testing/devloop-example
+    image: registry.k8s.io/pause:3.9
 `,
 		},
 	}

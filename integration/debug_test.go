@@ -184,7 +184,7 @@ func checkSupportContainer(containers []container.Summary, found *bool) {
 		return
 	}
 	for _, c := range containers {
-		if strings.Contains(c.Image, "gcr.io/k8s-devloop/devloop-debug-support") {
+		if strings.Contains(c.Image, "gcr.io/k8s-skaffold/skaffold-debug-support") {
 			*found = true
 		}
 	}
