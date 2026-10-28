@@ -22,8 +22,10 @@ import (
 	"net/http/httptest"
 	"os"
 	"runtime"
+	"strings"
 	"testing"
 
+	"github.com/docker/cli/cli/config"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
 
@@ -166,4 +168,67 @@ func getCredentialsFile(t *testutil.T, credValues map[string]string, tokenRefres
 		t.Fatalf("error generating credential files: %v", err)
 	}
 	return string(credFile)
+}
+
+func TestResolveFromDockerConfig(t *testing.T) {
+	registry, err := name.NewRegistry("my.registry")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		description     string
+		dockerConfig    string
+		expectAnonymous bool
+	}{
+		{
+			description:     "auths entry resolves",
+			dockerConfig:    `{"auths":{"my.registry":{"auth":"dXNlcjpwYXNz"}}}`,
+			expectAnonymous: false,
+		},
+		{
+			description:     "no entry is anonymous",
+			dockerConfig:    `{}`,
+			expectAnonymous: true,
+		},
+	}
+	for _, test := range tests {
+		testutil.Run(t, test.description, func(t *testutil.T) {
+			cfg, err := config.LoadFromReader(strings.NewReader(test.dockerConfig))
+			t.CheckNoError(err)
+
+			auth := resolveFromDockerConfig(cfg, registry)
+			authConfig, err := auth.Authorization()
+			t.CheckNoError(err)
+
+			if test.expectAnonymous {
+				t.CheckDeepEqual(&authn.AuthConfig{}, authConfig)
+			} else if authConfig.Auth == "" && authConfig.Username == "" && authConfig.Password == "" {
+				t.Errorf("expected non-anonymous credentials, got %+v", authConfig)
+			}
+		})
+	}
+}
+
+func TestKeychainFallsBackToPackageConfigDir(t *testing.T) {
+	registry, err := name.NewRegistry("my.registry")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testutil.Run(t, "uses resolved package configDir when keychain has none", func(t *testutil.T) {
+		tmpDir := t.NewTempDir().Write("config.json", `{"auths":{"my.registry":{"auth":"dXNlcjpwYXNz"}}}`)
+		t.Override(&configDir, tmpDir.Root())
+
+		kc := &Keychain{}
+		auth, err := kc.Resolve(registry)
+		t.CheckNoError(err)
+		t.CheckNotNil(auth)
+
+		authConfig, err := auth.Authorization()
+		t.CheckNoError(err)
+		if authConfig.Auth == "" && authConfig.Username == "" && authConfig.Password == "" {
+			t.Errorf("expected non-anonymous credentials, got %+v", authConfig)
+		}
+	})
 }

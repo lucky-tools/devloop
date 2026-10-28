@@ -51,7 +51,6 @@ jobs:
       run: |
         make
         echo DEVLOOP_BINARY=$PWD/out/devloop >> $GITHUB_ENV
-        out/devloop config set --global collect-metrics false
 
     - name: Build changed examples
       if: ${{ env.CHANGED_EXAMPLES_COUNT > 0 }}

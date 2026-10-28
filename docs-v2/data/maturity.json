@@ -323,12 +323,6 @@
     "maturity": "beta",
     "description": "Upgrade an older devloop config to the current version"
   },
-  "generate_pipeline.tekton": {
-    "deploy": "x",
-    "area": "Generate tekton pipelines",
-    "maturity": "alpha",
-    "description": "User can generate a starter tekton pipeline using devloop"
-  },
   "verify": {
     "area": "devloop verify",
     "maturity": "GA",
@@ -345,42 +339,6 @@
     "maturity": "GA",
     "description": "store user preferences in a separate preferences file",
     "url": "/docs/design/global-config/"
-  },
-  "init": {
-    "area": "Init",
-    "maturity": "beta",
-    "description": "Initialize a devloop.yaml file based on the contents of the current directory",
-    "url": "/docs/init"
-  },
-  "init.dockerfiles": {
-    "area": "Init",
-    "feature": "init for Dockerfiles ",
-    "maturity": "beta",
-    "description": "devloop init recognizes Dockerfiles"
-  },
-  "init.interactive": {
-    "area": "Init",
-    "feature": "interactive",
-    "maturity": "beta",
-    "description": "devloop init interactive for CLI users"
-  },
-  "init.json_api": {
-    "area": "Init",
-    "feature": "JSON based",
-    "maturity": "beta",
-    "description": "devloop init JSON based API for IDE integrations"
-  },
-  "init.k8s_manifests": {
-    "area": "Init",
-    "feature": "init for Kubernetes manifests",
-    "maturity": "beta",
-    "description": "devloop init parses images from Kubernetes manifests"
-  },
-  "init.generate_manifests": {
-    "area": "Init",
-    "feature": "generate manifests",
-    "maturity": "beta",
-    "description": "devloop init will try to generate kubernetes manifests for your project"
   },
   "insecure_registry": {
     "dev": "x",

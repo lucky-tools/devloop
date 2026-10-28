@@ -22,7 +22,6 @@ more information.
 
 In this quickstart, you will:
 
-* Use **devloop init** to bootstrap your Devloop config.
 * Use **devloop dev** to automatically build and deploy your application when your code changes.
 * Use **devloop build** and **devloop test** to tag, push, and test your container images.
 * Use **devloop render** and **devloop apply** to generate and deploy Kubernetes manifests as part of a GitOps workflow.
@@ -55,29 +54,6 @@ Let's get a sample application set up to use Devloop.
     ```bash
     cd devloop/examples/buildpacks-node-tutorial
     ```
-
-## Initialize Devloop
-
-Your working directory is the application directory, `devloop/examples/buildpacks-node-tutorial`. This will be our root Devloop directory.
-
-This sample application is written in Node, but Devloop is language-agnostic and works with any containerized application.
-
-### Bootstrap Devloop configuration
-
-1. Run the following command to generate a `devloop.yaml` config file:
-
-
-    ```bash
-    devloop init
-    ```
-
-1. When prompted to choose the builder, press enter to accept the default selection.
-
-1. When asked which builders you would like to create Kubernetes resources for, press enter to accept the default selection.
-
-1. When asked if you want to write this configuration to devloop.yaml, type "y" for yes.
-
-1. Open your new **devloop.yaml**, generated at `devloop/examples/buildpacks-node-tutorial/devloop.yaml`. All of your Devloop configuration lives in this file. We will go into more detail about how it works in later steps.
 
 ## Use Devloop for continuous development
 
@@ -253,8 +229,6 @@ Cloud Shell comes with Devloop, Minikube, and Docker pre-installed, and is free
 {{% /tabs %}}
 
 ## What's next
-
-For getting started with your project, see the [Getting Started With Your Project]({{<relref "/docs/workflows/getting-started-with-your-project" >}}) workflow.
 
 For more in-depth topics of Devloop, explore [Configuration]({{< relref "/docs/design/config.md" >}}),
 [Devloop Pipeline]({{<relref "/docs/pipeline-stages" >}}), and [Architecture and Design]({{< relref "/docs/design" >}}).

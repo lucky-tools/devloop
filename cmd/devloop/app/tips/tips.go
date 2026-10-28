@@ -30,13 +30,6 @@ func PrintForRun(out io.Writer, opts config.DevloopOptions) {
 	}
 }
 
-// PrintForInit prints tips to the user who has run `devloop init`.
-func PrintForInit(out io.Writer, opts config.DevloopOptions) {
-	printTip(out, "You can now run [devloop build] to build the artifacts")
-	printTip(out, "or [devloop run] to build and deploy")
-	printTip(out, "or [devloop dev] to enter development mode, with auto-redeploy")
-}
-
 // PrintForTest prints tips on when to use devloop test.
 func PrintForTest(out io.Writer) {
 	printTip(out, "You need to:")

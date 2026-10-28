@@ -153,11 +153,6 @@ generate-schemas:
 generate-schemas-v2:
 	go run hack/schemas/main.go
 
-# telemetry generation
-.PHONY: generate-telemetry-json-v2
-generate-telemetry-json-v2:
-	go run hack/struct-json/main.go -- pkg/devloop/instrumentation/types.go docs-v2/content/en/docs/resources/telemetry/metrics.json
-
 # static files
 
 $(EMBEDDED_FILES_CHECK): go.mod docs-v2/content/en/schemas/*

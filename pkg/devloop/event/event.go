@@ -31,7 +31,6 @@ import (
 
 	"github.com/lucky-tools/devloop/pkg/devloop/constants"
 	sErrors "github.com/lucky-tools/devloop/pkg/devloop/errors"
-	"github.com/lucky-tools/devloop/pkg/devloop/instrumentation"
 	"github.com/lucky-tools/devloop/pkg/devloop/platform"
 	"github.com/lucky-tools/devloop/pkg/devloop/schema/util"
 	"github.com/lucky-tools/devloop/pkg/devloop/version"
@@ -391,7 +390,6 @@ func DevLoopInProgress(i int) {
 
 // DevLoopFailed notifies that a dev loop has failed with an error code
 func DevLoopFailedWithErrorCode(i int, statusCode proto.StatusCode, err error) {
-	instrumentation.AddDevIterationErr(i, statusCode)
 	ai := &proto.ActionableErr{
 		ErrCode: statusCode,
 		Message: err.Error(),

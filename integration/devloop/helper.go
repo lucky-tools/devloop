@@ -109,11 +109,6 @@ func Config(args ...string) *RunBuilder {
 	return withDefaults("config", args)
 }
 
-// Init runs `devloop init` with the given arguments.
-func Init(args ...string) *RunBuilder {
-	return withDefaults("init", args)
-}
-
 // Diagnose runs `devloop diagnose` with the given arguments.
 func Diagnose(args ...string) *RunBuilder {
 	return withDefaults("diagnose", args)
@@ -134,18 +129,9 @@ func Render(args ...string) *RunBuilder {
 	return withDefaults("render", args)
 }
 
-// Inspect runs `devloop inspect` with the given arguments.
-func Inspect(args ...string) *RunBuilder {
-	return &RunBuilder{command: "inspect", args: args}
-}
-
 // Filter runs `devloop filter` with the given arguments.
 func Filter(args ...string) *RunBuilder {
 	return withDefaults("filter", args)
-}
-
-func GeneratePipeline(args ...string) *RunBuilder {
-	return withDefaults("generate-pipeline", args)
 }
 
 func withDefaults(command string, args []string) *RunBuilder {

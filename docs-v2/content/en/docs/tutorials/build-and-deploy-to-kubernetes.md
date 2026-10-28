@@ -6,7 +6,6 @@ weight: 90
 
 This is a link to an introductory Cloud Shell tutorial. In this tutorial, you will:
 
-* Use **devloop init** to bootstrap your Devloop config.
 * Use **devloop dev** to automatically build and deploy your application when your code changes.
 * Use **devloop build** and **devloop test** to tag, push, and test your container images.
 * Use **devloop render** and **devloop apply** to generate and deploy Kubernetes manifests as part of a GitOps workflow.

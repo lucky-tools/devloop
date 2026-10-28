@@ -83,6 +83,23 @@ func GetClusterInfo(kctx string) (*clientcmdapi.Cluster, error) {
 	return c, nil
 }
 
+// GetNamespace returns the namespace configured on the given kubeContext, or
+// "default" when the context does not set one. This is the client-go
+// equivalent of `kubectl config view --minify -o jsonpath='{..namespace}'`,
+// used by the API-backed deployer to avoid shelling out to `kubectl`.
+func GetNamespace(kubeContext string) (string, error) {
+	rawConfig, err := getCurrentConfig()
+	if err != nil {
+		return "", err
+	}
+	clientConfig := clientcmd.NewNonInteractiveClientConfig(rawConfig, kubeContext, &clientcmd.ConfigOverrides{CurrentContext: kubeContext}, clientcmd.NewDefaultClientConfigLoadingRules())
+	ns, _, err := clientConfig.Namespace()
+	if err != nil {
+		return "", err
+	}
+	return ns, nil
+}
+
 func getRestClientConfig(kctx string, kcfg string) (*restclient.Config, error) {
 	log.Entry(context.TODO()).Debugf("getting client config for kubeContext: `%s`", kctx)
 

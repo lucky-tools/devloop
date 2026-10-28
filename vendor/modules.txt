@@ -50,8 +50,6 @@ cloud.google.com/go/iam/apiv1/iampb
 ## explicit; go 1.25.0
 cloud.google.com/go/monitoring/apiv3/v2
 cloud.google.com/go/monitoring/apiv3/v2/monitoringpb
-cloud.google.com/go/monitoring/dashboard/apiv1
-cloud.google.com/go/monitoring/dashboard/apiv1/dashboardpb
 cloud.google.com/go/monitoring/internal
 # cloud.google.com/go/profiler v0.6.0
 ## explicit; go 1.25.0
@@ -78,11 +76,6 @@ cyphar.com/go-pathrs/procfs
 # dario.cat/mergo v1.0.2
 ## explicit; go 1.13
 dario.cat/mergo
-# github.com/AlecAivazis/survey/v2 v2.3.7
-## explicit; go 1.13
-github.com/AlecAivazis/survey/v2
-github.com/AlecAivazis/survey/v2/core
-github.com/AlecAivazis/survey/v2/terminal
 # github.com/Azure/azure-sdk-for-go v68.0.0+incompatible
 ## explicit
 github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/runtime/2019-08-15-preview/containerregistry
@@ -1170,9 +1163,6 @@ github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.22
 ## explicit; go 1.21
 github.com/mattn/go-isatty
-# github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
-## explicit
-github.com/mgutz/ansi
 # github.com/mitchellh/copystructure v1.2.0
 ## explicit; go 1.15
 github.com/mitchellh/copystructure
@@ -1660,18 +1650,6 @@ github.com/xlab/treeprint
 # github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78
 ## explicit; go 1.17
 github.com/youmark/pkcs8
-# go.lsp.dev/jsonrpc2 v0.10.0
-## explicit; go 1.17
-go.lsp.dev/jsonrpc2
-# go.lsp.dev/pkg v0.0.0-20210717090340-384b27a52fb2
-## explicit; go 1.15
-go.lsp.dev/pkg/xcontext
-# go.lsp.dev/protocol v0.12.0
-## explicit; go 1.17
-go.lsp.dev/protocol
-# go.lsp.dev/uri v0.3.0
-## explicit; go 1.13
-go.lsp.dev/uri
 # go.opentelemetry.io/auto/sdk v1.2.1
 ## explicit; go 1.24.0
 go.opentelemetry.io/auto/sdk
@@ -1725,11 +1703,6 @@ go.opentelemetry.io/otel/exporters/otlp/otlptrace
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/internal/tracetransform
 # go.opentelemetry.io/otel/exporters/stdout/stdoutmetric v1.44.0
 ## explicit; go 1.25.0
-go.opentelemetry.io/otel/exporters/stdout/stdoutmetric
-go.opentelemetry.io/otel/exporters/stdout/stdoutmetric/internal
-go.opentelemetry.io/otel/exporters/stdout/stdoutmetric/internal/counter
-go.opentelemetry.io/otel/exporters/stdout/stdoutmetric/internal/observ
-go.opentelemetry.io/otel/exporters/stdout/stdoutmetric/internal/x
 # go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.44.0
 ## explicit; go 1.25.0
 go.opentelemetry.io/otel/exporters/stdout/stdouttrace
@@ -1779,20 +1752,6 @@ go.opentelemetry.io/proto/otlp/trace/v1
 go.uber.org/automaxprocs/internal/cgroups
 go.uber.org/automaxprocs/internal/runtime
 go.uber.org/automaxprocs/maxprocs
-# go.uber.org/multierr v1.11.0
-## explicit; go 1.19
-go.uber.org/multierr
-# go.uber.org/zap v1.28.0
-## explicit; go 1.19
-go.uber.org/zap
-go.uber.org/zap/buffer
-go.uber.org/zap/internal
-go.uber.org/zap/internal/bufferpool
-go.uber.org/zap/internal/color
-go.uber.org/zap/internal/exit
-go.uber.org/zap/internal/pool
-go.uber.org/zap/internal/stacktrace
-go.uber.org/zap/zapcore
 # go.yaml.in/yaml/v2 v2.4.4
 ## explicit; go 1.15
 go.yaml.in/yaml/v2
@@ -1900,7 +1859,6 @@ golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
-golang.org/x/text/width
 # golang.org/x/time v0.15.0
 ## explicit; go 1.25.0
 golang.org/x/time/rate
@@ -1947,11 +1905,9 @@ google.golang.org/api/transport/http
 # google.golang.org/genproto v0.0.0-20260526163538-3dc84a4a5aaa
 ## explicit; go 1.25.0
 google.golang.org/genproto/googleapis/devtools/cloudprofiler/v2
-google.golang.org/genproto/googleapis/monitoring/dashboard/v1
 google.golang.org/genproto/googleapis/type/calendarperiod
 google.golang.org/genproto/googleapis/type/date
 google.golang.org/genproto/googleapis/type/expr
-google.golang.org/genproto/googleapis/type/interval
 google.golang.org/genproto/googleapis/type/timeofday
 # google.golang.org/genproto/googleapis/api v0.0.0-20260526163538-3dc84a4a5aaa
 ## explicit; go 1.25.0

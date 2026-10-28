@@ -44,6 +44,7 @@ type CLI struct {
 	Flags latest.KubectlFlags
 
 	forceDeploy      bool
+	useAPI           bool
 	waitForDeletions config.WaitForDeletions
 	previousApply    manifest.ManifestList
 }
@@ -79,6 +80,13 @@ func NewCLI(cfg Config, flags latest.KubectlFlags, defaultNamespace string) CLI 
 
 // Delete runs `kubectl delete` on a list of manifests.
 func (c *CLI) Delete(ctx context.Context, out io.Writer, manifests manifest.ManifestList) error {
+	if c.useAPI {
+		if err := c.deleteSSA(ctx, manifests); err != nil {
+			return deployerr.CleanupErr(err)
+		}
+		return nil
+	}
+
 	args := c.args(c.Flags.Delete, "--ignore-not-found=true", "--wait=false", "-f", "-")
 	if err := c.Run(ctx, manifests.Reader(), out, "delete", args...); err != nil {
 		return deployerr.CleanupErr(fmt.Errorf("kubectl delete: %w", err))
@@ -98,6 +106,15 @@ func (c *CLI) Apply(ctx context.Context, out io.Writer, manifests manifest.Manif
 	updated := c.previousApply.Diff(manifests)
 	log.Entry(ctx).Debugf("%d manifests to deploy. %d are updated or new", len(manifests), len(updated))
 	if len(updated) == 0 {
+		return nil
+	}
+
+	if c.useAPI {
+		if err := c.applySSA(ctx, out, updated); err != nil {
+			endTrace(instrumentation.TraceEndError(err))
+			return userErr(err)
+		}
+		c.previousApply = manifests
 		return nil
 	}
 
@@ -136,6 +153,10 @@ func (c *CLI) WaitForDeletions(ctx context.Context, out io.Writer, manifests man
 
 	ctx, cancel := context.WithTimeout(ctx, c.waitForDeletions.Max)
 	defer cancel()
+
+	if c.useAPI {
+		return c.waitForDeletionsSSA(ctx, out, manifests)
+	}
 
 	previousList := ""
 	previousCount := 0

@@ -530,19 +530,6 @@ maps directly to this value.
 
     __Resolved__: Implement file sync (for the Beta stage).
 
-### Open questions
-
-1.  Should the ko builder be the default for `devloop init`, instead of
-    buildpacks, for Go apps, when there's no Dockerfile
-    file?
-
-    Suggest yes, to make Devloop a compelling choice for Go developers.
-
-    If no, we can still consider configuring the ko builder if `devloop init`
-    finds a `.ko.yaml` configuration file.
-
-    __Not Yet Resolved__
-
 ## Approach
 
 Implement the ko builder as a series of small PRs that can be merged one by one.
@@ -739,7 +726,6 @@ The following features will be released at each stage:
 
 - File sync support.
 - Remote builders support.
-- `devloop init` support, behind a `--enableKoInit` flag.
 
 **Stable**
 

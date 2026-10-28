@@ -21,7 +21,6 @@ import (
 	"strings"
 
 	"github.com/lucky-tools/devloop/pkg/devloop/constants"
-	"github.com/lucky-tools/devloop/pkg/devloop/instrumentation"
 	"github.com/lucky-tools/devloop/proto/v1"
 	protoV2 "github.com/lucky-tools/devloop/proto/v2"
 )
@@ -90,19 +89,16 @@ func ShowAIError(cfg interface{}, err error) error {
 		err = uErr
 	}
 	if IsDevloopErr(err) {
-		instrumentation.SetErrorCode(err.(Error).StatusCode())
 		return err
 	}
 
 	if p, ok := isProblem(err); ok {
-		instrumentation.SetErrorCode(p.ErrCode)
 		return p.AIError(cfg, err)
 	}
 
 	for _, problems := range GetProblemCatalogCopy().allErrors {
 		for _, p := range problems {
 			if p.Regexp.MatchString(err.Error()) {
-				instrumentation.SetErrorCode(p.ErrCode)
 				return p.AIError(cfg, err)
 			}
 		}

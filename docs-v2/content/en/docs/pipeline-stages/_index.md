@@ -23,7 +23,6 @@ will not push artifacts to a remote repository.
 
 | Devloop Pipeline stages|Description| 
 |----------|-------|------|
-| [Init]({{< relref "/docs/init" >}}) | generate a starting point for Devloop configuration | 
 | [Build]({{< relref "/docs/builders" >}}) | build images with different builders | 
 | [Render]({{< relref "/docs/renderers" >}}) | render manifests with different renderers | 
 | [Tag]({{< relref "/docs/taggers" >}}) | tag images based on different policies |

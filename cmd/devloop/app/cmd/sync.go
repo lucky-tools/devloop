@@ -30,7 +30,7 @@ import (
 func NewCmdSync() *cobra.Command {
 	return NewCmd("sync").
 		WithDescription("Sync files to running containers").
-		WithLongDescription("Sync the files matching each artifact's `sync` configuration into its running containers. Requires pre-built image tags, passed via --build-artifacts or --images.").
+		WithLongDescription("Sync the files matching each artifact's `sync` configuration into its running containers. Tags are resolved from --build-artifacts, --images, or --tag, falling back to the configured tag policy.").
 		WithExample("Sync files using tags from a previous build", "sync --build-artifacts=tags.json").
 		WithCommonFlags().
 		WithHouseKeepingMessages().
@@ -40,7 +40,7 @@ func NewCmdSync() *cobra.Command {
 func doSync(ctx context.Context, out io.Writer) error {
 	return withRunner(ctx, out, func(r runner.Runner, configs []util.VersionedConfig) error {
 		artifacts := targetArtifacts(opts, configs)
-		builds, err := getBuildArtifactsAndSetTags(artifacts, r.ApplyDefaultRepo)
+		builds, err := getBuildArtifactsAndSetTagsWithTagPolicy(ctx, artifacts, r.ApplyDefaultRepo, r.TagFor)
 		if err != nil {
 			return err
 		}

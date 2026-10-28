@@ -32,8 +32,6 @@ import (
 	"github.com/lucky-tools/devloop/pkg/devloop/constants"
 	sErrors "github.com/lucky-tools/devloop/pkg/devloop/errors"
 	event "github.com/lucky-tools/devloop/pkg/devloop/event/v2"
-	"github.com/lucky-tools/devloop/pkg/devloop/instrumentation"
-	"github.com/lucky-tools/devloop/pkg/devloop/instrumentation/prompt"
 	kubectx "github.com/lucky-tools/devloop/pkg/devloop/kubernetes/context"
 	"github.com/lucky-tools/devloop/pkg/devloop/output"
 	"github.com/lucky-tools/devloop/pkg/devloop/output/log"
@@ -69,7 +67,6 @@ const (
 
 func NewDevloopCommand(out, errOut io.Writer) *cobra.Command {
 	updateMsg := make(chan string, 1)
-	var metricsPrompt bool
 
 	rootCmd := &cobra.Command{
 		Use: "devloop",
@@ -87,7 +84,6 @@ func NewDevloopCommand(out, errOut io.Writer) *cobra.Command {
 			// Don't redirect output for Cobra internal `__complete` and `__completeNoDesc` commands.
 			// These are used for command completion and send debug messages on stderr.
 			if cmd.Name() != cobra.ShellCompRequestCmd && cmd.Name() != cobra.ShellCompNoDescRequestCmd {
-				instrumentation.SetCommand(cmd.Name())
 				out := output.GetWriter(context.Background(), out, defaultColor, forceColors, timestamps)
 				cmd.Root().SetOut(out)
 				cmd.Root().SetErr(errOut)
@@ -120,7 +116,6 @@ func NewDevloopCommand(out, errOut io.Writer) *cobra.Command {
 			go func() {
 				updateMsg <- updateCheckForReleasedVersionsIfNotDisabled(versionInfo.Version)
 			}()
-			metricsPrompt = prompt.ShouldDisplayMetricsPrompt(opts.GlobalConfig)
 			return nil
 		},
 		PersistentPostRun: func(cmd *cobra.Command, args []string) {
@@ -134,11 +129,6 @@ func NewDevloopCommand(out, errOut io.Writer) *cobra.Command {
 				}
 				fmt.Fprintf(cmd.ErrOrStderr(), "%s\n", msg)
 			default:
-			}
-			if metricsPrompt {
-				if err := prompt.DisplayMetricsPrompt(opts.GlobalConfig, output.NewColorWriter(cmd.ErrOrStderr())); err != nil {
-					fmt.Fprintf(cmd.OutOrStderr(), "%v\n", err)
-				}
 			}
 		},
 	}
@@ -158,17 +148,12 @@ func NewDevloopCommand(out, errOut io.Writer) *cobra.Command {
 				NewCmdBuild(),
 				NewCmdTest(),
 				NewCmdDeploy(),
+				NewCmdRestart(),
 				NewCmdDelete(),
 				NewCmdRender(),
 				NewCmdSync(),
 				NewCmdApply(),
 				NewCmdVerify(),
-			},
-		},
-		{
-			Message: "Getting Started With a New Project:",
-			Commands: []*cobra.Command{
-				NewCmdInit(),
 			},
 		},
 	}
@@ -187,11 +172,7 @@ func NewDevloopCommand(out, errOut io.Writer) *cobra.Command {
 	rootCmd.AddCommand(NewCmdFilter())
 	rootCmd.AddCommand(NewCmdExec())
 	rootCmd.AddCommand(NewCmdEncrypt())
-
-	rootCmd.AddCommand(NewCmdGeneratePipeline())
-	rootCmd.AddCommand(NewCmdInspect())
-	rootCmd.AddCommand(NewCmdLint())
-	rootCmd.AddCommand(NewCmdLSP())
+	rootCmd.AddCommand(NewCmdPull())
 
 	templates.ActsAsRootCommand(rootCmd, nil, groups...)
 	rootCmd.PersistentFlags().StringVarP(&v, "verbosity", "v", log.DefaultLogLevel.String(), fmt.Sprintf("Log level: one of %v", log.AllLevels))
@@ -310,13 +291,10 @@ func preReleaseVersion(s string) bool {
 func isQuietMode() bool {
 	switch {
 	case !interactive:
-		log.Entry(context.TODO()).Debug("Update check prompt and telemetry prompt disabled in non-interactive mode")
+		log.Entry(context.TODO()).Debug("Update check prompt disabled in non-interactive mode")
 		return true
 	case quietFlag:
-		log.Entry(context.TODO()).Debug("Update check prompt and telemetry prompt disabled in quiet mode")
-		return true
-	case analyze:
-		log.Entry(context.TODO()).Debug("Update check prompt and telemetry prompt disabled when running `init --analyze`")
+		log.Entry(context.TODO()).Debug("Update check prompt disabled in quiet mode")
 		return true
 	default:
 		return false

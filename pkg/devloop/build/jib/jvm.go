@@ -44,9 +44,9 @@ func jvmFound(ctx context.Context) bool {
 	return jvmPresent
 }
 
-// resolveJVM returns true if a Java VM was found and works.  It is intended for
-// `devloop init` on macOS where calling out to the Maven Wrapper script (mvnw) can
-// hang if there is no installed Java VM found.
+// resolveJVM returns true if a Java VM was found and works. It is intended for
+// macOS where calling out to the Maven Wrapper script (mvnw) can hang if there
+// is no installed Java VM found.
 func resolveJVM(ctx context.Context) bool {
 	// Note that just checking for the existence of `java` is insufficient
 	// as macOS ships with /usr/bin/java that tries to hand off to a JVM

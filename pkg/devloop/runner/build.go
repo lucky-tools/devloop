@@ -61,6 +61,13 @@ func (r *Builder) GetBuilds() []graph.Artifact {
 	return r.Builds
 }
 
+// TagFor generates the fully-qualified image name (image:tag) for an artifact using
+// the configured tag policy. Non-building commands (sync, restart) use it to resolve
+// a tag when none was provided via --build-artifacts, --images, or --tag.
+func (r *Builder) TagFor(ctx context.Context, a latest.Artifact) (string, error) {
+	return tag.GenerateFullyQualifiedImageName(ctx, r.tagger, a)
+}
+
 // Build builds a list of artifacts.
 func (r *Builder) Build(ctx context.Context, out io.Writer, artifacts []*latest.Artifact) ([]graph.Artifact, error) {
 	eventV2.TaskInProgress(constants.Build, "Build containers")

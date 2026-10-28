@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"net/netip"
+	"os/exec"
 	"regexp"
 	"strings"
 	"sync"
@@ -155,6 +156,31 @@ func (d *Deployer) Deploy(ctx context.Context, out io.Writer, builds []graph.Art
 
 func (d *Deployer) ConfigName() string {
 	return d.configName
+}
+
+// Restart restarts the containers created for the given artifacts. It is used by
+// the `devloop restart` command when the project deploys to a local Docker daemon.
+func (d *Deployer) Restart(ctx context.Context, _ io.Writer, artifacts []graph.Artifact) error {
+	for _, a := range artifacts {
+		olog.Entry(ctx).Info("Restarting container:", a.ImageName)
+		if err := d.restart(ctx, a.ImageName); err != nil {
+			return fmt.Errorf("restarting container %q: %w", a.ImageName, err)
+		}
+	}
+	return nil
+}
+
+func (d *Deployer) restart(ctx context.Context, containerName string) error {
+	if d.cfg != nil && d.cfg.UseAPI {
+		inspect, err := d.client.RawClient().ContainerInspect(ctx, containerName, client.ContainerInspectOptions{})
+		if err != nil {
+			return fmt.Errorf("inspecting container %q: %w", containerName, err)
+		}
+		_, err = d.client.RawClient().ContainerRestart(ctx, inspect.Container.ID, client.ContainerRestartOptions{})
+		return err
+	}
+	_, err := util.RunCmdOut(ctx, exec.CommandContext(ctx, "docker", "restart", containerName))
+	return err
 }
 
 // deploy creates a container in the local docker daemon from a build artifact's image.

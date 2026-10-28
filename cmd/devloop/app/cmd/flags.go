@@ -27,7 +27,6 @@ import (
 
 	"github.com/lucky-tools/devloop/cmd/devloop/app/flags"
 	"github.com/lucky-tools/devloop/pkg/devloop/constants"
-	"github.com/lucky-tools/devloop/pkg/devloop/instrumentation"
 	"github.com/lucky-tools/devloop/pkg/devloop/output/log"
 )
 
@@ -155,7 +154,6 @@ var flagRegistry = []Flag{
 		Value:    &opts.SyncRemoteCache,
 		DefValue: "always",
 		DefValuePerCommand: map[string]interface{}{
-			"inspect":  "missing",
 			"diagnose": "missing",
 			"fix":      "missing",
 		},
@@ -373,7 +371,7 @@ var flagRegistry = []Flag{
 		Value:         &opts.CustomTag,
 		DefValue:      "",
 		FlagAddMethod: "StringVar",
-		DefinedOn:     []string{"build", "debug", "dev", "run", "deploy", "render", "sync"},
+		DefinedOn:     []string{"build", "debug", "dev", "run", "deploy", "render", "sync", "restart"},
 	},
 	{
 		Name:          "platform",
@@ -402,15 +400,6 @@ var flagRegistry = []Flag{
 		DefValue:      true,
 		FlagAddMethod: "BoolVar",
 		DefinedOn:     []string{"dev", "run", "debug", "deploy", "render", "build", "delete", "diagnose", "test", "verify", "exec"},
-		IsEnum:        true,
-	},
-	{
-		Name:          "auto",
-		Usage:         "Run with an auto-generated devloop configuration. This will create a temporary `devloop.yaml` file and kubernetes manifests necessary to run the application",
-		Value:         &opts.AutoInit,
-		DefValue:      false,
-		FlagAddMethod: "BoolVar",
-		DefinedOn:     []string{"debug", "dev", "run"},
 		IsEnum:        true,
 	},
 	{
@@ -566,7 +555,7 @@ The build result from a previous 'devloop build --file-output' run can be used h
 		Value:         &fromBuildOutputFile,
 		DefValue:      "",
 		FlagAddMethod: "Var",
-		DefinedOn:     []string{"deploy", "render", "test", "verify", "exec", "sync"},
+		DefinedOn:     []string{"deploy", "render", "test", "verify", "exec", "sync", "restart"},
 	},
 
 	{
@@ -576,18 +565,9 @@ The build result from a previous 'devloop build --file-output' run can be used h
 		Value:         &preBuiltImages,
 		DefValue:      nil,
 		FlagAddMethod: "Var",
-		DefinedOn:     []string{"deploy", "render", "test", "sync"},
+		DefinedOn:     []string{"deploy", "render", "test", "sync", "restart"},
 	},
 
-	{
-		Name:          "auto-create-config",
-		Usage:         "If true, devloop will try to create a config for the user's run if it doesn't find one",
-		Value:         &opts.AutoCreateConfig,
-		DefValue:      true,
-		FlagAddMethod: "BoolVar",
-		DefinedOn:     []string{"debug", "dev", "run"},
-		IsEnum:        true,
-	},
 	{
 		Name:          "assume-yes",
 		Usage:         "If true, devloop will skip yes/no confirmation from the user and default to yes",
@@ -828,9 +808,6 @@ func ResetFlagDefaults(cmd *cobra.Command, flags []*Flag) {
 		flag := cmd.Flag(fl.Name)
 		if !flag.Changed {
 			setDefaultValues(flag.Value, fl, cmd.Name())
-		}
-		if fl.IsEnum {
-			instrumentation.AddFlag(flag)
 		}
 	}
 }

@@ -50,6 +50,8 @@ func main() {
 		// ignore cancelled errors
 		code = app.ExitCode(err)
 	}
-	instrumentation.ShutdownAndFlush(context.Background(), code)
+	if err := instrumentation.TracerShutdown(context.Background()); err != nil {
+		log.Entry(context.TODO()).Debugf("error shutting down tracer %v", err)
+	}
 	os.Exit(code)
 }

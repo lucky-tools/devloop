@@ -19,6 +19,7 @@ package docker
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"runtime"
 	"testing"
 
@@ -171,6 +172,51 @@ func TestGetEncodedRegistryAuth(t *testing.T) {
 			out, err := l.encodedRegistryAuth(context.Background(), test.authType, test.image)
 
 			t.CheckErrorAndDeepEqual(test.shouldErr, err, test.expected, out)
+		})
+	}
+}
+
+func TestResolveConfigDir(t *testing.T) {
+	tests := []struct {
+		description string
+		dockerFile  bool
+		devloopFile bool
+		expected    string
+	}{
+		{
+			description: "docker config.json present",
+			dockerFile:  true,
+			expected:    ".docker",
+		},
+		{
+			description: "devloop config.json fallback",
+			devloopFile: true,
+			expected:    ".devloop",
+		},
+		{
+			description: "both present prefers docker",
+			dockerFile:  true,
+			devloopFile: true,
+			expected:    ".docker",
+		},
+		{
+			description: "neither present defaults to docker",
+			expected:    ".docker",
+		},
+	}
+	for _, test := range tests {
+		testutil.Run(t, test.description, func(t *testutil.T) {
+			tmpDir := t.NewTempDir()
+			if test.dockerFile {
+				tmpDir.Write(".docker/config.json", "{}")
+			}
+			if test.devloopFile {
+				tmpDir.Write(".devloop/config.json", "{}")
+			}
+
+			got := resolveConfigDir(tmpDir.Root())
+
+			t.CheckDeepEqual(filepath.Join(tmpDir.Root(), test.expected), got)
 		})
 	}
 }

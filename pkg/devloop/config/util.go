@@ -401,11 +401,11 @@ func discoverLocalRegistry(ctx context.Context, kubeContext string) (*string, er
 }
 
 func IsUpdateCheckEnabled(configfile string) bool {
-	cfg, err := GetConfigForCurrentKubectx(configfile)
+	cfg, err := ReadConfigFile(configfile)
 	if err != nil {
 		return true
 	}
-	return IsUpdateCheckEnabledForContext(cfg)
+	return IsUpdateCheckEnabledForContext(cfg.Global)
 }
 
 func IsUpdateCheckEnabledForContext(cfg *ContextConfig) bool {
@@ -413,14 +413,14 @@ func IsUpdateCheckEnabledForContext(cfg *ContextConfig) bool {
 }
 
 func ShouldDisplayUpdateMsg(configfile string) bool {
-	cfg, err := GetConfigForCurrentKubectx(configfile)
+	cfg, err := ReadConfigFile(configfile)
 	if err != nil {
 		return true
 	}
-	if cfg == nil || cfg.UpdateCheckConfig == nil {
+	if cfg.Global == nil || cfg.Global.UpdateCheckConfig == nil {
 		return true
 	}
-	return !timeutil.LessThan(cfg.UpdateCheckConfig.LastPrompted, 24*time.Hour)
+	return !timeutil.LessThan(cfg.Global.UpdateCheckConfig.LastPrompted, 24*time.Hour)
 }
 
 // UpdateMsgDisplayed updates the `last-prompted` config for `update-config` in
@@ -503,26 +503,6 @@ func UpdateGlobalSurveyPrompted(configFile string) error {
 	err = WriteFullConfig(configFile, fullConfig)
 	if err != nil {
 		return aiErr
-	}
-	return err
-}
-
-func UpdateGlobalCollectMetrics(configFile string, collectMetrics bool) error {
-	configFile, err := ResolveConfigFile(configFile)
-	if err != nil {
-		return err
-	}
-	fullConfig, err := ReadConfigFile(configFile)
-	if err != nil {
-		return err
-	}
-	if fullConfig.Global == nil {
-		fullConfig.Global = &ContextConfig{}
-	}
-	fullConfig.Global.CollectMetrics = &collectMetrics
-	err = WriteFullConfig(configFile, fullConfig)
-	if err != nil {
-		return err
 	}
 	return err
 }

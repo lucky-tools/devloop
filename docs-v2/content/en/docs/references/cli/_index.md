@@ -23,7 +23,6 @@ Pipeline building blocks for CI/CD:
 
 Getting started with a new project:
 
-* [devloop init](#devloop-init) - to bootstrap Devloop config
 * [devloop fix](#devloop-fix) - to upgrade from older devloop.yaml schema version to newer devloop.yaml schema version 
 
 Other Commands:
@@ -544,14 +543,8 @@ Options:
     --assume-yes=false:
 	If true, devloop will skip yes/no confirmation from the user and default to yes
 
-    --auto=false:
-	Run with an auto-generated devloop configuration. This will create a temporary `devloop.yaml` file and kubernetes manifests necessary to run the application
-
     --auto-build=false:
 	When set to false, builds wait for API request instead of running automatically
-
-    --auto-create-config=true:
-	If true, devloop will try to create a config for the user's run if it doesn't find one
 
     --auto-deploy=false:
 	When set to false, deploys wait for API request instead of running automatically
@@ -722,9 +715,7 @@ Use "devloop options" for a list of global command-line options (applies to all 
 Env vars:
 
 * `DEVLOOP_ASSUME_YES` (same as `--assume-yes`)
-* `DEVLOOP_AUTO` (same as `--auto`)
 * `DEVLOOP_AUTO_BUILD` (same as `--auto-build`)
-* `DEVLOOP_AUTO_CREATE_CONFIG` (same as `--auto-create-config`)
 * `DEVLOOP_AUTO_DEPLOY` (same as `--auto-deploy`)
 * `DEVLOOP_AUTO_SYNC` (same as `--auto-sync`)
 * `DEVLOOP_BUILD_CONCURRENCY` (same as `--build-concurrency`)
@@ -1076,14 +1067,8 @@ Options:
     --assume-yes=false:
 	If true, devloop will skip yes/no confirmation from the user and default to yes
 
-    --auto=false:
-	Run with an auto-generated devloop configuration. This will create a temporary `devloop.yaml` file and kubernetes manifests necessary to run the application
-
     --auto-build=true:
 	When set to false, builds wait for API request instead of running automatically
-
-    --auto-create-config=true:
-	If true, devloop will try to create a config for the user's run if it doesn't find one
 
     --auto-deploy=true:
 	When set to false, deploys wait for API request instead of running automatically
@@ -1254,9 +1239,7 @@ Use "devloop options" for a list of global command-line options (applies to all 
 Env vars:
 
 * `DEVLOOP_ASSUME_YES` (same as `--assume-yes`)
-* `DEVLOOP_AUTO` (same as `--auto`)
 * `DEVLOOP_AUTO_BUILD` (same as `--auto-build`)
-* `DEVLOOP_AUTO_CREATE_CONFIG` (same as `--auto-create-config`)
 * `DEVLOOP_AUTO_DEPLOY` (same as `--auto-deploy`)
 * `DEVLOOP_AUTO_SYNC` (same as `--auto-sync`)
 * `DEVLOOP_BUILD_CONCURRENCY` (same as `--build-concurrency`)
@@ -1565,80 +1548,6 @@ Env vars:
 * `DEVLOOP_SYNC_REMOTE_CACHE` (same as `--sync-remote-cache`)
 * `DEVLOOP_VERSION` (same as `--version`)
 
-### devloop init
-
-Generate configuration for deploying an application
-
-```
-
-
-Options:
-    --analyze=false:
-	Print all discoverable Dockerfiles and images in JSON format to stdout
-
-    -a, --artifact=[]:
-	'='-delimited Dockerfile/image pair, or JSON string, to generate build artifact (example: --artifact='{"builder":"Docker","payload":{"path":"/web/Dockerfile.web"},"image":"gcr.io/web-project/image"}')
-
-    --assume-yes=false:
-	If true, devloop will skip yes/no confirmation from the user and default to yes
-
-    --compose-file='':
-	Initialize from a docker-compose file
-
-    --default-kustomization='':
-	Default Kustomization overlay path (others will be added as profiles)
-
-    -f, --filename='devloop.yaml':
-	Path or URL to the Devloop config file
-
-    --force=false:
-	Force the generation of the Devloop config
-
-    --generate-manifests=false:
-	Allows devloop to try and generate basic kubernetes resources to get your project started
-
-    -k, --kubernetes-manifest=[]:
-	A path or a glob pattern to kubernetes manifests (can be non-existent) to be added to the kubectl deployer (overrides detection of kubernetes manifests). Repeat the flag for multiple entries. E.g.: devloop init -k pod.yaml -k k8s/*.yml
-
-    -m, --module=[]:
-	Filter Devloop configs to only the provided named modules
-
-    --remote-cache-dir='':
-	Specify the location of the remote cache (default $HOME/.devloop/remote-cache)
-
-    --skip-build=false:
-	Skip generating build artifacts in Devloop config
-
-    --skip-unreachable-dirs=false:
-	Instead of erroring, it will skip the directories that cannot be accessed due to permissions
-
-    --sync-remote-cache='always':
-	Controls how Devloop manages the remote config cache (see `remote-cache-dir`). One of `always` (default), `missing`, or `never`. `always` syncs remote repositories to latest on access. `missing` only clones remote repositories if they do not exist locally. `never` means the user takes responsibility for updating remote repositories.
-
-Usage:
-  devloop init [options]
-
-Use "devloop options" for a list of global command-line options (applies to all commands).
-
-
-```
-Env vars:
-
-* `DEVLOOP_ANALYZE` (same as `--analyze`)
-* `DEVLOOP_ARTIFACT` (same as `--artifact`)
-* `DEVLOOP_ASSUME_YES` (same as `--assume-yes`)
-* `DEVLOOP_COMPOSE_FILE` (same as `--compose-file`)
-* `DEVLOOP_DEFAULT_KUSTOMIZATION` (same as `--default-kustomization`)
-* `DEVLOOP_FILENAME` (same as `--filename`)
-* `DEVLOOP_FORCE` (same as `--force`)
-* `DEVLOOP_GENERATE_MANIFESTS` (same as `--generate-manifests`)
-* `DEVLOOP_KUBERNETES_MANIFEST` (same as `--kubernetes-manifest`)
-* `DEVLOOP_MODULE` (same as `--module`)
-* `DEVLOOP_REMOTE_CACHE_DIR` (same as `--remote-cache-dir`)
-* `DEVLOOP_SKIP_BUILD` (same as `--skip-build`)
-* `DEVLOOP_SKIP_UNREACHABLE_DIRS` (same as `--skip-unreachable-dirs`)
-* `DEVLOOP_SYNC_REMOTE_CACHE` (same as `--sync-remote-cache`)
-
 ### devloop options
 
 
@@ -1809,12 +1718,6 @@ Options:
     --assume-yes=false:
 	If true, devloop will skip yes/no confirmation from the user and default to yes
 
-    --auto=false:
-	Run with an auto-generated devloop configuration. This will create a temporary `devloop.yaml` file and kubernetes manifests necessary to run the application
-
-    --auto-create-config=true:
-	If true, devloop will try to create a config for the user's run if it doesn't find one
-
     --build-concurrency=-1:
 	Number of concurrently running builds. Set to 0 to run all builds in parallel. Doesn't violate build order among dependencies.
 
@@ -1969,8 +1872,6 @@ Use "devloop options" for a list of global command-line options (applies to all 
 Env vars:
 
 * `DEVLOOP_ASSUME_YES` (same as `--assume-yes`)
-* `DEVLOOP_AUTO` (same as `--auto`)
-* `DEVLOOP_AUTO_CREATE_CONFIG` (same as `--auto-create-config`)
 * `DEVLOOP_BUILD_CONCURRENCY` (same as `--build-concurrency`)
 * `DEVLOOP_BUILD_IMAGE` (same as `--build-image`)
 * `DEVLOOP_CACHE_ARTIFACTS` (same as `--cache-artifacts`)

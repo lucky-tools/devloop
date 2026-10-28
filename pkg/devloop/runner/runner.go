@@ -32,7 +32,6 @@ import (
 	"github.com/lucky-tools/devloop/pkg/devloop/render/renderer"
 	"github.com/lucky-tools/devloop/pkg/devloop/runner/runcontext"
 	"github.com/lucky-tools/devloop/pkg/devloop/schema/latest"
-	"github.com/lucky-tools/devloop/pkg/devloop/schema/util"
 	"github.com/lucky-tools/devloop/pkg/devloop/test"
 	"github.com/lucky-tools/devloop/pkg/devloop/verify"
 )
@@ -44,13 +43,14 @@ var ErrorConfigurationChanged = errors.New("configuration changed")
 type Runner interface {
 	Apply(context.Context, io.Writer) error
 	ApplyDefaultRepo(tag string) (string, error)
+	TagFor(context.Context, latest.Artifact) (string, error)
 	Build(context.Context, io.Writer, []*latest.Artifact) ([]graph.Artifact, error)
 	Cleanup(context.Context, io.Writer, bool, manifest.ManifestListByConfig, string) error
 	Dev(context.Context, io.Writer, []*latest.Artifact) error
 	// Deploy and DeployAndLog: Do they need the `graph.Artifact` and could use render output.
 	Deploy(context.Context, io.Writer, []graph.Artifact, manifest.ManifestListByConfig) error
 	DeployAndLog(context.Context, io.Writer, []graph.Artifact, manifest.ManifestListByConfig) error
-	GeneratePipeline(context.Context, io.Writer, []util.VersionedConfig, []string, string) error
+	Restart(context.Context, io.Writer, []graph.Artifact) error
 	HasBuilt() bool
 	DeployManifests() manifest.ManifestListByConfig
 	Prune(context.Context, io.Writer) error

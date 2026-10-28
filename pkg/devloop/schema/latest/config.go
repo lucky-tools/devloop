@@ -842,6 +842,12 @@ type KubectlDeploy struct {
 
 	// LifecycleHooks describes a set of lifecycle hooks that are executed before and after every deploy.
 	LifecycleHooks DeployHooks `yaml:"hooks,omitempty"`
+
+	// UseAPI uses client-go server-side apply to deploy manifests directly
+	// against the Kubernetes API server instead of shelling out to `kubectl`.
+	// Requires no `kubectl` binary on the host. When enabled, the kubectl
+	// `flags` are ignored.
+	UseAPI bool `yaml:"useAPI,omitempty"`
 }
 
 // KubectlFlags are additional flags passed on the command

@@ -17,12 +17,14 @@ limitations under the License.
 package util
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/buildpacks/lifecycle/cmd"
@@ -36,7 +38,6 @@ import (
 	"github.com/lucky-tools/devloop/pkg/devloop/constants"
 	"github.com/lucky-tools/devloop/pkg/devloop/docker"
 	"github.com/lucky-tools/devloop/pkg/devloop/graph"
-	"github.com/lucky-tools/devloop/pkg/devloop/initializer/prompt"
 	"github.com/lucky-tools/devloop/pkg/devloop/kubernetes"
 	"github.com/lucky-tools/devloop/pkg/devloop/kubernetes/manifest"
 	"github.com/lucky-tools/devloop/pkg/devloop/output"
@@ -48,7 +49,31 @@ import (
 	timeutil "github.com/lucky-tools/devloop/pkg/devloop/util/time"
 )
 
-var confirmHydrationDirOverride = prompt.ConfirmHydrationDirOverride
+var confirmHydrationDirOverride = ConfirmHydrationDirOverride
+
+// ConfirmHydrationDirOverride acknowledges users that the render may change the hydrated-dir.
+func ConfirmHydrationDirOverride(stdin io.Reader) bool {
+	msg := "The hydration directory (flag `--hydrated-dir`) is not empty. " +
+		"Some files may be overridden or deleted during the manifest hydration."
+	return promptUntilYesOrNo(stdin, msg)
+}
+
+func promptUntilYesOrNo(stdin io.Reader, userMsg string) bool {
+	fmt.Printf("%v. Do you want to proceed (Y/n): ", userMsg)
+	for {
+		reader := bufio.NewReader(stdin)
+		input, _ := reader.ReadString('\n')
+		answer := strings.ToLower(strings.TrimSpace(input))
+		switch answer {
+		case "", "y", "yes":
+			return true
+		case "n", "no":
+			return false
+		default:
+			fmt.Println("Please enter 'Y' or 'n':")
+		}
+	}
+}
 
 // ApplyDefaultRepo applies the default repo to a given image tag.
 func ApplyDefaultRepo(globalConfig string, defaultRepo *string, tag string) (string, error) {
