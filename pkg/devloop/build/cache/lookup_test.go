@@ -20,7 +20,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"reflect"
 	"testing"
 
@@ -129,7 +128,7 @@ func TestLookupLocal(t *testing.T) {
 			}
 
 			t.Override(&newArtifactHasherFunc, func(_ graph.ArtifactGraph, _ DependencyLister, _ config.RunMode) artifactHasher { return test.hasher })
-			details := cache.lookupArtifacts(context.Background(), io.Discard, map[string]string{"artifact": "tag"}, platform.Resolver{}, []*latest.Artifact{{
+			details := cache.lookupArtifacts(context.Background(), map[string]string{"artifact": "tag"}, platform.Resolver{}, []*latest.Artifact{{
 				ImageName: "artifact",
 			}})
 
@@ -217,7 +216,7 @@ func TestLookupRemote(t *testing.T) {
 				cfg:                &mockConfig{mode: config.RunModes.Build},
 			}
 			t.Override(&newArtifactHasherFunc, func(_ graph.ArtifactGraph, _ DependencyLister, _ config.RunMode) artifactHasher { return test.hasher })
-			details := cache.lookupArtifacts(context.Background(), io.Discard, map[string]string{"artifact": "tag"}, platform.Resolver{}, []*latest.Artifact{{
+			details := cache.lookupArtifacts(context.Background(), map[string]string{"artifact": "tag"}, platform.Resolver{}, []*latest.Artifact{{
 				ImageName: "artifact",
 			}})
 
@@ -233,7 +232,7 @@ type mockHasher struct {
 	val string
 }
 
-func (m mockHasher) hash(context.Context, io.Writer, *latest.Artifact, platform.Resolver, string) (string, error) {
+func (m mockHasher) hash(context.Context, *latest.Artifact, platform.Resolver, string) (string, error) {
 	return m.val, nil
 }
 
@@ -241,7 +240,7 @@ type failingHasher struct {
 	err error
 }
 
-func (f failingHasher) hash(context.Context, io.Writer, *latest.Artifact, platform.Resolver, string) (string, error) {
+func (f failingHasher) hash(context.Context, *latest.Artifact, platform.Resolver, string) (string, error) {
 	return "", f.err
 }
 

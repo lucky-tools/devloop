@@ -71,7 +71,7 @@ func NewItem(ctx context.Context, a *latest.Artifact, e filemon.Events, builds [
 		return syncItem(ctx, a, tag, e, a.Sync.Manual, cfg)
 
 	case a.Sync.Auto != nil:
-		return autoSyncItem(ctx, a, tag, e, cfg)
+		return autoSyncItem(ctx, a, tag, e)
 
 	case len(a.Sync.Infer) > 0:
 		return inferredSyncItem(ctx, a, tag, e, cfg)
@@ -183,7 +183,7 @@ func syncMapForArtifact(ctx context.Context, a *latest.Artifact, cfg docker.Conf
 	}
 }
 
-func autoSyncItem(ctx context.Context, a *latest.Artifact, tag string, e filemon.Events, cfg docker.Config) (*Item, error) {
+func autoSyncItem(ctx context.Context, a *latest.Artifact, tag string, e filemon.Events) (*Item, error) {
 	switch {
 	case a.JibArtifact != nil:
 		toCopy, toDelete, err := jib.GetSyncDiff(ctx, a.Workspace, a.JibArtifact, e)

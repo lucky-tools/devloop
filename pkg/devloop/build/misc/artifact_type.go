@@ -25,11 +25,11 @@ import (
 )
 
 const (
-	Docker    = "docker"
-	Kaniko    = "kaniko"
-	Jib       = "jib"
-	Custom    = "custom"
-	Ko        = "ko"
+	Docker = "docker"
+	Kaniko = "kaniko"
+	Jib    = "jib"
+	Custom = "custom"
+	Ko     = "ko"
 )
 
 // ArtifactType returns a string representing the type found in an artifact. Used for error messages.
