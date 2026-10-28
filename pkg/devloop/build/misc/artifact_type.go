@@ -29,7 +29,6 @@ const (
 	Kaniko    = "kaniko"
 	Jib       = "jib"
 	Custom    = "custom"
-	Buildpack = "buildpack"
 	Ko        = "ko"
 )
 
@@ -45,8 +44,6 @@ func ArtifactType(a *latest.Artifact) string {
 		return Jib
 	case a.CustomArtifact != nil:
 		return Custom
-	case a.BuildpackArtifact != nil:
-		return Buildpack
 	case a.KoArtifact != nil:
 		return Ko
 	default:

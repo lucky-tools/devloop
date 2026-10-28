@@ -27,7 +27,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/buildpacks/lifecycle/cmd"
 	"golang.org/x/sync/semaphore"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
@@ -163,7 +162,7 @@ func GetHydrationDir(opts config.DevloopOptions, workingDir string, promptIfNeed
 		if promptIfNeeded && !opts.AssumeYes {
 			fmt.Println("you can skip this promp message with flag \"--assume-yes=true\"")
 			if ok := confirmHydrationDirOverride(os.Stdin); !ok {
-				cmd.Exit(nil)
+				os.Exit(0)
 			}
 		}
 	}

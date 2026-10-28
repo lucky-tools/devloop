@@ -17,12 +17,6 @@ to use the ko builder.
 
 Compared to ...
 
-- [the Cloud Native buildpacks builder]({{< relref "/docs/builders/builder-types/buildpacks" >}}),
-  the ko builder is
-  [fast](https://cloud.google.com/blog/topics/developers-practitioners/ship-your-go-applications-faster-cloud-run-ko),
-  doesn't require Docker, and uses a default base image that has a small
-  attack surface.
-  
 - [the Docker builder]({{< relref "/docs/builders/builder-types/docker" >}}),
   the ko builder standardizes builds, avoiding artisanal
   [snowflake](https://martinfowler.com/bliki/SnowflakeServer.html)

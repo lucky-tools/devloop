@@ -333,14 +333,13 @@
       "enum": [
         "UNKNOWN_BUILDER_TYPE",
         "JIB",
-        "BUILDPACKS",
         "CUSTOM",
         "KANIKO",
         "DOCKER",
         "KO"
       ],
       "default": "UNKNOWN_BUILDER_TYPE",
-      "description": "Enum indicating builders used\n- UNKNOWN_BUILDER_TYPE: Could not determine builder type\n - JIB: JIB Builder\n - BUILDPACKS: Buildpacks Builder\n - CUSTOM: Custom Builder\n - KANIKO: Kaniko Builder\n - DOCKER: Docker Builder\n - KO: Ko Builder"
+      "description": "Enum indicating builders used\n- UNKNOWN_BUILDER_TYPE: Could not determine builder type\n - JIB: JIB Builder\n - CUSTOM: Custom Builder\n - KANIKO: Kaniko Builder\n - DOCKER: Docker Builder\n - KO: Ko Builder"
     },
     "enumsClusterType": {
       "type": "string",

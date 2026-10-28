@@ -10,4 +10,4 @@ This is a link to an introductory Cloud Shell tutorial. In this tutorial, you wi
 * Use **devloop build** and **devloop test** to tag, push, and test your container images.
 * Use **devloop render** and **devloop apply** to generate and deploy Kubernetes manifests as part of a GitOps workflow.
 
-[![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.png)](https://ssh.cloud.google.com/cloudshell/editor?show=ide%2Cterminal&cloudshell_git_repo=https://github.com/lucky-tools/devloop&walkthrough_id=devloop--devloop_onboarding&cloudshell_workspace=/examples/buildpacks-node-tutorial&cloudshell_open_in_editor=src/index.js)
+[![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.png)](https://ssh.cloud.google.com/cloudshell/editor?show=ide%2Cterminal&cloudshell_git_repo=https://github.com/lucky-tools/devloop&walkthrough_id=devloop--devloop_onboarding&cloudshell_workspace=/examples/getting-started&cloudshell_open_in_editor=main.go)

@@ -31,7 +31,6 @@ import (
 	"github.com/moby/moby/client"
 
 	"github.com/lucky-tools/devloop/pkg/devloop/build"
-	"github.com/lucky-tools/devloop/pkg/devloop/build/buildpacks"
 	"github.com/lucky-tools/devloop/pkg/devloop/build/custom"
 	dockerbuilder "github.com/lucky-tools/devloop/pkg/devloop/build/docker"
 	"github.com/lucky-tools/devloop/pkg/devloop/build/jib"
@@ -475,16 +474,6 @@ func TestGetArtifactBuilder(t *testing.T) {
 			expected: "jib",
 		},
 		{
-			description: "buildpacks builder",
-			artifact: &latest.Artifact{
-				ImageName: "gcr.io/test/image",
-				ArtifactType: latest.ArtifactType{
-					BuildpackArtifact: &latest.BuildpackArtifact{},
-				},
-			},
-			expected: "buildpacks",
-		},
-		{
 			description: "custom builder",
 			artifact: &latest.Artifact{
 				ImageName: "gcr.io/test/image",
@@ -513,8 +502,6 @@ func TestGetArtifactBuilder(t *testing.T) {
 			switch builder.(type) {
 			case *dockerbuilder.APIBuilder:
 				t.CheckDeepEqual(test.expected, "docker")
-			case *buildpacks.Builder:
-				t.CheckDeepEqual(test.expected, "buildpacks")
 			case *custom.Builder:
 				t.CheckDeepEqual(test.expected, "custom")
 			case *jib.Builder:

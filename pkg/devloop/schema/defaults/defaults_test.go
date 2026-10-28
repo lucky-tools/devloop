@@ -57,31 +57,11 @@ func TestSetDefaults(t *testing.T) {
 						},
 					},
 					{
-						ImageName: "fourth",
-						ArtifactType: latest.ArtifactType{
-							BuildpackArtifact: &latest.BuildpackArtifact{},
-						},
-						Sync: &latest.Sync{},
-					},
-					{
 						ImageName: "fifth",
 						ArtifactType: latest.ArtifactType{
 							JibArtifact: &latest.JibArtifact{},
 						},
 						Sync: &latest.Sync{},
-					},
-					{
-						ImageName: "sixth",
-						ArtifactType: latest.ArtifactType{
-							BuildpackArtifact: &latest.BuildpackArtifact{},
-						},
-					},
-					{
-						ImageName: "seventh",
-						ArtifactType: latest.ArtifactType{
-							BuildpackArtifact: &latest.BuildpackArtifact{},
-						},
-						Sync: &latest.Sync{Auto: util.Ptr(false)},
 					},
 					{
 						ImageName: "eights",
@@ -112,31 +92,13 @@ func TestSetDefaults(t *testing.T) {
 	testutil.CheckDeepEqual(t, []string{"."}, cfg.Build.Artifacts[2].CustomArtifact.Dependencies.Paths)
 	testutil.CheckDeepEqual(t, []string(nil), cfg.Build.Artifacts[2].CustomArtifact.Dependencies.Ignore)
 
-	testutil.CheckDeepEqual(t, "fourth", cfg.Build.Artifacts[3].ImageName)
-	testutil.CheckDeepEqual(t, []string{"."}, cfg.Build.Artifacts[3].BuildpackArtifact.Dependencies.Paths)
-	testutil.CheckDeepEqual(t, []string(nil), cfg.Build.Artifacts[3].BuildpackArtifact.Dependencies.Ignore)
-	testutil.CheckDeepEqual(t, "project.toml", cfg.Build.Artifacts[3].BuildpackArtifact.ProjectDescriptor)
+	testutil.CheckDeepEqual(t, "fifth", cfg.Build.Artifacts[3].ImageName)
 	testutil.CheckDeepEqual(t, util.Ptr(true), cfg.Build.Artifacts[3].Sync.Auto)
 
-	testutil.CheckDeepEqual(t, "fifth", cfg.Build.Artifacts[4].ImageName)
-	testutil.CheckDeepEqual(t, util.Ptr(true), cfg.Build.Artifacts[4].Sync.Auto)
-
-	testutil.CheckDeepEqual(t, "sixth", cfg.Build.Artifacts[5].ImageName)
-	testutil.CheckDeepEqual(t, []string{"."}, cfg.Build.Artifacts[5].BuildpackArtifact.Dependencies.Paths)
-	testutil.CheckDeepEqual(t, []string(nil), cfg.Build.Artifacts[5].BuildpackArtifact.Dependencies.Ignore)
-	testutil.CheckDeepEqual(t, "project.toml", cfg.Build.Artifacts[5].BuildpackArtifact.ProjectDescriptor)
-	testutil.CheckDeepEqual(t, util.Ptr(true), cfg.Build.Artifacts[5].Sync.Auto)
-
-	testutil.CheckDeepEqual(t, "seventh", cfg.Build.Artifacts[6].ImageName)
-	testutil.CheckDeepEqual(t, []string{"."}, cfg.Build.Artifacts[6].BuildpackArtifact.Dependencies.Paths)
-	testutil.CheckDeepEqual(t, []string(nil), cfg.Build.Artifacts[6].BuildpackArtifact.Dependencies.Ignore)
-	testutil.CheckDeepEqual(t, "project.toml", cfg.Build.Artifacts[6].BuildpackArtifact.ProjectDescriptor)
-	testutil.CheckDeepEqual(t, util.Ptr(false), cfg.Build.Artifacts[6].Sync.Auto)
-
-	testutil.CheckDeepEqual(t, "eights", cfg.Build.Artifacts[7].ImageName)
-	testutil.CheckDeepEqual(t, 3, *cfg.Build.Artifacts[7].KanikoArtifact.CopyMaxRetries)
-	testutil.CheckDeepEqual(t, "5m", cfg.Build.Artifacts[7].KanikoArtifact.CopyTimeout)
-	testutil.CheckDeepEqual(t, 1, *cfg.Build.Artifacts[7].KanikoArtifact.BuildContextCompressionLevel)
+	testutil.CheckDeepEqual(t, "eights", cfg.Build.Artifacts[4].ImageName)
+	testutil.CheckDeepEqual(t, 3, *cfg.Build.Artifacts[4].KanikoArtifact.CopyMaxRetries)
+	testutil.CheckDeepEqual(t, "5m", cfg.Build.Artifacts[4].KanikoArtifact.CopyTimeout)
+	testutil.CheckDeepEqual(t, 1, *cfg.Build.Artifacts[4].KanikoArtifact.BuildContextCompressionLevel)
 }
 
 func TestSetDefaultsOnCluster(t *testing.T) {
@@ -171,12 +133,6 @@ func TestSetDefaultsOnCluster(t *testing.T) {
 								CustomArtifact: &latest.CustomArtifact{},
 							},
 						},
-						{
-							ImageName: "buildpacks",
-							ArtifactType: latest.ArtifactType{
-								BuildpackArtifact: &latest.BuildpackArtifact{},
-							},
-						},
 					},
 					BuildType: latest.BuildType{
 						Cluster: &latest.ClusterDetails{},
@@ -194,7 +150,6 @@ func TestSetDefaultsOnCluster(t *testing.T) {
 		t.CheckNotNil(cfg.Pipeline.Build.Artifacts[0].KanikoArtifact)
 		t.CheckNotNil(cfg.Pipeline.Build.Artifacts[1].KanikoArtifact)
 		t.CheckNil(cfg.Pipeline.Build.Artifacts[2].KanikoArtifact)
-		t.CheckNil(cfg.Pipeline.Build.Artifacts[3].KanikoArtifact)
 
 		// pull secret set
 		cfg = &latest.DevloopConfig{

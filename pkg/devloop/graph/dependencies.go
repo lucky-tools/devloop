@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/lucky-tools/devloop/pkg/devloop/build/buildpacks"
 	"github.com/lucky-tools/devloop/pkg/devloop/build/custom"
 	"github.com/lucky-tools/devloop/pkg/devloop/build/jib"
 	"github.com/lucky-tools/devloop/pkg/devloop/build/kaniko"
@@ -147,9 +146,6 @@ func sourceDependenciesForArtifact(ctx context.Context, a *latest.Artifact, cfg 
 
 	case a.CustomArtifact != nil:
 		paths, err = custom.GetDependencies(ctx, a.Workspace, a.ImageName, a.CustomArtifact, cfg)
-
-	case a.BuildpackArtifact != nil:
-		paths, err = buildpacks.GetDependencies(ctx, a.Workspace, a.BuildpackArtifact)
 
 	case a.KoArtifact != nil:
 		paths, err = ko.GetDependencies(ctx, a.Workspace, a.KoArtifact)

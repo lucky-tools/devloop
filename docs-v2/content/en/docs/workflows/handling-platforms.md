@@ -11,7 +11,7 @@ Devloop has a lot of intelligence built-in to simplify working with ARM workload
 
 Container images are built targeting specific [Instruction Set Architectures](https://en.wikipedia.org/wiki/Instruction_set_architecture) like `amd64`, `arm64`, etc. **You must use container images that are compatible with the architecture of the node where you intend to run the workloads.** For example, to deploy to a GKE cluster running ARM nodes, the image needs to be built for `linux/arm64` platform.
 
-All image builders build for different default architecture and not all support cross-architecture builds. For instance [Docker]({{<relref "/docs/builders/builder-types/docker">}}) will build the image for the same architecture as the host machine, whereas [Buildpacks]({{<relref "/docs/builders/builder-types/buildpacks">}}) will always build it for `amd64`.
+All image builders build for different default architecture and not all support cross-architecture builds. For instance [Docker]({{<relref "/docs/builders/builder-types/docker">}}) will build the image for the same architecture as the host machine.
 
 Additionally, the following combination of development machine and cluster node architectures can make it difficult to build and deploy images correctly:
 

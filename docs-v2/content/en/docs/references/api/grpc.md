@@ -813,7 +813,6 @@ Enum indicating builders used
 | ---- |:------:| ----------- |
 | UNKNOWN_BUILDER_TYPE | 0 | Could not determine builder type |
 | JIB | 1 | JIB Builder |
-| BUILDPACKS | 3 | Buildpacks Builder |
 | CUSTOM | 4 | Custom Builder |
 | KANIKO | 5 | Kaniko Builder |
 | DOCKER | 6 | Docker Builder |

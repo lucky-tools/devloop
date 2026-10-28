@@ -49,10 +49,10 @@ Let's get a sample application set up to use Devloop.
     git clone https://github.com/lucky-tools/devloop
     ```
 
-1. Change to the `examples/buildpacks-node-tutorial` directory.
+1. Change to the `examples/nodejs` directory.
 
     ```bash
-    cd devloop/examples/buildpacks-node-tutorial
+    cd devloop/examples/nodejs
     ```
 
 ## Use Devloop for continuous development
@@ -91,12 +91,12 @@ This may take several minutes.
     minikube tunnel -p custom
     ```
     
-    Now open your browser at `http://localhost:3000`. This displays the content of `public/index.html` file. 
+    Now open your browser at `http://localhost:3000`. This displays `Hello World!` served by the Express app. 
 
     Devloop is now watching for any file changes, and will rebuild your application automatically. Let's see this in action.
 
 
-1. Open `devloop/examples/buildpacks-node-tutorial/src/index.js` and change line 10 to the following:
+1. Open `devloop/examples/nodejs/backend/src/index.js` and change line 8 to the following:
 
     ```
     app.listen(port, () => console.log(`Example app listening on port ${port}! This is version 2.`))
@@ -139,11 +139,11 @@ Your CI pipelines can run `devloop build` to build, tag, and push your container
 
 Devloop can also run tests against your images before deploying them.  Let's try this out by creating a simple custom test.
 
-1. Open your<walkthrough-editor-open-file filePath="cloudshell_open/devloop/examples/buildpacks-node-tutorial/devloop.yaml">`devloop.yaml`</walkthrough-editor-open-file> and add the following test configuration to the bottom, without any additional indentation:
+1. Open your<walkthrough-editor-open-file filePath="cloudshell_open/devloop/examples/nodejs/devloop.yaml">`devloop.yaml`</walkthrough-editor-open-file> and add the following test configuration to the bottom, without any additional indentation:
 
     ```
     test:
-    - image: devloop-buildpacks-node
+    - image: node-example
       custom:
         - command: echo This is a custom test commmand!
     ```
@@ -180,7 +180,7 @@ For GitOps delivery workflows, you may want to decompose your deployments into s
     devloop render -a build-$STATE.json --output render.yaml --digest-source local
     ```
 
-    Open `devloop/examples/buildpacks-node-tutorial/render.yaml` to check out the hydrated manifest.
+    Open `devloop/examples/nodejs/render.yaml` to check out the hydrated manifest.
 
 
 1. Next, run the following command to apply your hydrated manifest:
@@ -223,7 +223,7 @@ which provides a [browser-based terminal/CLI and editor](https://cloud.google.co
 Cloud Shell comes with Devloop, Minikube, and Docker pre-installed, and is free
 (requires a [Google Account](https://accounts.google.com/SignUp)).
 
-[![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.svg)](https://ssh.cloud.google.com/cloudshell/editor?show=ide%2Cterminal&cloudshell_git_repo=https://github.com/lucky-tools/devloop&walkthrough_id=devloop--devloop_onboarding&cloudshell_workspace=/examples/buildpacks-node-tutorial&cloudshell_open_in_editor=src/index.js)
+[![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.svg)](https://ssh.cloud.google.com/cloudshell/editor?show=ide%2Cterminal&cloudshell_git_repo=https://github.com/lucky-tools/devloop&walkthrough_id=devloop--devloop_onboarding&cloudshell_workspace=/examples/nodejs&cloudshell_open_in_editor=backend/src/index.js)
 
 {{% /tab %}}
 {{% /tabs %}}

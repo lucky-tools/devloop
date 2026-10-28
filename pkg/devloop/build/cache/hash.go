@@ -27,7 +27,6 @@ import (
 	"os"
 	"sort"
 
-	"github.com/lucky-tools/devloop/pkg/devloop/build/buildpacks"
 	"github.com/lucky-tools/devloop/pkg/devloop/build/kaniko"
 	"github.com/lucky-tools/devloop/pkg/devloop/config"
 	"github.com/lucky-tools/devloop/pkg/devloop/docker"
@@ -162,7 +161,7 @@ func encode(inputs []string) (string, error) {
 	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
-// TODO(dgageot): when the buildpacks builder image digest changes, we need to change the hash
+// artifactConfig marshals the artifact type used for cache keying.
 func artifactConfig(a *latest.Artifact) (string, error) {
 	buf, err := json.Marshal(a.ArtifactType)
 	if err != nil {
@@ -187,8 +186,6 @@ func hashBuildArgs(out io.Writer, artifact *latest.Artifact, tag string, mode co
 		args, err = docker.EvalBuildArgsWithEnv(mode, artifact.Workspace, artifact.DockerArtifact.DockerfilePath, artifact.DockerArtifact.BuildArgs, nil, envTags)
 	case artifact.KanikoArtifact != nil:
 		args, err = docker.EvalBuildArgsWithEnv(mode, kaniko.GetContext(artifact.KanikoArtifact, artifact.Workspace), artifact.KanikoArtifact.DockerfilePath, artifact.KanikoArtifact.BuildArgs, nil, envTags)
-	case artifact.BuildpackArtifact != nil:
-		env, err = buildpacks.GetEnv(out, artifact, mode)
 	case artifact.CustomArtifact != nil && artifact.CustomArtifact.Dependencies.Dockerfile != nil:
 		args, err = util.EvaluateEnvTemplateMap(artifact.CustomArtifact.Dependencies.Dockerfile.BuildArgs)
 	default:

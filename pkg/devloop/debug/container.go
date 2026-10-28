@@ -89,12 +89,9 @@ func transformContainer(adapter types.ContainerAdapter, config ImageConfiguratio
 		config.Arguments = container.Args
 	}
 
-	// Apply command-line unwrapping for buildpack images and images using `sh -c`-style command-lines
+	// Apply command-line unwrapping for images using `sh -c`-style command-lines
 	next := func(adapter types.ContainerAdapter, config ImageConfiguration) (types.ContainerDebugConfiguration, string, error) {
 		return performContainerTransform(adapter, config, portAlloc)
-	}
-	if isCNBImage(config) {
-		return updateForCNBImage(adapter, config, next)
 	}
 	return updateForShDashC(adapter, config, next)
 }

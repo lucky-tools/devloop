@@ -35,32 +35,6 @@ profiles:
     kustomize:
       paths:
       - "."
-# use GCP Buildpacks to build the individual projects
-- name: buildpacks
-  build:
-    artifacts:
-    - image: devloop-debug-java
-      context: java
-      buildpacks: {}
-    - image: devloop-debug-npm
-      context: npm
-      buildpacks: {}
-    - image: devloop-debug-nodejs
-      context: nodejs
-      buildpacks: {}
-    #- image: devloop-debug-python3
-    #  context: python3
-    #  buildpacks:
-    #    builder: "gcr.io/buildpacks/builder:v1"
-    - image: devloop-debug-go
-      context: go
-      buildpacks:
-        env:
-        - GOOGLE_RUNTIME_VERSION=1.16 # temporarily pin due to issue#6450
-    #- image: devloop-debug-netcore
-    #  context: netcore
-    #  buildpacks:
-    #    builder: "gcr.io/buildpacks/builder:v1"
 - name: docker
   patches:
   - op: remove

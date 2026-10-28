@@ -86,8 +86,6 @@ func getArtifacts(b latest.BuildConfig) []*proto.BuildMetadata_Artifact {
 			Context: a.Workspace,
 		}
 		switch {
-		case a.BuildpackArtifact != nil:
-			artifact.Type = proto.BuilderType_BUILDPACKS
 		case a.CustomArtifact != nil:
 			artifact.Type = proto.BuilderType_CUSTOM
 		case a.DockerArtifact != nil:

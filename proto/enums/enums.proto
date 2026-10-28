@@ -9,8 +9,6 @@ enum BuilderType {
     UNKNOWN_BUILDER_TYPE = 0;
     // JIB Builder
     JIB = 1;
-    // Buildpacks Builder
-    BUILDPACKS = 3;
     // Custom Builder
     CUSTOM = 4;
     // Kaniko Builder

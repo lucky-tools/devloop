@@ -25,11 +25,11 @@ To do this, we will take advantage of the [custom builder]({{<relref "/docs/buil
 
 First, add a `build.sh` file which Devloop will call to build artifacts:
 
-{{% readfile file="samples/builders/custom-buildpacks/build.sh" %}}
+{{% readfile file="samples/builders/custom-ko/build.sh" %}}
 
 Then, configure artifacts in your `devloop.yaml` to build with `build.sh`: 
 
-{{% readfile file="samples/builders/custom-buildpacks/devloop.yaml" %}}
+{{% readfile file="samples/builders/custom-ko/devloop.yaml" %}}
 
 List the file dependencies for each artifact; in the example above, Devloop watches all files in the build context.
 For more information about listing dependencies for custom artifacts, see the documentation [here]({{<relref "/docs/builders/builder-types/custom#dependencies-from-a-command" >}}).

@@ -14,31 +14,6 @@
     "maturity": "beta",
     "description": "Use hydrated Kubernetes manifests to create resources on the cluster"
   },
-  "build.buildpacks": {
-    "build": "x",
-    "area": "Build",
-    "feature": "Cloud Native Buildpacks support",
-    "maturity": "GA",
-    "description": "Devloop natively support for artifacts built with Cloud Native Buildpacks",
-    "examples": [
-      {
-        "name": "go buildpacks",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/buildpacks"
-      },
-      {
-        "name": "java buildpacks",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/buildpacks-java"
-      },
-      {
-        "name": "node buildpacks",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/buildpacks-node"
-      },
-      {
-        "name": "python buildpacks",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/buildpacks-python"
-      }
-    ]
-  },
   "build.custom": {
     "dev": "x",
     "build": "x",
@@ -118,22 +93,6 @@
       {
         "name": "jib/gradle",
         "url": "https://github.com/lucky-tools/devloop/tree/main/examples/jib-gradle"
-      },
-      {
-        "name": "go buildpacks",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/buildpacks"
-      },
-      {
-        "name": "java buildpacks",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/buildpacks-java"
-      },
-      {
-        "name": "node buildpacks",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/buildpacks-node"
-      },
-      {
-        "name": "python buildpacks",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/buildpacks-python"
       },
       {
         "name": "ko",

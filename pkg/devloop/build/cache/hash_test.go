@@ -129,28 +129,6 @@ func TestGetHashForArtifact(t *testing.T) {
 			mode:     config.RunModes.Dev,
 			expected: "f3f710a4ec1d1bfb2a9b8ef2b4b7cc5f254102d17095a71872821b396953a4ce",
 		},
-		{
-			description:  "buildpack in dev mode",
-			dependencies: []string{"a", "b"},
-			artifact: &latest.Artifact{
-				ArtifactType: latest.ArtifactType{
-					BuildpackArtifact: &latest.BuildpackArtifact{},
-				},
-			},
-			mode:     config.RunModes.Dev,
-			expected: "d99ab295a682897269b4db0fe7c136ea1ecd542150fa224ee03155b4e3e995d9",
-		},
-		{
-			description:  "buildpack in debug mode",
-			dependencies: []string{"a", "b"},
-			artifact: &latest.Artifact{
-				ArtifactType: latest.ArtifactType{
-					BuildpackArtifact: &latest.BuildpackArtifact{},
-				},
-			},
-			mode:     config.RunModes.Debug,
-			expected: "c3a878f799b2a6532db71683a09771af4f9d20ef5884c57642a272934e5c93ea",
-		},
 	}
 	for _, test := range tests {
 		testutil.Run(t, test.description, func(t *testutil.T) {
@@ -203,30 +181,6 @@ func TestGetHashForArtifactWithDependencies(t *testing.T) {
 			fileDeps: map[string][]string{"img1": {"a"}, "img2": {"b"}, "img3": {"c"}, "img4": {"d"}},
 			mode:     config.RunModes.Dev,
 			expected: "ccd159a9a50853f89ab6784530b58d658a0b349c92828eba335f1074f9a63bb3",
-		},
-		{
-			description: "hash for artifact with different dependencies (img4 builder changed)",
-			artifacts: []*latest.Artifact{
-				{ImageName: "img1", Dependencies: []*latest.ArtifactDependency{{ImageName: "img2"}, {ImageName: "img3"}}},
-				{ImageName: "img2", Dependencies: []*latest.ArtifactDependency{{ImageName: "img4"}}, ArtifactType: latest.ArtifactType{DockerArtifact: &latest.DockerArtifact{Target: "target2"}}},
-				{ImageName: "img3", ArtifactType: latest.ArtifactType{DockerArtifact: &latest.DockerArtifact{Target: "target3"}}},
-				{ImageName: "img4", ArtifactType: latest.ArtifactType{BuildpackArtifact: &latest.BuildpackArtifact{Builder: "builder"}}},
-			},
-			fileDeps: map[string][]string{"img1": {"a"}, "img2": {"b"}, "img3": {"c"}, "img4": {"d"}},
-			mode:     config.RunModes.Dev,
-			expected: "26defaa1291289f40b756b83824f0549a3a9c03cca5471bd268f0ac6e499aba6",
-		},
-		{
-			description: "hash for artifact with different dependencies (img4 files changed)",
-			artifacts: []*latest.Artifact{
-				{ImageName: "img1", Dependencies: []*latest.ArtifactDependency{{ImageName: "img2"}, {ImageName: "img3"}}},
-				{ImageName: "img2", Dependencies: []*latest.ArtifactDependency{{ImageName: "img4"}}, ArtifactType: latest.ArtifactType{DockerArtifact: &latest.DockerArtifact{Target: "target2"}}},
-				{ImageName: "img3", ArtifactType: latest.ArtifactType{DockerArtifact: &latest.DockerArtifact{Target: "target3"}}},
-				{ImageName: "img4", ArtifactType: latest.ArtifactType{BuildpackArtifact: &latest.BuildpackArtifact{}}},
-			},
-			fileDeps: map[string][]string{"img1": {"a"}, "img2": {"b"}, "img3": {"c"}, "img4": {"e"}},
-			mode:     config.RunModes.Dev,
-			expected: "bab56a88d483fa97ae072b027a46681177628156839b7e390842e6243b1ac6aa",
 		},
 	}
 	for _, test := range tests {
@@ -576,41 +530,6 @@ func TestHashBuildArgs(t *testing.T) {
 			artifactType: latest.ArtifactType{
 				KanikoArtifact: &latest.KanikoArtifact{},
 			},
-		},
-		{
-			description: "buildpacks artifact with env for dev",
-			artifactType: latest.ArtifactType{
-				BuildpackArtifact: &latest.BuildpackArtifact{
-					Env: []string{"foo=bar"},
-				},
-			},
-			mode:     config.RunModes.Dev,
-			expected: []string{"foo=bar"},
-		},
-		{
-			description: "buildpacks artifact without env for dev",
-			artifactType: latest.ArtifactType{
-				BuildpackArtifact: &latest.BuildpackArtifact{},
-			},
-			mode: config.RunModes.Dev,
-		},
-		{
-			description: "buildpacks artifact with env for debug",
-			artifactType: latest.ArtifactType{
-				BuildpackArtifact: &latest.BuildpackArtifact{
-					Env: []string{"foo=bar"},
-				},
-			},
-			mode:     config.RunModes.Debug,
-			expected: []string{"GOOGLE_GOGCFLAGS=all=-N -l", "foo=bar"},
-		},
-		{
-			description: "buildpacks artifact without env for debug",
-			artifactType: latest.ArtifactType{
-				BuildpackArtifact: &latest.BuildpackArtifact{},
-			},
-			mode:     config.RunModes.Debug,
-			expected: []string{"GOOGLE_GOGCFLAGS=all=-N -l"},
 		},
 		{
 			description: "custom artifact, dockerfile dependency, with build args",

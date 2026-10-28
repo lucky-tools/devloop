@@ -26,7 +26,6 @@ The final list of target platforms need to ultimately be supported by the target
 |----|:-----------:|:----------------:|
 | **Dockerfile** | Cross-platform and multi-platform supported | Cross-platform supported but platform should match cluster node running the pod. |
 | **Jib Maven and Gradle** | Cross-platform and multi-platform supported | - |
-| **Cloud Native Buildpacks** | Only supports `linux/amd64` | - |
 | **ko** | Cross-platform and multi-platform supported | - |
 | **Custom Script** | Cross-platform and multi-platform supported but requires user to implement it in the build script | Cross-platform and multi-platform supported but requires user to implement it in the build script |
 

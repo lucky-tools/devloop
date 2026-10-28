@@ -62,10 +62,6 @@ const (
 
 	DefaultPortForwardAddress = "127.0.0.1"
 
-	DefaultProjectDescriptor = "project.toml"
-
-	DefaultBuildpacksBuilderImage = "gcr.io/buildpacks/builder:v1"
-
 	LeeroyAppResponse = "leeroooooy app!!\n"
 
 	GithubIssueLink = "https://github.com/lucky-tools/devloop/issues/new"

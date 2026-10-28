@@ -80,8 +80,6 @@ Devloop supports the following tools:
   - in-cluster with [Kaniko](https://github.com/GoogleContainerTools/kaniko)
 * [Jib](https://github.com/GoogleContainerTools/jib) Maven and Gradle
   - locally
-* [Cloud Native Buildpacks](https://buildpacks.io/)
-  - locally with Docker
 * Custom script
   - locally
   - in-cluster

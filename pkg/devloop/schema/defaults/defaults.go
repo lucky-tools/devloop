@@ -42,7 +42,7 @@ func Set(c *latest.DevloopConfig) error {
 		setDefaultWorkspace(a)
 		setDefaultSync(a)
 
-		if c.Build.Cluster != nil && a.CustomArtifact == nil && a.BuildpackArtifact == nil {
+		if c.Build.Cluster != nil && a.CustomArtifact == nil {
 			defaultToKanikoArtifact(a)
 		} else {
 			defaultToDockerArtifact(a)
@@ -57,9 +57,6 @@ func Set(c *latest.DevloopConfig) error {
 
 		case a.CustomArtifact != nil:
 			setCustomArtifactDefaults(a.CustomArtifact)
-
-		case a.BuildpackArtifact != nil:
-			setBuildpackArtifactDefaults(a.BuildpackArtifact)
 		}
 
 		for _, d := range a.Dependencies {
@@ -186,21 +183,6 @@ func setCustomArtifactDefaults(a *latest.CustomArtifact) {
 	}
 }
 
-func setBuildpackArtifactDefaults(a *latest.BuildpackArtifact) {
-	if a.ProjectDescriptor == "" {
-		a.ProjectDescriptor = constants.DefaultProjectDescriptor
-	}
-	if a.Dependencies == nil {
-		a.Dependencies = &latest.BuildpackDependencies{
-			Paths: []string{"."},
-		}
-	}
-	if a.Builder == "" && len(a.Buildpacks) == 0 {
-		a.Builder = constants.DefaultBuildpacksBuilderImage
-		a.TrustBuilder = true
-	}
-}
-
 func setDockerArtifactDefaults(a *latest.DockerArtifact) {
 	a.DockerfilePath = valueOrDefault(a.DockerfilePath, constants.DefaultDockerfilePath)
 }
@@ -213,14 +195,12 @@ func setDefaultSync(a *latest.Artifact) {
 	if a.Sync != nil {
 		if len(a.Sync.Manual) == 0 && len(a.Sync.Infer) == 0 && a.Sync.Auto == nil {
 			switch {
-			case a.JibArtifact != nil || a.BuildpackArtifact != nil:
+			case a.JibArtifact != nil:
 				a.Sync.Auto = util.Ptr(true)
 			default:
 				a.Sync.Infer = []string{"**/*"}
 			}
 		}
-	} else if a.BuildpackArtifact != nil {
-		a.Sync = &latest.Sync{Auto: util.Ptr(true)}
 	}
 }
 

@@ -48,7 +48,7 @@ func AllItems(ctx context.Context, a *latest.Artifact, builds []graph.Artifact, 
 		return allManualItems(ctx, a, tag, cfg)
 
 	case a.Sync.Auto != nil:
-		return nil, fmt.Errorf("full sync is not supported for `sync.auto` (jib/buildpacks); use `sync.manual` or `sync.infer`")
+		return nil, fmt.Errorf("full sync is not supported for `sync.auto` (jib); use `sync.manual` or `sync.infer`")
 
 	case len(a.Sync.Infer) > 0:
 		return allInferredItems(ctx, a, tag, cfg)
