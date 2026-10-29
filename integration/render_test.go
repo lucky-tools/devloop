@@ -348,7 +348,6 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  annotations: null
   labels:
     app: devloop-helm
     chart: devloop-helm-0.1.0
@@ -569,7 +568,6 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  annotations: null
   labels:
     app: devloop-helm
     chart: devloop-helm-0.1.0
@@ -2642,7 +2640,6 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  annotations: null
   labels:
     app: devloop-helm
     chart: devloop-helm-0.1.0

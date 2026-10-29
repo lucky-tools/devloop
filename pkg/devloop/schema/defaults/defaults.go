@@ -129,6 +129,9 @@ func SetDefaultRenderer(c *latest.DevloopConfig) {
 		return
 	}
 	if c.Render.Generate.Kustomize != nil {
+		if len(c.Render.Generate.Kustomize.Paths) == 0 {
+			c.Render.Generate.Kustomize.Paths = []string{"."}
+		}
 		return
 	}
 	if c.Render.Generate.Helm != nil {

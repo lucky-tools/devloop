@@ -403,6 +403,19 @@ func TestSetDefaultRenderer(t *testing.T) {
 			},
 		},
 		{
+			description: "kustomize manifests with empty paths defaults to current directory",
+			input: latest.RenderConfig{
+				Generate: latest.Generate{
+					Kustomize: &latest.Kustomize{},
+				},
+			},
+			expected: latest.RenderConfig{
+				Generate: latest.Generate{
+					Kustomize: &latest.Kustomize{Paths: []string{"."}},
+				},
+			},
+		},
+		{
 			description: "kpt manifests",
 			input: latest.RenderConfig{
 				Generate: latest.Generate{
