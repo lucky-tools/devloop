@@ -262,7 +262,7 @@ debugging.
 The ko builder implementation work will add `KO_DATA_PATH` to
 [the set of environment variables used to detect Go-based applications](https://github.com/lucky-tools/devloop/blob/c75c55133e709b2fee906eb158be13c7ccfa72cd/pkg/devloop/debug/transform_go.go#L67-L72)
 and updating the associated unit tests and
-[documentation](https://github.com/lucky-tools/devloop/blob/main/docs-v2/content/en/docs/workflows/debug.md#L245).
+[documentation](https://github.com/lucky-tools/devloop/blob/master/docs-v2/content/en/docs/workflows/debug.md#L245).
 
 ## Design
 

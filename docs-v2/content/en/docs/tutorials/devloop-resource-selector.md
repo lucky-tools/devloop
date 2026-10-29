@@ -18,7 +18,7 @@ Currently devloop modifies the manifests it renders and deploys for the followin
 
 Devloop has by default the following resources set for management via field "labels:" and "image:" overwriting:
 
-_The below list is derived from the values defined [here](https://github.com/lucky-tools/devloop/blob/main/pkg/devloop/kubernetes/manifest/visitor.go)_
+_The below list is derived from the values defined [here](https://github.com/lucky-tools/devloop/blob/master/pkg/devloop/kubernetes/manifest/visitor.go)_
 
 
 * Pod

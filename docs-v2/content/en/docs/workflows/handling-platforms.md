@@ -29,9 +29,9 @@ When running Devloop in an interactive mode like `devloop dev`, `devloop debug` 
 Devloop will create platform node `affinity` rules only for clusters having multiple architecture nodes. You can also force this using the flag `--enable-platform-node-affinity=true` to always create these affinity rules in the Kubernetes manifests for built images.
 {{< /alert >}}
 
-Let's test this in a [sample Golang](https://github.com/lucky-tools/devloop/tree/main/examples/cross-platform-builds) project:
+Let's test this in a [sample Golang](https://github.com/lucky-tools/devloop/tree/master/examples/cross-platform-builds) project:
 
-* The `devloop.yaml` file defines a single [Docker build artifact](https://github.com/lucky-tools/devloop/blob/main/examples/cross-platform-builds/Dockerfile) and deploys it in a [`Kubernetes Pod`](https://github.com/lucky-tools/devloop/blob/main/examples/cross-platform-builds/k8s-pod.yaml).
+* The `devloop.yaml` file defines a single [Docker build artifact](https://github.com/lucky-tools/devloop/blob/master/examples/cross-platform-builds/Dockerfile) and deploys it in a [`Kubernetes Pod`](https://github.com/lucky-tools/devloop/blob/master/examples/cross-platform-builds/k8s-pod.yaml).
 
 * First set the active Kubernetes context to a cluster having only `linux/amd64` nodes, and run:
 
@@ -133,7 +133,7 @@ Devloop supports building multi-platform images natively using the [jib builder]
 
 ![multi-arch-flow](/images/multi-arch-flow.png)
 
-Let's test this in the same [sample Golang](https://github.com/lucky-tools/devloop/tree/main/examples/cross-platform-builds) project as before:
+Let's test this in the same [sample Golang](https://github.com/lucky-tools/devloop/tree/master/examples/cross-platform-builds) project as before:
 
 * Run this command to build for the target architectures `linux/amd64` and `linux/arm64`:
 

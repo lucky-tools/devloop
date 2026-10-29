@@ -15,7 +15,7 @@ Kpt is [an OSS tool](https://github.com/GoogleContainerTools/kpt) for Kubernetes
 *   How to enable kpt to deploy your configurations in their live state.
 *   How to use kpt with kustomize.
 
-This codelab is the second session. Check out the [01_kpt-validate](https://github.com/lucky-tools/devloop/tree/main/codelab/01_kpt-validate) about how to use kpt to validate your configuration before deploying to the cluster.
+This codelab is the second session. Check out the [01_kpt-validate](https://github.com/lucky-tools/devloop/tree/master/codelab/01_kpt-validate) about how to use kpt to validate your configuration before deploying to the cluster.
 
 ## Prerequisites
 
@@ -87,7 +87,7 @@ Time to complete: **About 3 minutes**
 
 <walkthrough-pin-section-icon></walkthrough-pin-section-icon>
 **Tips**
->  If you haven't used `devloop dev`, you can go through this [codelab](https://github.com/lucky-tools/devloop/tree/main/codelab/01_kpt-validate).
+>  If you haven't used `devloop dev`, you can go through this [codelab](https://github.com/lucky-tools/devloop/tree/master/codelab/01_kpt-validate).
 
 ## Deploy
 Time to complete: **About 2 minutes**

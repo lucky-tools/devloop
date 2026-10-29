@@ -23,7 +23,7 @@ To learn more about how to set up Devloop and a Kubernetes cluster, see the [get
 
 This tutorial will demonstrate how Devloop can build a simple Hello World Go application with ko and deploy it to a Kubernetes cluster.
 
-First, clone the Devloop [repo](https://github.com/lucky-tools/devloop) and navigate to the [custom example](https://github.com/lucky-tools/devloop/tree/main/examples/custom) for sample code:
+First, clone the Devloop [repo](https://github.com/lucky-tools/devloop) and navigate to the [custom example](https://github.com/lucky-tools/devloop/tree/master/examples/custom) for sample code:
 
 ```sh
 git clone https://github.com/lucky-tools/devloop.git

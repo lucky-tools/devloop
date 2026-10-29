@@ -37,9 +37,9 @@ But putting all port-forwards behind the `--port-forward` flag has resulted in n
 
 Forwarding all `containerPort`s on pods in `devloop debug` has also resulted in odd situations
 such as container-ports being allocated before service ports.  For example, the Devloop
-[`examples/react-reload`](https://github.com/lucky-tools/devloop/tree/main/examples/react-reload/) example
-has a [service on port 8080](https://github.com/lucky-tools/devloop/tree/main/examples/react-reload/k8s/deployment.yaml#L7)
-and a [deployment/pod on port 8080](https://github.com/lucky-tools/devloop/blob/main/examples/react-reload/k8s/deployment.yaml#L29).
+[`examples/react-reload`](https://github.com/lucky-tools/devloop/tree/master/examples/react-reload/) example
+has a [service on port 8080](https://github.com/lucky-tools/devloop/tree/master/examples/react-reload/k8s/deployment.yaml#L7)
+and a [deployment/pod on port 8080](https://github.com/lucky-tools/devloop/blob/master/examples/react-reload/k8s/deployment.yaml#L29).
 
 
 
@@ -100,7 +100,7 @@ specify __Not Yet Resolved__
 
 ## Implementation plan
 
-1. Separate user-defined forwarding from [ResourceForwarder](https://github.com/lucky-tools/devloop/blob/main/pkg/devloop/kubernetes/portforward/resource_forwarder.go)
+1. Separate user-defined forwarding from [ResourceForwarder](https://github.com/lucky-tools/devloop/blob/master/pkg/devloop/kubernetes/portforward/resource_forwarder.go)
 2. Amend `WatchingPodForwarder` to take a pod/port-filter to allow determining if a port is
    a debug port, as determined by the `debug.cloud.google.com` annotation.
 3. Somehow turn `--port-forward` into string slice argument, if possible!

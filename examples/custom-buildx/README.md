@@ -29,7 +29,7 @@ cluster.
 ##### Step 1: Obtain the example
 
 First, clone the Devloop [repo](https://github.com/lucky-tools/devloop)
-and navigate to the [`custom-buildx` example](https://github.com/lucky-tools/devloop/tree/main/examples/custom) for sample code:
+and navigate to the [`custom-buildx` example](https://github.com/lucky-tools/devloop/tree/master/examples/custom) for sample code:
 
 ```shell
 $ git clone https://github.com/lucky-tools/devloop

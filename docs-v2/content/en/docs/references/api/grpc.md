@@ -23,7 +23,7 @@ We also generate the [reference doc for the HTTP layer]({{<relref "/docs/referen
 
 ## v1/devloop.proto
 
-You can find the source for v1/devloop.proto [on Github](https://github.com/lucky-tools/devloop/blob/main/proto/v1/devloop.proto).
+You can find the source for v1/devloop.proto [on Github](https://github.com/lucky-tools/devloop/blob/master/proto/v1/devloop.proto).
 
 
 

@@ -97,7 +97,7 @@ Changes to other file types will result in a complete rebuild.
 
 Jib integration with Devloop allows for zero-config `auto` sync. In this mode, Jib will sync your class files, resource files, and Jib's "extra directories" files to a remote container as changes are made. It can only be used with Jib in the default build mode (exploded) for non-WAR applications. It was primarily designed around [Spring Boot Developer Tools](https://docs.spring.io/spring-boot/docs/current/reference/html/using-spring-boot.html#using-boot-devtools), but can work with any embedded server that can reload/restart.
 
-Check out the [Jib Sync example](https://github.com/lucky-tools/devloop/tree/main/examples/jib-sync) for more details.
+Check out the [Jib Sync example](https://github.com/lucky-tools/devloop/tree/master/examples/jib-sync) for more details.
 
 ## Limitations
 

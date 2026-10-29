@@ -71,7 +71,7 @@ directory of your source files and should generally match the artifact's
 The `remotePath` or `to` properties should be set to the absolute path of the
 source location _during compilation_. For example, the `golang` images, which
 are
-[often used in multi-stage builds](https://github.com/lucky-tools/devloop/tree/main/examples/getting-started/Dockerfile),
+[often used in multi-stage builds](https://github.com/lucky-tools/devloop/tree/master/examples/getting-started/Dockerfile),
 have a default working directory of `/go`. The following
 [configuration](https://github.com/golang/vscode-go/blob/master/docs/debugging-legacy.md#remote-debugging)
 works in this case:

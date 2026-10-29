@@ -53,7 +53,7 @@ You can define dependency on other artifacts using the `requires` keyword. This 
 
 **Example**
 
-See the [Devloop-Jib demo project](https://github.com/lucky-tools/devloop/blob/main/examples/jib/)
+See the [Devloop-Jib demo project](https://github.com/lucky-tools/devloop/blob/master/examples/jib/)
 for an example.
 
 ### Multi-Module Projects

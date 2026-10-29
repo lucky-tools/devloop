@@ -26,11 +26,11 @@
     "examples": [
       {
         "name": "buildx",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/custom-buildx"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/custom-buildx"
       },
       {
         "name": "ko",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/custom"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/custom"
       }
     ]
   },
@@ -68,7 +68,7 @@
     "examples": [
       {
         "name": "ko",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/ko"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/ko"
       }
     ]
   },
@@ -84,23 +84,23 @@
     "examples": [
       {
         "name": "docker",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/docker-deploy"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/docker-deploy"
       },
       {
         "name": "jib/maven",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/jib"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/jib"
       },
       {
         "name": "jib/gradle",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/jib-gradle"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/jib-gradle"
       },
       {
         "name": "ko",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/ko"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/ko"
       },
       {
         "name": "buildx",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/custom-buildx"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/custom-buildx"
       }
     ]
   },
@@ -207,19 +207,19 @@
     "examples": [
       {
         "name": "kubectl",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/getting-started"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/getting-started"
       },
       {
         "name": "helm",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/helm-deployment"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/helm-deployment"
       },
       {
         "name": "kustomize",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/kustomize"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/kustomize"
       },
       {
         "name": "docker",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/docker-deploy"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/docker-deploy"
       }
     ]
   },
@@ -244,7 +244,7 @@
     "examples": [
       {
         "name": "docker",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/docker-deploy"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/docker-deploy"
       }
     ]
   },
@@ -321,7 +321,7 @@
     "examples": [
       {
         "name": "hooks",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/lifecycle-hooks"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/lifecycle-hooks"
       }
     ]
   },
@@ -357,11 +357,11 @@
     "examples": [
       {
         "name": "profiles",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/profiles"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/profiles"
       },
       {
         "name": "profile patches",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/profile-patches"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/profile-patches"
       }
     ]
   },
@@ -410,7 +410,7 @@
     "examples": [
       {
         "name": "envTemplate",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/tagging-with-environment-variables"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/tagging-with-environment-variables"
       }
     ]
   },
@@ -423,7 +423,7 @@
     "examples": [
       {
         "name": "templated fields",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/templated-fields"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/templated-fields"
       }
     ]
   },
@@ -438,11 +438,11 @@
     "examples": [
       {
         "name": "custom test",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/custom-tests"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/custom-tests"
       },
       {
         "name": "structure test",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/structure-tests"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/structure-tests"
       }
     ]
   },
@@ -457,7 +457,7 @@
     "examples": [
       {
         "name": "structure test",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/structure-tests"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/structure-tests"
       }
     ]
   },
@@ -473,7 +473,7 @@
     "examples": [
       {
         "name": "custom test",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/custom-tests"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/custom-tests"
       }
     ]
   },

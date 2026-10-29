@@ -2,7 +2,7 @@
 ---------------------
 
 [![Code Coverage](https://codecov.io/gh/lucky-tools/devloop/branch/main/graph/badge.svg)](https://codecov.io/gh/lucky-tools/devloop)
-[![LICENSE](https://img.shields.io/github/license/lucky-tools/devloop.svg)](https://github.com/lucky-tools/devloop/blob/main/LICENSE)
+[![LICENSE](https://img.shields.io/github/license/lucky-tools/devloop.svg)](https://github.com/lucky-tools/devloop/blob/master/LICENSE)
 [![Releases](https://img.shields.io/github/release-pre/lucky-tools/devloop.svg)](https://github.com/lucky-tools/devloop/releases)
 
 Devloop is a command line tool that facilitates continuous development for

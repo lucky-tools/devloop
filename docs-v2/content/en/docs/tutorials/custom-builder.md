@@ -15,7 +15,7 @@ To learn more about how to set up Devloop and a Kubernetes cluster, see the [qui
 
 ## Tutorial - Hello World in Go
 
-This tutorial will be based on the [custom example](https://github.com/lucky-tools/devloop/tree/main/examples/custom) in our repository.
+This tutorial will be based on the [custom example](https://github.com/lucky-tools/devloop/tree/master/examples/custom) in our repository.
 
 
 ## Adding a Custom Builder to Your Devloop Project

@@ -434,7 +434,7 @@ If the ko builder doesn't support your use of `ko`, you can instead use the
 [`custom` builder]({{< relref "/docs/builders/builder-types/custom" >}}).
 
 See the `custom` builder
-[example](https://github.com/lucky-tools/devloop/tree/main/examples/custom).
+[example](https://github.com/lucky-tools/devloop/tree/master/examples/custom).
 
 ```yaml
 build:

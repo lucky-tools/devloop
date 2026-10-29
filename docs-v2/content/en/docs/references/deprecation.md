@@ -28,7 +28,7 @@ A "deprecation event" would coincide with a release.
 1. We document the deprecation in the following places if applicable
     1. deprecation policy - this document 
     1. [Document on this site]({{< relref "/docs" >}}) changes in relevant sections
-    1. [Release notes](https://github.com/lucky-tools/devloop/blob/main/CHANGELOG.md)
+    1. [Release notes](https://github.com/lucky-tools/devloop/releases)
     1. [Command help]({{< relref "/docs/references/cli" >}})
     1. Log messages
     1. [devloop yaml reference]({{< relref "/docs/references/yaml" >}})
