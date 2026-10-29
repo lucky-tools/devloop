@@ -2168,7 +2168,7 @@ metadata:
 
 spec:
   containers:
-  - image: us-central1-docker.pkg.dev/k8s-devloop/testing/multi-config-module1:customtag
+  - image: ghcr.io/lucky-tools/multi-config-module1:customtag
     name: module1
 `,
 		},
@@ -2185,7 +2185,7 @@ metadata:
     app2: after-change-2
 spec:
   containers:
-  - image: us-central1-docker.pkg.dev/k8s-devloop/testing/multi-config-module1:customtag
+  - image: ghcr.io/lucky-tools/multi-config-module1:customtag
     name: module1
 `,
 		},
@@ -2202,7 +2202,7 @@ metadata:
     app2: after-change-2
 spec:
   containers:
-  - image: us-central1-docker.pkg.dev/k8s-devloop/testing/multi-config-module1:customtag
+  - image: ghcr.io/lucky-tools/multi-config-module1:customtag
     name: module1
 `,
 		},
@@ -2219,7 +2219,7 @@ metadata:
   name: module1
 spec:
   containers:
-    - image: us-central1-docker.pkg.dev/k8s-devloop/testing/multi-config-module1:customtag
+    - image: ghcr.io/lucky-tools/multi-config-module1:customtag
       name: module1
 ---
 apiVersion: v1
@@ -2230,7 +2230,7 @@ metadata:
   name: module2
 spec:
   containers:
-    - image: us-central1-docker.pkg.dev/k8s-devloop/testing/multi-config-module2:customtag
+    - image: ghcr.io/lucky-tools/multi-config-module2:customtag
       name: module2
 `,
 		},
@@ -2247,7 +2247,7 @@ metadata:
   name: module1
 spec:
   containers:
-    - image: us-central1-docker.pkg.dev/k8s-devloop/testing/multi-config-module1:customtag
+    - image: ghcr.io/lucky-tools/multi-config-module1:customtag
       name: module1
 ---
 apiVersion: v1
@@ -2258,7 +2258,7 @@ metadata:
   name: module2
 spec:
   containers:
-    - image: us-central1-docker.pkg.dev/k8s-devloop/testing/multi-config-module2:customtag
+    - image: ghcr.io/lucky-tools/multi-config-module2:customtag
       name: module2
 `,
 		},
@@ -2275,7 +2275,7 @@ metadata:
   name: module1
 spec:
   containers:
-    - image: us-central1-docker.pkg.dev/k8s-devloop/testing/multi-config-module1:customtag
+    - image: ghcr.io/lucky-tools/multi-config-module1:customtag
       name: module1
 `,
 			expectedStderr: `Starting post-render hooks...

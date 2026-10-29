@@ -40,7 +40,7 @@ import (
 	"github.com/lucky-tools/devloop/testutil"
 )
 
-const imageName = "us-central1-docker.pkg.dev/k8s-devloop/testing/simple-build:"
+const imageName = devloop.DefaultRepo + "/simple-build:"
 
 func TestBuild(t *testing.T) {
 	tests := []struct {

@@ -174,10 +174,10 @@ func TestBuildDependenciesCache(t *testing.T) {
 }
 
 func checkImagesExist(t *testing.T) {
-	checkImageExists(t, "us-central1-docker.pkg.dev/k8s-devloop/testing/image1:latest")
-	checkImageExists(t, "us-central1-docker.pkg.dev/k8s-devloop/testing/image2:latest")
-	checkImageExists(t, "us-central1-docker.pkg.dev/k8s-devloop/testing/image3:latest")
-	checkImageExists(t, "us-central1-docker.pkg.dev/k8s-devloop/testing/image4:latest")
+	checkImageExists(t, devloop.DefaultRepo+"/image1:latest")
+	checkImageExists(t, devloop.DefaultRepo+"/image2:latest")
+	checkImageExists(t, devloop.DefaultRepo+"/image3:latest")
+	checkImageExists(t, devloop.DefaultRepo+"/image4:latest")
 }
 
 func contains(sl []int, t int) bool {
