@@ -545,7 +545,8 @@ func (h *Deployer) deployRelease(ctx context.Context, out io.Writer, releaseName
 	// devloop uses the post-renderer feature to do devloop specific rendering such as image replacement, adding debugging annotation in helm rendered result,
 	// as Helm doesn't support to run multiple post-renderers,  this is used to run user-defined render inside devloop filter which happens before devloop
 	// post-rendering process for helm releases.
-	postRendererFlag := getPostRendererFlag(opts.flags)
+	var postRendererFlag []string
+	postRendererFlag, opts.flags = splitPostRendererFlag(opts.flags)
 	devloopBinary, filterEnv, cleanup, err := helm.PrepareDevloopFilter(h, builds, postRendererFlag)
 	if err != nil {
 		return nil, nil, fmt.Errorf("could not prepare `devloop filter`: %w", err)
@@ -624,18 +625,31 @@ func (h *Deployer) deployRelease(ctx context.Context, out io.Writer, releaseName
 	return b, artifacts, nil
 }
 
-func getPostRendererFlag(flags []string) []string {
-	for i, ele := range flags {
-		if strings.HasPrefix(ele, "--post-renderer") {
-			// "--post-renderer", "executable"
-			if ele == "--post-renderer" {
-				return []string{ele, flags[i+1]}
+// splitPostRendererFlag extracts the user-provided --post-renderer flag (to be run inside
+// `devloop filter`) and returns the remaining flags without it, so the raw flag is not
+// forwarded to helm.
+func splitPostRendererFlag(flags []string) (postRendererFlag, remaining []string) {
+	remaining = make([]string, 0, len(flags))
+	for i := 0; i < len(flags); i++ {
+		if !strings.HasPrefix(flags[i], "--post-renderer") {
+			remaining = append(remaining, flags[i])
+			continue
+		}
+
+		// Keep only the first --post-renderer; strip every occurrence from helm's flags.
+		if postRendererFlag == nil {
+			postRendererFlag = []string{flags[i]}
+			// "--post-renderer", "executable": the value sits in the next position.
+			if flags[i] == "--post-renderer" && i+1 < len(flags) {
+				postRendererFlag = append(postRendererFlag, flags[i+1])
 			}
-			// "--post-renderer=executable"
-			return []string{ele}
+		}
+		// Always skip the value of the space-separated form.
+		if flags[i] == "--post-renderer" {
+			i++
 		}
 	}
-	return []string{}
+	return postRendererFlag, remaining
 }
 
 // getReleaseManifest confirms that a release is visible to helm and returns the release manifest

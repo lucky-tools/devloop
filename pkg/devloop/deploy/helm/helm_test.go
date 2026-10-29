@@ -1814,32 +1814,37 @@ func TestHasRunnableHooks(t *testing.T) {
 	}
 }
 
-func Test_getPostRendererFlag(t *testing.T) {
+func Test_splitPostRendererFlag(t *testing.T) {
 	tests := []struct {
-		description string
-		flags       []string
-		expected    []string
+		description       string
+		flags             []string
+		expectedFlag      []string
+		expectedRemaining []string
 	}{
 		{
-			description: "--post-render xxx found",
-			flags:       []string{"-f", "file.yaml", "--post-renderer", "xxx"},
-			expected:    []string{"--post-renderer", "xxx"},
+			description:       "--post-renderer value pair found",
+			flags:             []string{"-f", "file.yaml", "--post-renderer", "xxx"},
+			expectedFlag:      []string{"--post-renderer", "xxx"},
+			expectedRemaining: []string{"-f", "file.yaml"},
 		},
 		{
-			description: "--post-render=xxx found",
-			flags:       []string{"-f", "file.yaml", "--post-renderer=xxx"},
-			expected:    []string{"--post-renderer=xxx"},
+			description:       "--post-renderer=value found",
+			flags:             []string{"-f", "file.yaml", "--post-renderer=xxx"},
+			expectedFlag:      []string{"--post-renderer=xxx"},
+			expectedRemaining: []string{"-f", "file.yaml"},
 		},
 		{
-			description: "post renderer flags not found",
-			flags:       []string{"-f", "file.yaml", "--renderer-post=xxx"},
-			expected:    []string{},
+			description:       "no post-renderer flag",
+			flags:             []string{"-f", "file.yaml", "--wait"},
+			expectedFlag:      nil,
+			expectedRemaining: []string{"-f", "file.yaml", "--wait"},
 		},
 	}
 	for _, test := range tests {
 		testutil.Run(t, test.description, func(t *testutil.T) {
-			actual := getPostRendererFlag(test.flags)
-			t.CheckDeepEqual(test.expected, actual)
+			flag, remaining := splitPostRendererFlag(test.flags)
+			t.CheckDeepEqual(test.expectedFlag, flag)
+			t.CheckDeepEqual(test.expectedRemaining, remaining)
 		})
 	}
 }
