@@ -47,7 +47,7 @@ type RunBuilder struct {
 	stdin      []byte
 }
 
-const DefaultRepo = "us-central1-docker.pkg.dev/k8s-devloop/testing"
+const DefaultRepo = "ghcr.io/lucky-tools"
 
 // Apply runs `devloop apply` with the given arguments.
 func Apply(args ...string) *RunBuilder {
