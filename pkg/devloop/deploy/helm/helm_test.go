@@ -98,30 +98,32 @@ var testDeployPreservingOrderWithDependsOnConfig = latest.LegacyHelmDeploy{
 	 * level 1: B, D
 	 * level 2: A, E
 	 */
-	Releases: []latest.HelmRelease{{
-		Name:      "A",
-		ChartPath: "examples/test",
-		DependsOn: []string{"B", "C"},
-	}, {
-		Name:      "B",
-		ChartPath: "examples/test",
-		DependsOn: []string{"C"},
-	}, {
-		Name:      "C",
-		ChartPath: "examples/test",
-	}, {
-		Name:      "D",
-		ChartPath: "examples/test",
-		DependsOn: []string{"C"},
-	}, {
-		Name:      "E",
-		ChartPath: "examples/test",
-		DependsOn: []string{"D"},
-	}, {
-		Name:      "F",
-		ChartPath: "examples/test",
+	Releases: []latest.HelmRelease{
+		{
+			Name:      "A",
+			ChartPath: "examples/test",
+			DependsOn: []string{"B", "C"},
+		}, {
+			Name:      "B",
+			ChartPath: "examples/test",
+			DependsOn: []string{"C"},
+		}, {
+			Name:      "C",
+			ChartPath: "examples/test",
+		}, {
+			Name:      "D",
+			ChartPath: "examples/test",
+			DependsOn: []string{"C"},
+		}, {
+			Name:      "E",
+			ChartPath: "examples/test",
+			DependsOn: []string{"D"},
+		}, {
+			Name:      "F",
+			ChartPath: "examples/test",
+		},
 	},
-	}}
+}
 
 var testDeployNamespacedConfig = latest.LegacyHelmDeploy{
 	Releases: []latest.HelmRelease{{
@@ -204,6 +206,7 @@ var testDeployConfigVersionTemplated = latest.LegacyHelmDeploy{
 		Version:   "{{.VERSION}}",
 	}},
 }
+
 var testDeployConfigRepoTemplated = latest.LegacyHelmDeploy{
 	Releases: []latest.HelmRelease{{
 		Name:      "skaffold-helm",
@@ -260,13 +263,15 @@ var testDeployWithPackaged = latest.LegacyHelmDeploy{
 }
 
 var testDeployWithTemplatedName = latest.LegacyHelmDeploy{
-	Releases: []latest.HelmRelease{{
-		Name:      "{{.USER}}-skaffold-helm",
-		ChartPath: "examples/test",
-		Overrides: schemautil.HelmOverrides{Values: map[string]interface{}{"foo": "bar"}},
-		SetValues: map[string]string{
-			"some.key": "somevalue",
-		}},
+	Releases: []latest.HelmRelease{
+		{
+			Name:      "{{.USER}}-skaffold-helm",
+			ChartPath: "examples/test",
+			Overrides: schemautil.HelmOverrides{Values: map[string]interface{}{"foo": "bar"}},
+			SetValues: map[string]string{
+				"some.key": "somevalue",
+			},
+		},
 	},
 }
 
@@ -295,14 +300,16 @@ var testDeployRemoteChartVersion = latest.LegacyHelmDeploy{
 	}},
 }
 
-var upgradeOnChangeFalse = false
-var testDeployUpgradeOnChange = latest.LegacyHelmDeploy{
-	Releases: []latest.HelmRelease{{
-		Name:            "skaffold-helm-upgradeOnChange",
-		ChartPath:       "examples/test",
-		UpgradeOnChange: &upgradeOnChangeFalse,
-	}},
-}
+var (
+	upgradeOnChangeFalse      = false
+	testDeployUpgradeOnChange = latest.LegacyHelmDeploy{
+		Releases: []latest.HelmRelease{{
+			Name:            "skaffold-helm-upgradeOnChange",
+			ChartPath:       "examples/test",
+			UpgradeOnChange: &upgradeOnChangeFalse,
+		}},
+	}
+)
 
 var testTwoReleases = latest.LegacyHelmDeploy{
 	Releases: []latest.HelmRelease{{
@@ -314,19 +321,21 @@ var testTwoReleases = latest.LegacyHelmDeploy{
 	}},
 }
 
-var createNamespaceFlag = true
-var testDeployCreateNamespaceConfig = latest.LegacyHelmDeploy{
-	Releases: []latest.HelmRelease{{
-		Name:      "skaffold-helm",
-		ChartPath: "examples/test",
-		Overrides: schemautil.HelmOverrides{Values: map[string]interface{}{"foo": "bar"}},
-		SetValues: map[string]string{
-			"some.key": "somevalue",
-		},
-		Namespace:       "testReleaseNamespace",
-		CreateNamespace: &createNamespaceFlag,
-	}},
-}
+var (
+	createNamespaceFlag             = true
+	testDeployCreateNamespaceConfig = latest.LegacyHelmDeploy{
+		Releases: []latest.HelmRelease{{
+			Name:      "skaffold-helm",
+			ChartPath: "examples/test",
+			Overrides: schemautil.HelmOverrides{Values: map[string]interface{}{"foo": "bar"}},
+			SetValues: map[string]string{
+				"some.key": "somevalue",
+			},
+			Namespace:       "testReleaseNamespace",
+			CreateNamespace: &createNamespaceFlag,
+		}},
+	}
+)
 
 var testDeployNoOverridesConfig = latest.LegacyHelmDeploy{
 	Releases: []latest.HelmRelease{{
@@ -1457,7 +1466,8 @@ func TestHelmRender(t *testing.T) {
 				{
 					ImageName: "skaffold-helm",
 					Tag:       "skaffold-helm:tag1",
-				}},
+				},
+			},
 		},
 		{
 			description: "normal render (Helm v4)",
@@ -1473,7 +1483,8 @@ func TestHelmRender(t *testing.T) {
 				{
 					ImageName: "skaffold-helm",
 					Tag:       "skaffold-helm:tag1",
-				}},
+				},
+			},
 		},
 		{
 			description: "render with templated config",
@@ -1487,7 +1498,8 @@ func TestHelmRender(t *testing.T) {
 				{
 					ImageName: "skaffold-helm",
 					Tag:       "skaffold-helm:tag1",
-				}},
+				},
+			},
 		},
 		{
 			description: "render with templated values file (Helm v3)",
@@ -1501,7 +1513,8 @@ func TestHelmRender(t *testing.T) {
 				{
 					ImageName: "skaffold-helm",
 					Tag:       "skaffold-helm:tag1",
-				}},
+				},
+			},
 		},
 		{
 			description: "render with templated values file (Helm v4)",
@@ -1517,7 +1530,8 @@ func TestHelmRender(t *testing.T) {
 				{
 					ImageName: "skaffold-helm",
 					Tag:       "skaffold-helm:tag1",
-				}},
+				},
+			},
 		},
 		{
 			description: "render with missing templated release name should fail",
@@ -1582,7 +1596,8 @@ func TestHelmRender(t *testing.T) {
 				{
 					ImageName: "skaffold-helm",
 					Tag:       "skaffold-helm:tag1",
-				}},
+				},
+			},
 		},
 		{
 			description: "render with namespace from environment",
@@ -1595,7 +1610,8 @@ func TestHelmRender(t *testing.T) {
 				{
 					ImageName: "skaffold-helm",
 					Tag:       "skaffold-helm:tag1",
-				}},
+				},
+			},
 		},
 		{
 			description: "render with remote repo",
@@ -1608,7 +1624,8 @@ func TestHelmRender(t *testing.T) {
 				{
 					ImageName: "skaffold-helm",
 					Tag:       "skaffold-helm:tag1",
-				}},
+				},
+			},
 		},
 		{
 			description: "render with remote chart",
@@ -1667,7 +1684,8 @@ func TestHelmRender(t *testing.T) {
 				{
 					ImageName: "skaffold-helm",
 					Tag:       "skaffold-helm:tag1",
-				}},
+				},
+			},
 		},
 		{
 			description: "render with useHelmSecrets",
@@ -1751,8 +1769,9 @@ type helmConfig struct {
 	configFile            string
 }
 
-func (c *helmConfig) ForceDeploy() bool                                   { return c.force }
-func (c *helmConfig) GetKubeConfig() string                               { return kubectl.TestKubeConfig }
+func (c *helmConfig) ForceDeploy() bool     { return c.force }
+func (c *helmConfig) GetKubeConfig() string { return kubectl.TestKubeConfig }
+
 func (c *helmConfig) GetKubeContext() string                              { return kubectl.TestKubeContext }
 func (c *helmConfig) GetKubeNamespace() string                            { return c.namespace }
 func (c *helmConfig) GetNamespace() string                                { return c.namespace }
@@ -1801,17 +1820,20 @@ func Test_getPostRendererFlag(t *testing.T) {
 		flags       []string
 		expected    []string
 	}{
-		{description: "--post-render xxx found",
-			flags:    []string{"-f", "file.yaml", "--post-renderer", "xxx"},
-			expected: []string{"--post-renderer", "xxx"},
+		{
+			description: "--post-render xxx found",
+			flags:       []string{"-f", "file.yaml", "--post-renderer", "xxx"},
+			expected:    []string{"--post-renderer", "xxx"},
 		},
-		{description: "--post-render=xxx found",
-			flags:    []string{"-f", "file.yaml", "--post-renderer=xxx"},
-			expected: []string{"--post-renderer=xxx"},
+		{
+			description: "--post-render=xxx found",
+			flags:       []string{"-f", "file.yaml", "--post-renderer=xxx"},
+			expected:    []string{"--post-renderer=xxx"},
 		},
-		{description: "post renderer flags not found",
-			flags:    []string{"-f", "file.yaml", "--renderer-post=xxx"},
-			expected: []string{},
+		{
+			description: "post renderer flags not found",
+			flags:       []string{"-f", "file.yaml", "--renderer-post=xxx"},
+			expected:    []string{},
 		},
 	}
 	for _, test := range tests {

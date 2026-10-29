@@ -46,7 +46,6 @@ var (
 	v                 string
 	defaultColor      int
 	forceColors       bool
-	overwrite         bool
 	interactive       bool
 	timestamps        bool
 	shutdownAPIServer func() error

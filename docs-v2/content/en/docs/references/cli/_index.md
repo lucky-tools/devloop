@@ -20,10 +20,7 @@ Pipeline building blocks for CI/CD:
 * [devloop delete](#devloop-delete) - to cleanup the deployed artifacts
 * [devloop render](#devloop-render) - build and tag images, and output templated Kubernetes manifests
 * [devloop apply](#devloop-apply) - to apply hydrated manifests to a cluster
-
-Getting started with a new project:
-
-* [devloop fix](#devloop-fix) - to upgrade from older devloop.yaml schema version to newer devloop.yaml schema version
+* [devloop restart](#devloop-restart) - update image tags and rolling-restart workloads without re-applying manifests
 
 Other Commands:
 
@@ -33,6 +30,7 @@ Other Commands:
 * [devloop config](#devloop-config) - manage context specific parameters
 * [devloop credits](#devloop-credits) - export third party notices to given path (./devloop-credits by default)
 * [devloop diagnose](#devloop-diagnose) - diagnostics of Devloop works in your project
+* [devloop pull](#devloop-pull) - pull an image from a registry and save it as a tarball
 * [devloop schema](#devloop-schema) - list and print json schemas used to validate devloop.yaml configuration
 
 
@@ -88,7 +86,6 @@ Other Commands:
   diagnose       Run a diagnostic on Devloop
   encrypt        Encrypt a value with the global Devloop encryption key
   exec           Execute a custom action
-  fix            Update old configuration to a newer schema version
   pull           Pull an image from a registry and save it as a tarball
   schema         List JSON schemas used to validate devloop.yaml configuration
   version        Print the version information
@@ -1483,69 +1480,6 @@ Env vars:
 * `DEVLOOP_RPC_HTTP_PORT` (same as `--rpc-http-port`)
 * `DEVLOOP_RPC_PORT` (same as `--rpc-port`)
 * `DEVLOOP_SYNC_REMOTE_CACHE` (same as `--sync-remote-cache`)
-
-### devloop fix
-
-Update old configuration to a newer schema version
-
-```
-
-
-Examples:
-  # Update "devloop.yaml" in the current folder to the latest version
-  devloop fix
-
-  # Update "devloop.yaml" in the current folder to version "devloop/v1"
-  devloop fix --version devloop/v1
-
-  # Update "devloop.yaml" in the current folder in-place
-  devloop fix --overwrite
-
-  # Update "devloop.yaml" and write the output to a new file
-  devloop fix --output devloop.new.yaml
-
-Options:
-    --assume-yes=false:
-	If true, devloop will skip yes/no confirmation from the user and default to yes
-
-    -f, --filename='devloop.yaml':
-	Path or URL to the Devloop config file
-
-    -m, --module=[]:
-	Filter Devloop configs to only the provided named modules
-
-    -o, --output='':
-	File to write the changed config (instead of standard output)
-
-    --overwrite=false:
-	Overwrite original config with fixed config
-
-    --remote-cache-dir='':
-	Specify the location of the remote cache (default $HOME/.devloop/remote-cache)
-
-    --sync-remote-cache='missing':
-	Controls how Devloop manages the remote config cache (see `remote-cache-dir`). One of `always` (default), `missing`, or `never`. `always` syncs remote repositories to latest on access. `missing` only clones remote repositories if they do not exist locally. `never` means the user takes responsibility for updating remote repositories.
-
-    --version='devloop/v1':
-	Target schema version to upgrade to
-
-Usage:
-  devloop fix [options]
-
-Use "devloop options" for a list of global command-line options (applies to all commands).
-
-
-```
-Env vars:
-
-* `DEVLOOP_ASSUME_YES` (same as `--assume-yes`)
-* `DEVLOOP_FILENAME` (same as `--filename`)
-* `DEVLOOP_MODULE` (same as `--module`)
-* `DEVLOOP_OUTPUT` (same as `--output`)
-* `DEVLOOP_OVERWRITE` (same as `--overwrite`)
-* `DEVLOOP_REMOTE_CACHE_DIR` (same as `--remote-cache-dir`)
-* `DEVLOOP_SYNC_REMOTE_CACHE` (same as `--sync-remote-cache`)
-* `DEVLOOP_VERSION` (same as `--version`)
 
 ### devloop options
 

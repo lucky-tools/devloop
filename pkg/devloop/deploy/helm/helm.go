@@ -576,7 +576,7 @@ func (h *Deployer) deployRelease(ctx context.Context, out io.Writer, releaseName
 			return nil, nil, helm.UserErr("cannot marshal overrides to create overrides values.yaml", err)
 		}
 
-		if err := os.WriteFile(constants.HelmOverridesFilename, overrides, 0666); err != nil {
+		if err := os.WriteFile(constants.HelmOverridesFilename, overrides, 0o666); err != nil {
 			return nil, nil, helm.UserErr(fmt.Sprintf("cannot create file %q", constants.HelmOverridesFilename), err)
 		}
 
