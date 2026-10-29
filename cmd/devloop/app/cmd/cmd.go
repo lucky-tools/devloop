@@ -161,7 +161,6 @@ func NewDevloopCommand(out, errOut io.Writer) *cobra.Command {
 
 	// other commands
 	rootCmd.AddCommand(NewCmdVersion())
-	rootCmd.AddCommand(NewCmdFix())
 	rootCmd.AddCommand(NewCmdCompletion())
 	rootCmd.AddCommand(NewCmdConfig())
 	rootCmd.AddCommand(NewCmdFindConfigs())

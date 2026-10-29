@@ -59,11 +59,6 @@ func Dev(args ...string) *RunBuilder {
 	return withDefaults("dev", args)
 }
 
-// Fix runs `devloop fix` with the given arguments.
-func Fix(args ...string) *RunBuilder {
-	return withDefaults("fix", args)
-}
-
 // Build runs `devloop build` with the given arguments.
 func Build(args ...string) *RunBuilder {
 	return withDefaults("build", args)

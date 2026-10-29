@@ -155,7 +155,6 @@ var flagRegistry = []Flag{
 		DefValue: "always",
 		DefValuePerCommand: map[string]interface{}{
 			"diagnose": "missing",
-			"fix":      "missing",
 		},
 		FlagAddMethod: "Var",
 		DefinedOn:     []string{"all"},
