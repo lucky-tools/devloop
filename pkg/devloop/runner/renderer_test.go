@@ -151,7 +151,7 @@ func TestGetRenderer(tOuter *testing.T) {
 							"default": test.cfg,
 						},
 						[]string{"default"}),
-				}, "", map[string]string{})
+				}, "", map[string]string{}, false)
 
 				t.CheckError(test.shouldErr, err)
 				expected := test.expected()

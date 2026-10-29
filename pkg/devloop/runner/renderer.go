@@ -21,12 +21,14 @@ import (
 
 	"github.com/lucky-tools/devloop/pkg/devloop/hooks"
 	"github.com/lucky-tools/devloop/pkg/devloop/render/renderer"
+	"github.com/lucky-tools/devloop/pkg/devloop/render/renderer/helm"
 	"github.com/lucky-tools/devloop/pkg/devloop/runner/runcontext"
+	"github.com/lucky-tools/devloop/pkg/devloop/schema/latest"
 	"github.com/lucky-tools/devloop/pkg/devloop/util"
 )
 
 // GetRenderer creates a renderer from a given RunContext and pipeline definitions.
-func GetRenderer(ctx context.Context, runCtx *runcontext.RunContext, hydrationDir string, labels map[string]string) (renderer.Renderer, error) {
+func GetRenderer(ctx context.Context, runCtx *runcontext.RunContext, hydrationDir string, labels map[string]string, usingLegacyHelmDeploy bool) (renderer.Renderer, error) {
 	configNames := runCtx.Pipelines.AllOrderedConfigNames()
 
 	var gr renderer.GroupRenderer
@@ -53,5 +55,52 @@ func GetRenderer(ctx context.Context, runCtx *runcontext.RunContext, hydrationDi
 		gr.HookRunners = append(gr.HookRunners, hooks.NewRenderRunner(p.Render.LifecycleHooks, &[]string{runCtx.GetNamespace()},
 			hooks.NewRenderEnvOpts(runCtx.KubeContext, []string{runCtx.GetNamespace()}), configName))
 	}
+	// In case of legacy helm deployer configured and render/restart command used
+	// force a helm renderer from deploy helm config
+	if usingLegacyHelmDeploy && (runCtx.Opts.Command == "render" || runCtx.Opts.Command == "restart") {
+		for _, configName := range configNames {
+			p := runCtx.Pipelines.GetForConfigName(configName)
+			legacyHelmReleases := filterDuplicates(p.Deploy.LegacyHelmDeploy, p.Render.Helm)
+			if len(legacyHelmReleases) == 0 {
+				continue
+			}
+			rCfg := latest.RenderConfig{
+				Generate: latest.Generate{
+					Helm: &latest.Helm{
+						Releases: legacyHelmReleases,
+					},
+				},
+			}
+			r, err := helm.New(ctx, runCtx, rCfg, labels, configName, nil)
+			if err != nil {
+				return nil, err
+			}
+			gr.Renderers = append(gr.Renderers, r)
+		}
+	}
 	return renderer.NewRenderMux(gr), nil
+}
+
+// filterDuplicates removes duplicate releases defined in the legacy helm deployer
+func filterDuplicates(l *latest.LegacyHelmDeploy, h *latest.Helm) []latest.HelmRelease {
+	if l == nil {
+		return nil
+	}
+	if h == nil {
+		return l.Releases
+	}
+	var rs []latest.HelmRelease
+	for i := range l.Releases {
+		isDup := false
+		for _, r := range h.Releases {
+			if r.Name == l.Releases[i].Name {
+				isDup = true
+				break
+			}
+		}
+		if !isDup {
+			rs = append(rs, l.Releases[i])
+		}
+	}
+	return rs
 }

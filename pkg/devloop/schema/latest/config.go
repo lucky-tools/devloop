@@ -787,6 +787,9 @@ type DeployType struct {
 	// DockerDeploy *alpha* uses the `docker` CLI to create application containers in Docker.
 	DockerDeploy *DockerDeploy `yaml:"docker,omitempty"`
 
+	// LegacyHelmDeploy *beta* uses the `helm` CLI to apply the charts to the cluster.
+	LegacyHelmDeploy *LegacyHelmDeploy `yaml:"helm,omitempty"`
+
 	// KptDeploy *alpha* uses the `kpt` CLI to manage and deploy manifests.
 	KptDeploy *KptDeploy `yaml:"kpt,omitempty"`
 
@@ -866,6 +869,23 @@ type KubectlFlags struct {
 	// DisableValidation passes the `--validate=false` flag to supported
 	// `kubectl` commands when enabled.
 	DisableValidation bool `yaml:"disableValidation,omitempty"`
+}
+
+// LegacyHelmDeploy *beta* uses the `helm` CLI to apply the charts to the cluster.
+type LegacyHelmDeploy struct {
+	// Concurrency is how many packages can be installed concurrently. 0 means "no-limit".
+	// Defaults to `1`.
+	Concurrency *int `yaml:"concurrency,omitempty"`
+
+	// Releases is a list of Helm releases.
+	Releases []HelmRelease `yaml:"releases,omitempty"`
+
+	// Flags are additional option flags that are passed on the command
+	// line to `helm`.
+	Flags HelmDeployFlags `yaml:"flags,omitempty"`
+
+	// LifecycleHooks describes a set of lifecycle hooks that are executed before and after every deploy.
+	LifecycleHooks DeployHooks `yaml:"hooks,omitempty"`
 }
 
 // HelmDeployFlags are additional option flags that are passed on the command

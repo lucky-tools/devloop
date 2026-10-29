@@ -79,7 +79,7 @@ func NewForConfig(ctx context.Context, runCtx *runcontext.RunContext) (*DevloopR
 		return nil, fmt.Errorf("getting render output path: %w", err)
 	}
 
-	renderer, err := GetRenderer(ctx, runCtx, hydrationDir, labeller.Labels())
+	renderer, err := GetRenderer(ctx, runCtx, hydrationDir, labeller.Labels(), runCtx.UsingLegacyHelmDeploy())
 	if err != nil {
 		endTrace(instrumentation.TraceEndError(err))
 		return nil, fmt.Errorf("creating renderer: %w", err)

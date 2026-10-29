@@ -1204,6 +1204,11 @@
           "description": "*alpha* uses the `docker` CLI to create application containers in Docker.",
           "x-intellij-html-description": "<em>alpha</em> uses the <code>docker</code> CLI to create application containers in Docker."
         },
+        "helm": {
+          "$ref": "#/definitions/LegacyHelmDeploy",
+          "description": "*beta* uses the `helm` CLI to apply the charts to the cluster.",
+          "x-intellij-html-description": "<em>beta</em> uses the <code>helm</code> CLI to apply the charts to the cluster."
+        },
         "kpt": {
           "$ref": "#/definitions/KptDeploy",
           "description": "*alpha* uses the `kpt` CLI to manage and deploy manifests.",
@@ -1246,6 +1251,7 @@
       },
       "preferredOrder": [
         "docker",
+        "helm",
         "kpt",
         "kubectl",
         "cloudrun",
@@ -2931,6 +2937,44 @@
       "type": "object",
       "description": "defines the paths to be modified with kustomize, along with extra flags to be passed to kustomize.",
       "x-intellij-html-description": "defines the paths to be modified with kustomize, along with extra flags to be passed to kustomize."
+    },
+    "LegacyHelmDeploy": {
+      "properties": {
+        "concurrency": {
+          "type": "integer",
+          "description": "how many packages can be installed concurrently. 0 means \"no-limit\".",
+          "x-intellij-html-description": "how many packages can be installed concurrently. 0 means &quot;no-limit&quot;.",
+          "default": "1"
+        },
+        "flags": {
+          "$ref": "#/definitions/HelmDeployFlags",
+          "description": "additional option flags that are passed on the command line to `helm`.",
+          "x-intellij-html-description": "additional option flags that are passed on the command line to <code>helm</code>."
+        },
+        "hooks": {
+          "$ref": "#/definitions/DeployHooks",
+          "description": "describes a set of lifecycle hooks that are executed before and after every deploy.",
+          "x-intellij-html-description": "describes a set of lifecycle hooks that are executed before and after every deploy."
+        },
+        "releases": {
+          "items": {
+            "$ref": "#/definitions/HelmRelease"
+          },
+          "type": "array",
+          "description": "a list of Helm releases.",
+          "x-intellij-html-description": "a list of Helm releases."
+        }
+      },
+      "preferredOrder": [
+        "concurrency",
+        "releases",
+        "flags",
+        "hooks"
+      ],
+      "additionalProperties": false,
+      "type": "object",
+      "description": "*beta* uses the `helm` CLI to apply the charts to the cluster.",
+      "x-intellij-html-description": "<em>beta</em> uses the <code>helm</code> CLI to apply the charts to the cluster."
     },
     "LocalBuild": {
       "type": "object",
