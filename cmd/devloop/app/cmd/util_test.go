@@ -17,6 +17,7 @@ limitations under the License.
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"testing"
@@ -198,5 +199,67 @@ func Test_getBuildArtifactsAndSetTags(t *testing.T) {
 			})
 			t.CheckErrorAndDeepEqual(test.shouldErr, err, test.expected, artifacts)
 		})
+	}
+}
+
+func Test_fillTagsFromTagPolicy(t *testing.T) {
+	artifacts := []*latest.Artifact{
+		{ImageName: "image1"},
+		{ImageName: "image2"},
+	}
+	tagFn := func(_ context.Context, a latest.Artifact) (string, error) {
+		return a.ImageName + ":v1", nil
+	}
+
+	tests := []struct {
+		description string
+		builds      []graph.Artifact
+		tagFn       TagFn
+		expected    []graph.Artifact
+		shouldErr   bool
+	}{
+		{
+			description: "fills empty tags from tag policy",
+			builds:      []graph.Artifact{{ImageName: "image1"}, {ImageName: "image2"}},
+			tagFn:       tagFn,
+			expected:    []graph.Artifact{{ImageName: "image1", Tag: "image1:v1"}, {ImageName: "image2", Tag: "image2:v1"}},
+		},
+		{
+			description: "keeps tags provided explicitly",
+			builds:      []graph.Artifact{{ImageName: "image1", Tag: "image1:explicit"}, {ImageName: "image2"}},
+			tagFn:       tagFn,
+			expected:    []graph.Artifact{{ImageName: "image1", Tag: "image1:explicit"}, {ImageName: "image2", Tag: "image2:v1"}},
+		},
+		{
+			description: "no tag policy fallback",
+			builds:      []graph.Artifact{{ImageName: "image1"}},
+			tagFn:       nil,
+			expected:    []graph.Artifact{{ImageName: "image1"}},
+		},
+		{
+			description: "tag policy error propagates",
+			builds:      []graph.Artifact{{ImageName: "image1"}},
+			tagFn: func(_ context.Context, a latest.Artifact) (string, error) {
+				return "", errors.New("boom")
+			},
+			shouldErr: true,
+		},
+	}
+	for _, test := range tests {
+		testutil.Run(t, test.description, func(t *testutil.T) {
+			got, err := fillTagsFromTagPolicy(context.Background(), artifacts, test.builds, test.tagFn)
+			t.CheckErrorAndDeepEqual(test.shouldErr, err, test.expected, got)
+		})
+	}
+}
+
+func Test_findArtifactByName(t *testing.T) {
+	artifacts := []*latest.Artifact{{ImageName: "image1"}, {ImageName: "image2"}}
+
+	if a := findArtifactByName(artifacts, "image2"); a == nil || a.ImageName != "image2" {
+		t.Fatalf("findArtifactByName(image2) = %v, want image2", a)
+	}
+	if a := findArtifactByName(artifacts, "missing"); a != nil {
+		t.Fatalf("findArtifactByName(missing) = %v, want nil", a)
 	}
 }

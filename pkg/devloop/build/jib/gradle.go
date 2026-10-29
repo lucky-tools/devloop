@@ -91,12 +91,12 @@ func getDependenciesGradle(ctx context.Context, workspace string, a *latest.JibA
 }
 
 func getCommandGradle(ctx context.Context, workspace string, a *latest.JibArtifact) exec.Cmd {
-	args := append(gradleArgsFunc(a, "_jibDevloopFilesV2", MinimumJibGradleVersion), "-q", "--console=plain")
+	args := append(gradleArgsFunc(a, "_jibSkaffoldFilesV2", MinimumJibGradleVersion), "-q", "--console=plain")
 	return GradleCommand.CreateCommand(ctx, workspace, args)
 }
 
 func getSyncMapCommandGradle(ctx context.Context, workspace string, a *latest.JibArtifact) *exec.Cmd {
-	cmd := GradleCommand.CreateCommand(ctx, workspace, gradleBuildArgsFunc("_jibDevloopSyncMap", a, true, false, MinimumJibMavenVersionForSync))
+	cmd := GradleCommand.CreateCommand(ctx, workspace, gradleBuildArgsFunc("_jibSkaffoldSyncMap", a, true, false, MinimumJibMavenVersionForSync))
 	return &cmd
 }
 
@@ -142,7 +142,7 @@ func gradleBuildArgs(task string, a *latest.JibArtifact, skipTests, showColors b
 
 // Do not use directly, use gradleArgsFunc
 func gradleArgs(a *latest.JibArtifact, task string, minimumVersion string) []string {
-	args := []string{"_devloopFailIfJibOutOfDate", "-Djib.requiredVersion=" + minimumVersion}
+	args := []string{"_skaffoldFailIfJibOutOfDate", "-Djib.requiredVersion=" + minimumVersion}
 	if a.Project == "" {
 		return append(args, ":"+task)
 	}

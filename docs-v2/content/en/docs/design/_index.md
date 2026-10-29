@@ -16,7 +16,6 @@ provides built-in support for the following tools:
 * **Build**
   * Dockerfile locally, in-cluster with kaniko
   * Jib Maven and Jib Gradle locally
-  * Cloud Native Buildpacks locally
   * Custom script locally or in-cluster
 * **Test**
   * [container-structure-test](https://github.com/GoogleContainerTools/container-structure-test)

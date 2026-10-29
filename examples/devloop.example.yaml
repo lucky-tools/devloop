@@ -116,7 +116,7 @@ build:
             dest: /app                  # 容器内目标路径（必填）
             strip: src/                 # 去掉的路径前缀（optional）
         # infer: ["src/**"]             # 或：从 Dockerfile 推断（oneOf）
-        # auto: true                    # 或：构建系统自动发现（仅 jib/buildpacks，oneOf）
+        # auto: true                    # 或：构建系统自动发现（仅 jib，oneOf）
         hooks:                          # sync 前后生命周期钩子（optional）
           before: []
           after: []
@@ -132,29 +132,6 @@ build:
         after: []                       # 构建后
       platforms: [linux/amd64, linux/arm64]  # 该 artifact 的构建平台（覆盖顶层 platforms）
       runtimeType: go                   # 语言运行时：go/nodejs/jvm/python/netcore（debug 用）
-
-    # ================= buildpacks 构建（oneOf，与 docker 二选一） =================
-    # - image: gcr.io/example/my-app
-    #   context: .
-    #   buildpacks:                     # 构建器（oneOf）
-    #     builder: gcr.io/buildpacks/builder:v1   # builder 镜像
-    #     runImage: gcr.io/buildpacks/gcp/run:v1  # 覆盖 run image（optional）
-    #     env:                          # 构建时环境变量，value 支持 {{.ENV}} 模板
-    #       - GOPROXY={{.GOPROXY}}
-    #     buildpacks:                   # 显式指定 buildpack 列表（可选）
-    #       - gcr.io/buildpacks/go
-    #     trustBuilder: false           # 信任 builder
-    #     clearCache: false             # 清理旧缓存卷
-    #     projectDescriptor: project.toml  # 项目描述文件（默认 project.toml）
-    #     dependencies:                 # 文件依赖（监听哪些文件触发重建/同步）
-    #       paths: ["src/**"]           # 依赖路径（oneOf）
-    #       ignore: ["src/**/*_test.go"]  # 忽略路径（需配合 paths）
-    #     volumes:                      # 挂载宿主机目录到构建容器
-    #       - host: ./cache             # 宿主机路径（必填）
-    #         target: /cache            # 容器内路径（必填）
-    #         options: ro               # 挂载选项：ro/rw
-    #     buildArgs:                    # 传给 pack build 的额外参数
-    #       - --network=host
 
     # ================= ko 构建（Go，oneOf） =================
     # - image: gcr.io/example/my-go-app

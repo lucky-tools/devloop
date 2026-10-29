@@ -13,7 +13,7 @@ To learn more about how to set up Devloop and a Kubernetes cluster, see the [qui
 
 ## Tutorial - Simple artifact dependency
 
-This tutorial will be based on the [simple-artifact-dependency](https://github.com/lucky-tools/devloop/tree/main/examples/simple-artifact-dependency) example in our repository.
+This tutorial will be based on the [simple-artifact-dependency](https://github.com/lucky-tools/devloop/tree/master/examples/simple-artifact-dependency) example in our repository.
 
 
 ## Adding an artifact dependency
@@ -30,7 +30,7 @@ The image alias `BASE` is now available as a build-arg in the Dockerfile for `ap
 
 ## Build and Deploy
 
-In the [simple-artifact-dependency](https://github.com/lucky-tools/devloop/tree/main/examples/simple-artifact-dependency) directory, run:
+In the [simple-artifact-dependency](https://github.com/lucky-tools/devloop/tree/master/examples/simple-artifact-dependency) directory, run:
 
 ```text
 devloop dev

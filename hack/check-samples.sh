@@ -33,7 +33,7 @@ fi
 
 MISSING_DEVLOOP_YAMLs="false"
 # to whitelist an example from having a devloop.yaml, add a `grep -v "example_name"` here
-cat $EXAMPLES | grep -v "compose" | grep -v "buildpacks-node-tutorial" | grep -v "jaeger-devloop-trace" | grep -v "jib-sync" | while read e; do
+cat $EXAMPLES | grep -v "jaeger-devloop-trace" | grep -v "jib-sync" | while read e; do
   NUM_DEVLOOP_YAML=$(find "examples/$e" -type f -name devloop.yaml | wc -l)
   if [[ NUM_DEVLOOP_YAML -eq 0 ]]; then
     echo "examples/$e doesn't have a devloop.yaml!"

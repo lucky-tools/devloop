@@ -17,7 +17,7 @@ To learn more about how to set up, see the [getting started docs](https://devloo
 
 This tutorial will demonstrate how Devloop can inject image repo and image tag values into the build and deploy stanzas.
 
-First, clone the Devloop [repo](https://github.com/lucky-tools/devloop) and navigate to the [templated-fields example](https://github.com/lucky-tools/devloop/tree/main/examples/templated-fields) for sample code:
+First, clone the Devloop [repo](https://github.com/lucky-tools/devloop) and navigate to the [templated-fields example](https://github.com/lucky-tools/devloop/tree/master/examples/templated-fields) for sample code:
 
 ```sh
 git clone https://github.com/lucky-tools/devloop

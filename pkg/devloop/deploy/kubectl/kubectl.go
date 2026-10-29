@@ -38,6 +38,7 @@ import (
 	"github.com/lucky-tools/devloop/pkg/devloop/hooks"
 	"github.com/lucky-tools/devloop/pkg/devloop/instrumentation"
 	"github.com/lucky-tools/devloop/pkg/devloop/kubernetes"
+	kubernetescontext "github.com/lucky-tools/devloop/pkg/devloop/kubernetes/context"
 	k8slogger "github.com/lucky-tools/devloop/pkg/devloop/kubernetes/logger"
 	"github.com/lucky-tools/devloop/pkg/devloop/kubernetes/manifest"
 	kstatus "github.com/lucky-tools/devloop/pkg/devloop/kubernetes/status"
@@ -87,11 +88,19 @@ type Deployer struct {
 // with the needed configuration for `kubectl apply`
 func NewDeployer(cfg Config, labeller *label.DefaultLabeller, d *latest.KubectlDeploy, artifacts []*latest.Artifact, configName string, customResourceSelectors []manifest.GroupKindSelector) (*Deployer, error) {
 	defaultNamespace := ""
-	b, err := util.RunCmdOutOnce(context.TODO(), exec.Command("kubectl", "config", "view", "--minify", "-o", "jsonpath='{..namespace}'"))
-	if err == nil {
-		defaultNamespace = strings.Trim(string(b), "'")
-		if defaultNamespace == "default" {
-			defaultNamespace = ""
+	if d.UseAPI {
+		// Read the context's namespace via client-go instead of shelling out to
+		// `kubectl`, so the API-backed deployer needs no kubectl binary.
+		if ns, err := kubernetescontext.GetNamespace(cfg.GetKubeContext()); err == nil && ns != "default" {
+			defaultNamespace = ns
+		}
+	} else {
+		b, err := util.RunCmdOutOnce(context.TODO(), exec.Command("kubectl", "config", "view", "--minify", "-o", "jsonpath='{..namespace}'"))
+		if err == nil {
+			defaultNamespace = strings.Trim(string(b), "'")
+			if defaultNamespace == "default" {
+				defaultNamespace = ""
+			}
 		}
 	}
 	if d.DefaultNamespace != nil {
@@ -104,7 +113,8 @@ func NewDeployer(cfg Config, labeller *label.DefaultLabeller, d *latest.KubectlD
 
 	podSelector := kubernetes.NewImageList()
 	kubectl := NewCLI(cfg, d.Flags, defaultNamespace)
-	namespaces, err := deployutil.GetAllPodNamespaces(cfg.GetNamespace())
+	kubectl.useAPI = d.UseAPI
+	namespaces, err := deployutil.GetAllPodNamespaces(cfg.GetNamespace(), cfg.GetPipelines())
 	if err != nil {
 		olog.Entry(context.TODO()).Warn("unable to parse namespaces - deploy might not work correctly!")
 	}

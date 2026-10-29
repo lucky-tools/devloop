@@ -348,7 +348,6 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  annotations: null
   labels:
     app: devloop-helm
     chart: devloop-helm-0.1.0
@@ -569,7 +568,6 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  annotations: null
   labels:
     app: devloop-helm
     chart: devloop-helm-0.1.0
@@ -628,10 +626,9 @@ kind: Config
 build:
   artifacts: []
 
-deploy:
-  kubectl:
-    manifests:
-      - deployment.yaml
+manifests:
+  rawYaml:
+    - deployment.yaml
 `,
 			buildOutputFilePath: "testdata/render/build-output.json",
 			offline:             false,
@@ -669,10 +666,9 @@ kind: Config
 build:
   artifacts: []
 
-deploy:
-  kubectl:
-    manifests:
-      - deployment.yaml
+manifests:
+  rawYaml:
+    - deployment.yaml
 `,
 			buildOutputFilePath: "testdata/render/build-output.json",
 			offline:             true,
@@ -712,10 +708,9 @@ kind: Config
 build:
   artifacts: []
 
-deploy:
-  kubectl:
-    manifests:
-      - deployment.yaml
+manifests:
+  rawYaml:
+    - deployment.yaml
 `,
 			buildOutputFilePath: "testdata/render/build-output.json",
 			offline:             true,
@@ -755,7 +750,7 @@ kind: Config
 build:
   artifacts: []
 
-deploy:
+manifests:
   kustomize: {} # defaults to current working directory
 `,
 			buildOutputFilePath: "testdata/render/build-output.json",
@@ -807,7 +802,7 @@ kind: Config
 build:
   artifacts: []
 
-deploy:
+manifests:
   kustomize: {} # defaults to current working directory
 `,
 			buildOutputFilePath: "testdata/render/build-output.json",
@@ -1070,10 +1065,9 @@ kind: Config
 build:
   artifacts: []
 
-deploy:
-  kubectl:
-    manifests:
-      - deployment.yaml
+manifests:
+  rawYaml:
+    - deployment.yaml
 `,
 			images:  "12345.dkr.ecr.eu-central-1.amazonaws.com/my/project-a:4da6a56988057d23f68a4e988f4905dd930ea438-dirty@sha256:d8a33c260c50385ea54077bc7032dba0a860dc8870464f6795fd0aa548d117bf,gcr.io/my/project-b:764841f8bac17e625724adcbf0d28013f22d058f-dirty@sha256:79e160161fd8190acae2d04d8f296a27a562c8a59732c64ac71c99009a6e89bc",
 			offline: false,
@@ -2174,7 +2168,7 @@ metadata:
 
 spec:
   containers:
-  - image: us-central1-docker.pkg.dev/k8s-devloop/testing/multi-config-module1:customtag
+  - image: ghcr.io/lucky-tools/multi-config-module1:customtag
     name: module1
 `,
 		},
@@ -2191,7 +2185,7 @@ metadata:
     app2: after-change-2
 spec:
   containers:
-  - image: us-central1-docker.pkg.dev/k8s-devloop/testing/multi-config-module1:customtag
+  - image: ghcr.io/lucky-tools/multi-config-module1:customtag
     name: module1
 `,
 		},
@@ -2208,7 +2202,7 @@ metadata:
     app2: after-change-2
 spec:
   containers:
-  - image: us-central1-docker.pkg.dev/k8s-devloop/testing/multi-config-module1:customtag
+  - image: ghcr.io/lucky-tools/multi-config-module1:customtag
     name: module1
 `,
 		},
@@ -2225,7 +2219,7 @@ metadata:
   name: module1
 spec:
   containers:
-    - image: us-central1-docker.pkg.dev/k8s-devloop/testing/multi-config-module1:customtag
+    - image: ghcr.io/lucky-tools/multi-config-module1:customtag
       name: module1
 ---
 apiVersion: v1
@@ -2236,7 +2230,7 @@ metadata:
   name: module2
 spec:
   containers:
-    - image: us-central1-docker.pkg.dev/k8s-devloop/testing/multi-config-module2:customtag
+    - image: ghcr.io/lucky-tools/multi-config-module2:customtag
       name: module2
 `,
 		},
@@ -2253,7 +2247,7 @@ metadata:
   name: module1
 spec:
   containers:
-    - image: us-central1-docker.pkg.dev/k8s-devloop/testing/multi-config-module1:customtag
+    - image: ghcr.io/lucky-tools/multi-config-module1:customtag
       name: module1
 ---
 apiVersion: v1
@@ -2264,7 +2258,7 @@ metadata:
   name: module2
 spec:
   containers:
-    - image: us-central1-docker.pkg.dev/k8s-devloop/testing/multi-config-module2:customtag
+    - image: ghcr.io/lucky-tools/multi-config-module2:customtag
       name: module2
 `,
 		},
@@ -2281,7 +2275,7 @@ metadata:
   name: module1
 spec:
   containers:
-    - image: us-central1-docker.pkg.dev/k8s-devloop/testing/multi-config-module1:customtag
+    - image: ghcr.io/lucky-tools/multi-config-module1:customtag
       name: module1
 `,
 			expectedStderr: `Starting post-render hooks...
@@ -2646,7 +2640,6 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  annotations: null
   labels:
     app: devloop-helm
     chart: devloop-helm-0.1.0

@@ -40,7 +40,8 @@ import (
 )
 
 const (
-	configFileDir = ".docker"
+	configFileDir        = ".docker"
+	devloopConfigFileDir = ".devloop"
 )
 
 var (
@@ -66,8 +67,25 @@ func init() {
 		return home
 	}
 	if configDir == "" {
-		configDir = filepath.Join(getHomeDir(), configFileDir)
+		configDir = resolveConfigDir(getHomeDir())
 	}
+}
+
+// resolveConfigDir returns the directory holding the docker auth config file.
+// DOCKER_CONFIG, when set, takes priority (handled before this is called).
+// Otherwise the default ~/.docker is used when its config.json exists, falling
+// back to ~/.devloop/config.json, and finally defaulting to ~/.docker.
+func resolveConfigDir(home string) string {
+	dockerDir := filepath.Join(home, configFileDir)
+	devloopDir := filepath.Join(home, devloopConfigFileDir)
+
+	if _, err := os.Stat(filepath.Join(dockerDir, config.ConfigFileName)); err == nil {
+		return dockerDir
+	}
+	if _, err := os.Stat(filepath.Join(devloopDir, config.ConfigFileName)); err == nil {
+		return devloopDir
+	}
+	return dockerDir
 }
 
 // AuthConfigHelper exists for testing purposes since GetAuthConfig shells out

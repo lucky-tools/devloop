@@ -510,7 +510,7 @@ func (l *localDaemon) Pull(ctx context.Context, out io.Writer, ref string, platf
 
 	// Set CLOUDSDK_CORE_VERBOSITY to suppress error messages emitted by docker-credential-gcloud
 	// when the user is not authenticated or lacks credentials to pull the given image.  The errors
-	// are irrelevant when the image is public (e.g., `gcr.io/buildpacks/builder:v1`).`
+	// are irrelevant when the image is public.
 	// If the image is private, the error from GCR directs the user to the GCR authentication
 	// page which provides steps to rememdy the situation.
 	if v, found := os.LookupEnv("CLOUDSDK_CORE_VERBOSITY"); found {

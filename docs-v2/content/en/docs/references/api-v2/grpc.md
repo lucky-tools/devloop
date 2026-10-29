@@ -23,7 +23,7 @@ We also generate the [reference doc for the HTTP layer]({{<relref "/docs/referen
 
 ## v2/devloop.proto
 
-You can find the source for v2/devloop.proto [on Github](https://github.com/lucky-tools/devloop/blob/main/proto/v2/devloop.proto).
+You can find the source for v2/devloop.proto [on Github](https://github.com/lucky-tools/devloop/blob/master/proto/v2/devloop.proto).
 
 
 
@@ -995,7 +995,6 @@ Enum indicating builders used
 | ---- |:------:| ----------- |
 | UNKNOWN_BUILDER_TYPE | 0 | Could not determine builder type |
 | JIB | 1 | JIB Builder |
-| BUILDPACKS | 3 | Buildpacks Builder |
 | CUSTOM | 4 | Custom Builder |
 | KANIKO | 5 | Kaniko Builder |
 | DOCKER | 6 | Docker Builder |

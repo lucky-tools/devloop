@@ -47,7 +47,7 @@ type RunBuilder struct {
 	stdin      []byte
 }
 
-const DefaultRepo = "us-central1-docker.pkg.dev/k8s-devloop/testing"
+const DefaultRepo = "ghcr.io/lucky-tools"
 
 // Apply runs `devloop apply` with the given arguments.
 func Apply(args ...string) *RunBuilder {
@@ -57,11 +57,6 @@ func Apply(args ...string) *RunBuilder {
 // Dev runs `devloop dev` with the given arguments.
 func Dev(args ...string) *RunBuilder {
 	return withDefaults("dev", args)
-}
-
-// Fix runs `devloop fix` with the given arguments.
-func Fix(args ...string) *RunBuilder {
-	return withDefaults("fix", args)
 }
 
 // Build runs `devloop build` with the given arguments.
@@ -109,11 +104,6 @@ func Config(args ...string) *RunBuilder {
 	return withDefaults("config", args)
 }
 
-// Init runs `devloop init` with the given arguments.
-func Init(args ...string) *RunBuilder {
-	return withDefaults("init", args)
-}
-
 // Diagnose runs `devloop diagnose` with the given arguments.
 func Diagnose(args ...string) *RunBuilder {
 	return withDefaults("diagnose", args)
@@ -134,18 +124,9 @@ func Render(args ...string) *RunBuilder {
 	return withDefaults("render", args)
 }
 
-// Inspect runs `devloop inspect` with the given arguments.
-func Inspect(args ...string) *RunBuilder {
-	return &RunBuilder{command: "inspect", args: args}
-}
-
 // Filter runs `devloop filter` with the given arguments.
 func Filter(args ...string) *RunBuilder {
 	return withDefaults("filter", args)
-}
-
-func GeneratePipeline(args ...string) *RunBuilder {
-	return withDefaults("generate-pipeline", args)
 }
 
 func withDefaults(command string, args []string) *RunBuilder {

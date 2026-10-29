@@ -17,12 +17,6 @@ to use the ko builder.
 
 Compared to ...
 
-- [the Cloud Native buildpacks builder]({{< relref "/docs/builders/builder-types/buildpacks" >}}),
-  the ko builder is
-  [fast](https://cloud.google.com/blog/topics/developers-practitioners/ship-your-go-applications-faster-cloud-run-ko),
-  doesn't require Docker, and uses a default base image that has a small
-  attack surface.
-  
 - [the Docker builder]({{< relref "/docs/builders/builder-types/docker" >}}),
   the ko builder standardizes builds, avoiding artisanal
   [snowflake](https://martinfowler.com/bliki/SnowflakeServer.html)
@@ -262,11 +256,6 @@ Useful tips for existing `ko` users:
   specify these fields in `.ko.yaml`, you do not need to repeat them in
   `devloop.yaml`.
 
-- You can generate `devloop.yaml` files by examining an existing code base,
-  using the command
-  [`devloop init --XXenableKoInit=true`]({{< relref "/docs/init" >}}).
-  Select the Ko builder for your images when prompted.
-
 ### `ko` commands and workflows in Devloop
 
 Here are some examples of Devloop equivalents of `ko` commands and worflows.
@@ -445,7 +434,7 @@ If the ko builder doesn't support your use of `ko`, you can instead use the
 [`custom` builder]({{< relref "/docs/builders/builder-types/custom" >}}).
 
 See the `custom` builder
-[example](https://github.com/lucky-tools/devloop/tree/main/examples/custom).
+[example](https://github.com/lucky-tools/devloop/tree/master/examples/custom).
 
 ```yaml
 build:

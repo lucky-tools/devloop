@@ -242,6 +242,10 @@ func TestIsErrAndNotRetriable(t *testing.T) {
 			expected:    true,
 		},
 		{
+			description: "container creating",
+			statusCode:  proto.StatusCode_STATUSCHECK_CONTAINER_CREATING,
+		},
+		{
 			description: "rollout status random error",
 			statusCode:  proto.StatusCode_STATUSCHECK_UNKNOWN,
 			expected:    true,

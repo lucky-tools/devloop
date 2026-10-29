@@ -113,13 +113,11 @@ func ConsolidateTransformConfiguration(cfg render.Config) (map[apim.GroupKind]la
 
 	// add user schema values, override defaults
 	for _, rf := range cfg.TransformAllowList() {
-		instrumentation.AddResourceFilter("schema", "allow")
 		groupKind := apim.ParseGroupKind(rf.GroupKind)
 		transformableAllowlist[groupKind] = ConvertJSONPathIndex(rf)
 		delete(transformableDenylist, groupKind)
 	}
 	for _, rf := range cfg.TransformDenyList() {
-		instrumentation.AddResourceFilter("schema", "deny")
 		groupKind := apim.ParseGroupKind(rf.GroupKind)
 		transformableDenylist[groupKind] = ConvertJSONPathIndex(rf)
 		delete(transformableAllowlist, groupKind)
@@ -138,14 +136,12 @@ func ConsolidateTransformConfiguration(cfg render.Config) (map[apim.GroupKind]la
 			return nil, nil, err
 		}
 		for _, rf := range rsc.Allow {
-			instrumentation.AddResourceFilter("cli-flag", "allow")
 			groupKind := apim.ParseGroupKind(rf.GroupKind)
 			transformableAllowlist[groupKind] = ConvertJSONPathIndex(rf)
 			delete(transformableDenylist, groupKind)
 		}
 
 		for _, rf := range rsc.Deny {
-			instrumentation.AddResourceFilter("cli-flag", "deny")
 			groupKind := apim.ParseGroupKind(rf.GroupKind)
 			transformableDenylist[groupKind] = ConvertJSONPathIndex(rf)
 			delete(transformableAllowlist, groupKind)

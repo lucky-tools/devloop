@@ -33,7 +33,6 @@ Kubernetes cluster, local Docker environment or Cloud Run project.
   * **CI/CD building blocks** - use `devloop build`, `devloop test` and `devloop deploy` as part of your CI/CD pipeline, or simply `devloop run` end-to-end
   * **GitOps integration** - use `devloop render` to build your images and render templated Kubernetes manifests for use in GitOps workflows
 * devloop.yaml - a single pluggable, declarative configuration for your project
-  * **devloop init** - Devloop can discover your build and deployment configuration and generate a Devloop config
   * **multi-component apps** - Devloop supports applications with many components, making it great for microservice-based applications
   * **bring your own tools** - Devloop has a pluggable architecture, allowing for different implementations of the build and deploy stages
 * Lightweight
@@ -81,8 +80,6 @@ Devloop supports the following tools:
   - in-cluster with [Kaniko](https://github.com/GoogleContainerTools/kaniko)
 * [Jib](https://github.com/GoogleContainerTools/jib) Maven and Gradle
   - locally
-* [Cloud Native Buildpacks](https://buildpacks.io/)
-  - locally with Docker
 * Custom script
   - locally
   - in-cluster

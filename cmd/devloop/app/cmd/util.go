@@ -17,6 +17,7 @@ limitations under the License.
 package cmd
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/lucky-tools/devloop/pkg/devloop/build"
@@ -29,6 +30,11 @@ import (
 // no default repo is specified.
 type DefaultRepoFn func(string) (string, error)
 
+// TagFn generates a fully-qualified image name (image:tag) for a config artifact using
+// the configured tag policy. It is used as a fallback for artifacts whose tag was not
+// provided via --build-artifacts, --images, or --tag.
+type TagFn func(context.Context, latest.Artifact) (string, error)
+
 func getBuildArtifactsAndSetTags(artifacts []*latest.Artifact, defaulterFn DefaultRepoFn) ([]graph.Artifact, error) {
 	buildArtifacts, err := mergeBuildArtifacts(fromBuildOutputFile.BuildArtifacts(), preBuiltImages.Artifacts(), artifacts)
 	if err != nil {
@@ -36,6 +42,59 @@ func getBuildArtifactsAndSetTags(artifacts []*latest.Artifact, defaulterFn Defau
 	}
 
 	return applyDefaultRepoToArtifacts(buildArtifacts, defaulterFn)
+}
+
+// getBuildArtifactsAndSetTagsWithTagPolicy resolves tags for non-building commands
+// (sync, restart). It first merges tags from --build-artifacts, --images, and --tag,
+// then falls back to the tag policy for any artifact that still has no tag.
+func getBuildArtifactsAndSetTagsWithTagPolicy(ctx context.Context, artifacts []*latest.Artifact, defaulterFn DefaultRepoFn, tagFn TagFn) ([]graph.Artifact, error) {
+	buildArtifacts, err := mergeBuildArtifactsWithoutValidation(fromBuildOutputFile.BuildArtifacts(), preBuiltImages.Artifacts(), artifacts)
+	if err != nil {
+		return nil, err
+	}
+
+	buildArtifacts, err = fillTagsFromTagPolicy(ctx, artifacts, buildArtifacts, tagFn)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := validateArtifactTags(buildArtifacts); err != nil {
+		return nil, err
+	}
+
+	return applyDefaultRepoToArtifacts(buildArtifacts, defaulterFn)
+}
+
+// fillTagsFromTagPolicy fills the empty tags of buildArtifacts using tagFn, leaving
+// tags that were already provided via --build-artifacts, --images, or --tag untouched.
+func fillTagsFromTagPolicy(ctx context.Context, artifacts []*latest.Artifact, buildArtifacts []graph.Artifact, tagFn TagFn) ([]graph.Artifact, error) {
+	if tagFn == nil {
+		return buildArtifacts, nil
+	}
+	for i := range buildArtifacts {
+		if buildArtifacts[i].Tag != "" {
+			continue
+		}
+		a := findArtifactByName(artifacts, buildArtifacts[i].ImageName)
+		if a == nil {
+			continue
+		}
+		tag, err := tagFn(ctx, *a)
+		if err != nil {
+			return nil, fmt.Errorf("generating tag for image %q: %w", buildArtifacts[i].ImageName, err)
+		}
+		buildArtifacts[i].Tag = tag
+	}
+	return buildArtifacts, nil
+}
+
+func findArtifactByName(artifacts []*latest.Artifact, name string) *latest.Artifact {
+	for _, a := range artifacts {
+		if a.ImageName == name {
+			return a
+		}
+	}
+	return nil
 }
 
 func applyDefaultRepoToArtifacts(artifacts []graph.Artifact, defaulterFn DefaultRepoFn) ([]graph.Artifact, error) {
@@ -51,6 +110,24 @@ func applyDefaultRepoToArtifacts(artifacts []graph.Artifact, defaulterFn Default
 }
 
 func mergeBuildArtifacts(fromFile, fromCLI []graph.Artifact, artifacts []*latest.Artifact) ([]graph.Artifact, error) {
+	buildArtifacts, err := mergeBuildArtifactsWithoutValidation(fromFile, fromCLI, artifacts)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check that every image has a non empty tag
+	if err := validateArtifactTags(buildArtifacts); err != nil {
+		return nil, err
+	}
+
+	return buildArtifacts, nil
+}
+
+// mergeBuildArtifactsWithoutValidation merges config artifacts with tags provided on
+// the command line and in the build output file, and applies the --tag override. It
+// does not require every artifact to have a non-empty tag, so callers can fill the
+// remaining tags from another source (e.g. the tag policy).
+func mergeBuildArtifactsWithoutValidation(fromFile, fromCLI []graph.Artifact, artifacts []*latest.Artifact) ([]graph.Artifact, error) {
 	var buildArtifacts []graph.Artifact
 	for _, artifact := range artifacts {
 		buildArtifacts = append(buildArtifacts, graph.Artifact{
@@ -63,17 +140,7 @@ func mergeBuildArtifacts(fromFile, fromCLI []graph.Artifact, artifacts []*latest
 	buildArtifacts = build.MergeWithPreviousBuilds(fromCLI, buildArtifacts)
 	buildArtifacts = build.MergeWithPreviousBuilds(fromFile, buildArtifacts)
 
-	buildArtifacts, err := applyCustomTag(buildArtifacts)
-	if err != nil {
-		return nil, err
-	}
-
-	// Check that every image has a non empty tag
-	if err := validateArtifactTags(buildArtifacts); err != nil {
-		return nil, err
-	}
-
-	return buildArtifacts, nil
+	return applyCustomTag(buildArtifacts)
 }
 
 func applyCustomTag(artifacts []graph.Artifact) ([]graph.Artifact, error) {

@@ -91,13 +91,13 @@ func getDependenciesMaven(ctx context.Context, workspace string, a *latest.JibAr
 
 func getCommandMaven(ctx context.Context, workspace string, a *latest.JibArtifact) exec.Cmd {
 	args := mavenArgsFunc(a, MinimumJibMavenVersion)
-	args = append(args, "jib:_devloop-files-v2", "--quiet", "--batch-mode")
+	args = append(args, "jib:_skaffold-files-v2", "--quiet", "--batch-mode")
 
 	return MavenCommand.CreateCommand(ctx, workspace, args)
 }
 
 func getSyncMapCommandMaven(ctx context.Context, workspace string, a *latest.JibArtifact) *exec.Cmd {
-	cmd := MavenCommand.CreateCommand(ctx, workspace, mavenBuildArgsFunc("_devloop-sync-map", a, true, false, MinimumJibMavenVersionForSync))
+	cmd := MavenCommand.CreateCommand(ctx, workspace, mavenBuildArgsFunc("_skaffold-sync-map", a, true, false, MinimumJibMavenVersionForSync))
 	return &cmd
 }
 
@@ -150,7 +150,7 @@ func mavenBuildArgs(goal string, a *latest.JibArtifact, skipTests, showColors bo
 
 // Do not use directly, use mavenArgsFunc
 func mavenArgs(a *latest.JibArtifact, minimumVersion string) []string {
-	args := []string{"jib:_devloop-fail-if-jib-out-of-date", "-Djib.requiredVersion=" + minimumVersion}
+	args := []string{"jib:_skaffold-fail-if-jib-out-of-date", "-Djib.requiredVersion=" + minimumVersion}
 	args = append(args, a.Flags...)
 
 	if a.Project == "" {

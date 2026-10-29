@@ -351,6 +351,16 @@ func (rc *RunContext) BuildConcurrency() int { return rc.Opts.BuildConcurrency }
 
 func (rc *RunContext) IsMultiConfig() bool { return rc.Pipelines.IsMultiPipeline() }
 
+// UsingLegacyHelmDeploy reports whether any pipeline uses the legacy `deploy.helm` deployer.
+func (rc *RunContext) UsingLegacyHelmDeploy() bool {
+	for _, config := range rc.DeployConfigs() {
+		if config.LegacyHelmDeploy != nil {
+			return true
+		}
+	}
+	return false
+}
+
 func (rc *RunContext) IsDefaultKubeContext() bool { return rc.Opts.KubeContext == "" }
 func (rc *RunContext) GetRunID() string           { return rc.RunID }
 func (rc *RunContext) RPCPort() *int              { return rc.Opts.RPCPort.Value() }

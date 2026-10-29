@@ -29,8 +29,6 @@ const (
 	BuilderType_UNKNOWN_BUILDER_TYPE BuilderType = 0
 	// JIB Builder
 	BuilderType_JIB BuilderType = 1
-	// Buildpacks Builder
-	BuilderType_BUILDPACKS BuilderType = 3
 	// Custom Builder
 	BuilderType_CUSTOM BuilderType = 4
 	// Kaniko Builder
@@ -46,7 +44,6 @@ var (
 	BuilderType_name = map[int32]string{
 		0: "UNKNOWN_BUILDER_TYPE",
 		1: "JIB",
-		3: "BUILDPACKS",
 		4: "CUSTOM",
 		5: "KANIKO",
 		6: "DOCKER",
@@ -55,7 +52,6 @@ var (
 	BuilderType_value = map[string]int32{
 		"UNKNOWN_BUILDER_TYPE": 0,
 		"JIB":                  1,
-		"BUILDPACKS":           3,
 		"CUSTOM":               4,
 		"KANIKO":               5,
 		"DOCKER":               6,

@@ -257,7 +257,7 @@ func TestGetCommandMaven(t *testing.T) {
 			jibArtifact:      latest.JibArtifact{},
 			filesInWorkspace: []string{},
 			expectedCmd: func(workspace string) exec.Cmd {
-				return MavenCommand.CreateCommand(ctx, workspace, []string{"fake-mavenArgs", "jib:_devloop-files-v2", "--quiet", "--batch-mode"})
+				return MavenCommand.CreateCommand(ctx, workspace, []string{"fake-mavenArgs", "jib:_skaffold-files-v2", "--quiet", "--batch-mode"})
 			},
 		},
 		{
@@ -265,7 +265,7 @@ func TestGetCommandMaven(t *testing.T) {
 			jibArtifact:      latest.JibArtifact{},
 			filesInWorkspace: []string{"mvnw", "mvnw.bat"},
 			expectedCmd: func(workspace string) exec.Cmd {
-				return MavenCommand.CreateCommand(ctx, workspace, []string{"fake-mavenArgs", "jib:_devloop-files-v2", "--quiet", "--batch-mode"})
+				return MavenCommand.CreateCommand(ctx, workspace, []string{"fake-mavenArgs", "jib:_skaffold-files-v2", "--quiet", "--batch-mode"})
 			},
 		},
 		{
@@ -273,7 +273,7 @@ func TestGetCommandMaven(t *testing.T) {
 			jibArtifact:      latest.JibArtifact{Project: "module"},
 			filesInWorkspace: []string{"mvnw", "mvnw.bat"},
 			expectedCmd: func(workspace string) exec.Cmd {
-				return MavenCommand.CreateCommand(ctx, workspace, []string{"fake-mavenArgs-for-module", "jib:_devloop-files-v2", "--quiet", "--batch-mode"})
+				return MavenCommand.CreateCommand(ctx, workspace, []string{"fake-mavenArgs-for-module", "jib:_skaffold-files-v2", "--quiet", "--batch-mode"})
 			},
 		},
 	}
@@ -305,14 +305,14 @@ func TestGetSyncMapCommandMaven(t *testing.T) {
 			description: "single module",
 			jibArtifact: latest.JibArtifact{},
 			expectedCmd: func(workspace string) exec.Cmd {
-				return MavenCommand.CreateCommand(ctx, workspace, []string{"fake-mavenBuildArgs-for-_devloop-sync-map-skipTests"})
+				return MavenCommand.CreateCommand(ctx, workspace, []string{"fake-mavenBuildArgs-for-_skaffold-sync-map-skipTests"})
 			},
 		},
 		{
 			description: "multi module",
 			jibArtifact: latest.JibArtifact{Project: "module"},
 			expectedCmd: func(workspace string) exec.Cmd {
-				return MavenCommand.CreateCommand(ctx, workspace, []string{"fake-mavenBuildArgs-for-module-for-_devloop-sync-map-skipTests"})
+				return MavenCommand.CreateCommand(ctx, workspace, []string{"fake-mavenBuildArgs-for-module-for-_skaffold-sync-map-skipTests"})
 			},
 		},
 	}
@@ -462,19 +462,19 @@ func TestMavenArgs(t *testing.T) {
 		{
 			description: "single module",
 			jibArtifact: latest.JibArtifact{},
-			expected:    []string{"jib:_devloop-fail-if-jib-out-of-date", "-Djib.requiredVersion=test-version", "--non-recursive"},
+			expected:    []string{"jib:_skaffold-fail-if-jib-out-of-date", "-Djib.requiredVersion=test-version", "--non-recursive"},
 		},
 		{
 			description: "single module with extra flags",
 			jibArtifact: latest.JibArtifact{
 				Flags: []string{"--flag1", "--flag2"},
 			},
-			expected: []string{"jib:_devloop-fail-if-jib-out-of-date", "-Djib.requiredVersion=test-version", "--flag1", "--flag2", "--non-recursive"},
+			expected: []string{"jib:_skaffold-fail-if-jib-out-of-date", "-Djib.requiredVersion=test-version", "--flag1", "--flag2", "--non-recursive"},
 		},
 		{
 			description: "multi module",
 			jibArtifact: latest.JibArtifact{Project: "module"},
-			expected:    []string{"jib:_devloop-fail-if-jib-out-of-date", "-Djib.requiredVersion=test-version", "--projects", "module", "--also-make"},
+			expected:    []string{"jib:_skaffold-fail-if-jib-out-of-date", "-Djib.requiredVersion=test-version", "--projects", "module", "--also-make"},
 		},
 		{
 			description: "multi module with extra falgs",
@@ -482,7 +482,7 @@ func TestMavenArgs(t *testing.T) {
 				Project: "module",
 				Flags:   []string{"--flag1", "--flag2"},
 			},
-			expected: []string{"jib:_devloop-fail-if-jib-out-of-date", "-Djib.requiredVersion=test-version", "--flag1", "--flag2", "--projects", "module", "--also-make"},
+			expected: []string{"jib:_skaffold-fail-if-jib-out-of-date", "-Djib.requiredVersion=test-version", "--flag1", "--flag2", "--projects", "module", "--also-make"},
 		},
 	}
 	for _, test := range tests {

@@ -29,7 +29,6 @@ var ignoreFileSuffixes = []string{
 	"_test.go",
 	"pkg/devloop/output/log/log.go",
 	"pkg/devloop/event/v2/logger.go",
-	"pkg/devloop/build/buildpacks/logger.go",
 }
 
 var LogrusAnalyzer = &analysis.Analyzer{

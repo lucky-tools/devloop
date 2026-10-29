@@ -25,12 +25,11 @@ import (
 )
 
 const (
-	Docker    = "docker"
-	Kaniko    = "kaniko"
-	Jib       = "jib"
-	Custom    = "custom"
-	Buildpack = "buildpack"
-	Ko        = "ko"
+	Docker = "docker"
+	Kaniko = "kaniko"
+	Jib    = "jib"
+	Custom = "custom"
+	Ko     = "ko"
 )
 
 // ArtifactType returns a string representing the type found in an artifact. Used for error messages.
@@ -45,8 +44,6 @@ func ArtifactType(a *latest.Artifact) string {
 		return Jib
 	case a.CustomArtifact != nil:
 		return Custom
-	case a.BuildpackArtifact != nil:
-		return Buildpack
 	case a.KoArtifact != nil:
 		return Ko
 	default:

@@ -3,4 +3,4 @@ kind: Config
 manifests:
   kustomize:
     paths:
-      - https://github.com/lucky-tools/devloop//examples/kustomize?ref=v2.6.3
+      - https://github.com/lucky-tools/devloop//examples/kustomize?ref=master

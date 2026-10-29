@@ -32,7 +32,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/lucky-tools/devloop/pkg/devloop/build"
-	"github.com/lucky-tools/devloop/pkg/devloop/build/buildpacks"
 	"github.com/lucky-tools/devloop/pkg/devloop/build/jib"
 	kosync "github.com/lucky-tools/devloop/pkg/devloop/build/ko/sync"
 	"github.com/lucky-tools/devloop/pkg/devloop/docker"
@@ -72,7 +71,7 @@ func NewItem(ctx context.Context, a *latest.Artifact, e filemon.Events, builds [
 		return syncItem(ctx, a, tag, e, a.Sync.Manual, cfg)
 
 	case a.Sync.Auto != nil:
-		return autoSyncItem(ctx, a, tag, e, cfg)
+		return autoSyncItem(ctx, a, tag, e)
 
 	case len(a.Sync.Infer) > 0:
 		return inferredSyncItem(ctx, a, tag, e, cfg)
@@ -184,21 +183,8 @@ func syncMapForArtifact(ctx context.Context, a *latest.Artifact, cfg docker.Conf
 	}
 }
 
-func autoSyncItem(ctx context.Context, a *latest.Artifact, tag string, e filemon.Events, cfg docker.Config) (*Item, error) {
+func autoSyncItem(ctx context.Context, a *latest.Artifact, tag string, e filemon.Events) (*Item, error) {
 	switch {
-	case a.BuildpackArtifact != nil:
-		labels, err := Labels(ctx, tag, cfg)
-		if err != nil {
-			return nil, fmt.Errorf("retrieving labels for %q: %w", tag, err)
-		}
-
-		rules, err := buildpacks.SyncRules(labels)
-		if err != nil {
-			return nil, fmt.Errorf("extracting sync rules from labels for %q: %w", tag, err)
-		}
-
-		return syncItem(ctx, a, tag, e, rules, cfg)
-
 	case a.JibArtifact != nil:
 		toCopy, toDelete, err := jib.GetSyncDiff(ctx, a.Workspace, a.JibArtifact, e)
 		if err != nil {

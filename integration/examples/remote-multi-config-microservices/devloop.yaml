@@ -3,11 +3,11 @@ kind: Config
 requires:
 - git:
     repo: https://github.com/lucky-tools/devloop
-    ref: main
+    ref: master
     path: examples/multi-config-microservices/leeroy-app
     sync: false
 - git:
     repo: https://github.com/lucky-tools/devloop
-    ref: main
+    ref: master
     path: examples/multi-config-microservices/leeroy-web
     sync: false

@@ -69,8 +69,6 @@ func getBuilders(b latest.BuildConfig) []*proto.BuildMetadata_ImageBuilder {
 	m := map[proto.BuilderType]int{}
 	for _, a := range b.Artifacts {
 		switch {
-		case a.BuildpackArtifact != nil:
-			updateOrAddKey(m, proto.BuilderType_BUILDPACKS)
 		case a.CustomArtifact != nil:
 			updateOrAddKey(m, proto.BuilderType_CUSTOM)
 		case a.DockerArtifact != nil:

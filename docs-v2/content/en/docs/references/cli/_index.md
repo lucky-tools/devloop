@@ -20,11 +20,7 @@ Pipeline building blocks for CI/CD:
 * [devloop delete](#devloop-delete) - to cleanup the deployed artifacts
 * [devloop render](#devloop-render) - build and tag images, and output templated Kubernetes manifests
 * [devloop apply](#devloop-apply) - to apply hydrated manifests to a cluster
-
-Getting started with a new project:
-
-* [devloop init](#devloop-init) - to bootstrap Devloop config
-* [devloop fix](#devloop-fix) - to upgrade from older devloop.yaml schema version to newer devloop.yaml schema version 
+* [devloop restart](#devloop-restart) - update image tags and rolling-restart workloads without re-applying manifests
 
 Other Commands:
 
@@ -34,6 +30,7 @@ Other Commands:
 * [devloop config](#devloop-config) - manage context specific parameters
 * [devloop credits](#devloop-credits) - export third party notices to given path (./devloop-credits by default)
 * [devloop diagnose](#devloop-diagnose) - diagnostics of Devloop works in your project
+* [devloop pull](#devloop-pull) - pull an image from a registry and save it as a tarball
 * [devloop schema](#devloop-schema) - list and print json schemas used to validate devloop.yaml configuration
 
 
@@ -68,32 +65,30 @@ To edit this file above edit index_header - the rest of the file is autogenerate
 
 
 End-to-end Pipelines:
-  run                 Run a pipeline
-  dev                 Run a pipeline in development mode
-  debug               Run a pipeline in debug mode
+  run            Run a pipeline
+  dev            Run a pipeline in development mode
+  debug          Run a pipeline in debug mode
 
 Pipeline Building Blocks:
-  build               Build the artifacts
-  test                Run tests against your built application images
-  deploy              Deploy pre-built artifacts
-  delete              Delete any resources deployed by Devloop
-  render              Generate rendered Kubernetes manifests
-  sync                Sync files to running containers
-  apply               Apply hydrated manifests to a cluster
-  verify              Run verification tests against devloop deployments
-
-Getting Started With a New Project:
-  init                Generate configuration for deploying an application
+  build          Build the artifacts
+  test           Run tests against your built application images
+  deploy         Deploy pre-built artifacts
+  restart        Update image tags and rolling-restart workloads without re-applying manifests
+  delete         Delete any resources deployed by Devloop
+  render         Generate rendered Kubernetes manifests
+  sync           Sync files to running containers
+  apply          Apply hydrated manifests to a cluster
+  verify         Run verification tests against devloop deployments
 
 Other Commands:
-  completion          Output shell completion for the given shell (bash, fish or zsh)
-  config              Interact with the global Devloop config file (defaults to `$HOME/.devloop/config`)
-  diagnose            Run a diagnostic on Devloop
-  encrypt             Encrypt a value with the global Devloop encryption key
-  exec                Execute a custom action
-  fix                 Update old configuration to a newer schema version
-  schema              List JSON schemas used to validate devloop.yaml configuration
-  version             Print the version information
+  completion     Output shell completion for the given shell (bash, fish or zsh)
+  config         Interact with the global Devloop config file (defaults to `$HOME/.devloop/config`)
+  diagnose       Run a diagnostic on Devloop
+  encrypt        Encrypt a value with the global Devloop encryption key
+  exec           Execute a custom action
+  pull           Pull an image from a registry and save it as a tarball
+  schema         List JSON schemas used to validate devloop.yaml configuration
+  version        Print the version information
 
 Use "devloop <command> --help" for more information about a given command.
 Use "devloop options" for a list of global command-line options (applies to all commands).
@@ -544,14 +539,8 @@ Options:
     --assume-yes=false:
 	If true, devloop will skip yes/no confirmation from the user and default to yes
 
-    --auto=false:
-	Run with an auto-generated devloop configuration. This will create a temporary `devloop.yaml` file and kubernetes manifests necessary to run the application
-
     --auto-build=false:
 	When set to false, builds wait for API request instead of running automatically
-
-    --auto-create-config=true:
-	If true, devloop will try to create a config for the user's run if it doesn't find one
 
     --auto-deploy=false:
 	When set to false, deploys wait for API request instead of running automatically
@@ -722,9 +711,7 @@ Use "devloop options" for a list of global command-line options (applies to all 
 Env vars:
 
 * `DEVLOOP_ASSUME_YES` (same as `--assume-yes`)
-* `DEVLOOP_AUTO` (same as `--auto`)
 * `DEVLOOP_AUTO_BUILD` (same as `--auto-build`)
-* `DEVLOOP_AUTO_CREATE_CONFIG` (same as `--auto-create-config`)
 * `DEVLOOP_AUTO_DEPLOY` (same as `--auto-deploy`)
 * `DEVLOOP_AUTO_SYNC` (same as `--auto-sync`)
 * `DEVLOOP_BUILD_CONCURRENCY` (same as `--build-concurrency`)
@@ -1076,14 +1063,8 @@ Options:
     --assume-yes=false:
 	If true, devloop will skip yes/no confirmation from the user and default to yes
 
-    --auto=false:
-	Run with an auto-generated devloop configuration. This will create a temporary `devloop.yaml` file and kubernetes manifests necessary to run the application
-
     --auto-build=true:
 	When set to false, builds wait for API request instead of running automatically
-
-    --auto-create-config=true:
-	If true, devloop will try to create a config for the user's run if it doesn't find one
 
     --auto-deploy=true:
 	When set to false, deploys wait for API request instead of running automatically
@@ -1254,9 +1235,7 @@ Use "devloop options" for a list of global command-line options (applies to all 
 Env vars:
 
 * `DEVLOOP_ASSUME_YES` (same as `--assume-yes`)
-* `DEVLOOP_AUTO` (same as `--auto`)
 * `DEVLOOP_AUTO_BUILD` (same as `--auto-build`)
-* `DEVLOOP_AUTO_CREATE_CONFIG` (same as `--auto-create-config`)
 * `DEVLOOP_AUTO_DEPLOY` (same as `--auto-deploy`)
 * `DEVLOOP_AUTO_SYNC` (same as `--auto-sync`)
 * `DEVLOOP_BUILD_CONCURRENCY` (same as `--build-concurrency`)
@@ -1502,143 +1481,6 @@ Env vars:
 * `DEVLOOP_RPC_PORT` (same as `--rpc-port`)
 * `DEVLOOP_SYNC_REMOTE_CACHE` (same as `--sync-remote-cache`)
 
-### devloop fix
-
-Update old configuration to a newer schema version
-
-```
-
-
-Examples:
-  # Update "devloop.yaml" in the current folder to the latest version
-  devloop fix
-
-  # Update "devloop.yaml" in the current folder to version "devloop/v1"
-  devloop fix --version devloop/v1
-
-  # Update "devloop.yaml" in the current folder in-place
-  devloop fix --overwrite
-
-  # Update "devloop.yaml" and write the output to a new file
-  devloop fix --output devloop.new.yaml
-
-Options:
-    --assume-yes=false:
-	If true, devloop will skip yes/no confirmation from the user and default to yes
-
-    -f, --filename='devloop.yaml':
-	Path or URL to the Devloop config file
-
-    -m, --module=[]:
-	Filter Devloop configs to only the provided named modules
-
-    -o, --output='':
-	File to write the changed config (instead of standard output)
-
-    --overwrite=false:
-	Overwrite original config with fixed config
-
-    --remote-cache-dir='':
-	Specify the location of the remote cache (default $HOME/.devloop/remote-cache)
-
-    --sync-remote-cache='missing':
-	Controls how Devloop manages the remote config cache (see `remote-cache-dir`). One of `always` (default), `missing`, or `never`. `always` syncs remote repositories to latest on access. `missing` only clones remote repositories if they do not exist locally. `never` means the user takes responsibility for updating remote repositories.
-
-    --version='devloop/v1':
-	Target schema version to upgrade to
-
-Usage:
-  devloop fix [options]
-
-Use "devloop options" for a list of global command-line options (applies to all commands).
-
-
-```
-Env vars:
-
-* `DEVLOOP_ASSUME_YES` (same as `--assume-yes`)
-* `DEVLOOP_FILENAME` (same as `--filename`)
-* `DEVLOOP_MODULE` (same as `--module`)
-* `DEVLOOP_OUTPUT` (same as `--output`)
-* `DEVLOOP_OVERWRITE` (same as `--overwrite`)
-* `DEVLOOP_REMOTE_CACHE_DIR` (same as `--remote-cache-dir`)
-* `DEVLOOP_SYNC_REMOTE_CACHE` (same as `--sync-remote-cache`)
-* `DEVLOOP_VERSION` (same as `--version`)
-
-### devloop init
-
-Generate configuration for deploying an application
-
-```
-
-
-Options:
-    --analyze=false:
-	Print all discoverable Dockerfiles and images in JSON format to stdout
-
-    -a, --artifact=[]:
-	'='-delimited Dockerfile/image pair, or JSON string, to generate build artifact (example: --artifact='{"builder":"Docker","payload":{"path":"/web/Dockerfile.web"},"image":"gcr.io/web-project/image"}')
-
-    --assume-yes=false:
-	If true, devloop will skip yes/no confirmation from the user and default to yes
-
-    --compose-file='':
-	Initialize from a docker-compose file
-
-    --default-kustomization='':
-	Default Kustomization overlay path (others will be added as profiles)
-
-    -f, --filename='devloop.yaml':
-	Path or URL to the Devloop config file
-
-    --force=false:
-	Force the generation of the Devloop config
-
-    --generate-manifests=false:
-	Allows devloop to try and generate basic kubernetes resources to get your project started
-
-    -k, --kubernetes-manifest=[]:
-	A path or a glob pattern to kubernetes manifests (can be non-existent) to be added to the kubectl deployer (overrides detection of kubernetes manifests). Repeat the flag for multiple entries. E.g.: devloop init -k pod.yaml -k k8s/*.yml
-
-    -m, --module=[]:
-	Filter Devloop configs to only the provided named modules
-
-    --remote-cache-dir='':
-	Specify the location of the remote cache (default $HOME/.devloop/remote-cache)
-
-    --skip-build=false:
-	Skip generating build artifacts in Devloop config
-
-    --skip-unreachable-dirs=false:
-	Instead of erroring, it will skip the directories that cannot be accessed due to permissions
-
-    --sync-remote-cache='always':
-	Controls how Devloop manages the remote config cache (see `remote-cache-dir`). One of `always` (default), `missing`, or `never`. `always` syncs remote repositories to latest on access. `missing` only clones remote repositories if they do not exist locally. `never` means the user takes responsibility for updating remote repositories.
-
-Usage:
-  devloop init [options]
-
-Use "devloop options" for a list of global command-line options (applies to all commands).
-
-
-```
-Env vars:
-
-* `DEVLOOP_ANALYZE` (same as `--analyze`)
-* `DEVLOOP_ARTIFACT` (same as `--artifact`)
-* `DEVLOOP_ASSUME_YES` (same as `--assume-yes`)
-* `DEVLOOP_COMPOSE_FILE` (same as `--compose-file`)
-* `DEVLOOP_DEFAULT_KUSTOMIZATION` (same as `--default-kustomization`)
-* `DEVLOOP_FILENAME` (same as `--filename`)
-* `DEVLOOP_FORCE` (same as `--force`)
-* `DEVLOOP_GENERATE_MANIFESTS` (same as `--generate-manifests`)
-* `DEVLOOP_KUBERNETES_MANIFEST` (same as `--kubernetes-manifest`)
-* `DEVLOOP_MODULE` (same as `--module`)
-* `DEVLOOP_REMOTE_CACHE_DIR` (same as `--remote-cache-dir`)
-* `DEVLOOP_SKIP_BUILD` (same as `--skip-build`)
-* `DEVLOOP_SKIP_UNREACHABLE_DIRS` (same as `--skip-unreachable-dirs`)
-* `DEVLOOP_SYNC_REMOTE_CACHE` (same as `--sync-remote-cache`)
-
 ### devloop options
 
 
@@ -1664,6 +1506,51 @@ The following options can be passed to any command:
 
 
 ```
+
+### devloop pull
+
+Pull an image from a registry and save it as a tarball
+
+```
+
+
+Examples:
+  # Pull from a local HTTP registry
+  devloop pull localhost:5000/app:latest --insecure
+
+  # Pull with credentials and a custom output path
+  devloop pull localhost:5000/app:latest -o app.tar --username admin --password secret
+
+Options:
+    -c, --config='':
+	File for global configurations (defaults to $HOME/.devloop/config)
+
+    --insecure=false:
+	Allow pulling from an insecure registry (plain HTTP and/or untrusted TLS)
+
+    -o, --output='':
+	Path to write the image tarball to (defaults to a name derived from the image tag)
+
+    --password='':
+	Registry password for basic authentication
+
+    --username='':
+	Registry username for basic authentication
+
+Usage:
+  devloop pull [options]
+
+Use "devloop options" for a list of global command-line options (applies to all commands).
+
+
+```
+Env vars:
+
+* `DEVLOOP_CONFIG` (same as `--config`)
+* `DEVLOOP_INSECURE` (same as `--insecure`)
+* `DEVLOOP_OUTPUT` (same as `--output`)
+* `DEVLOOP_PASSWORD` (same as `--password`)
+* `DEVLOOP_USERNAME` (same as `--username`)
 
 ### devloop render
 
@@ -1791,6 +1678,60 @@ Env vars:
 * `DEVLOOP_TAG` (same as `--tag`)
 * `DEVLOOP_WAIT_FOR_CONNECTION` (same as `--wait-for-connection`)
 
+### devloop restart
+
+Update image tags and rolling-restart workloads without re-applying manifests
+
+```
+
+
+Examples:
+  # Update my-app to tag v2 and rolling-restart its workloads
+  devloop restart --images my-app=v2
+
+Options:
+    --assume-yes=false:
+	If true, devloop will skip yes/no confirmation from the user and default to yes
+
+    -a, --build-artifacts=:
+	File containing pre-built images to use instead of rebuilding artifacts. A sample file looks like the following: {   "builds":[     {       "imageName":"registry/image1",       "tag":"registry/image1:tag"     },{       "imageName":"registry/image2",       "tag":"registry/image2:tag"     }] } The build result from a previous 'devloop build --file-output' run can be used here
+
+    -f, --filename='devloop.yaml':
+	Path or URL to the Devloop config file
+
+    -i, --images=:
+	A list of pre-built images to deploy, either tagged images or NAME=TAG pairs
+
+    -m, --module=[]:
+	Filter Devloop configs to only the provided named modules
+
+    --remote-cache-dir='':
+	Specify the location of the remote cache (default $HOME/.devloop/remote-cache)
+
+    --sync-remote-cache='always':
+	Controls how Devloop manages the remote config cache (see `remote-cache-dir`). One of `always` (default), `missing`, or `never`. `always` syncs remote repositories to latest on access. `missing` only clones remote repositories if they do not exist locally. `never` means the user takes responsibility for updating remote repositories.
+
+    -t, --tag='':
+	The optional custom tag to use for images which overrides the current Tagger configuration
+
+Usage:
+  devloop restart [options]
+
+Use "devloop options" for a list of global command-line options (applies to all commands).
+
+
+```
+Env vars:
+
+* `DEVLOOP_ASSUME_YES` (same as `--assume-yes`)
+* `DEVLOOP_BUILD_ARTIFACTS` (same as `--build-artifacts`)
+* `DEVLOOP_FILENAME` (same as `--filename`)
+* `DEVLOOP_IMAGES` (same as `--images`)
+* `DEVLOOP_MODULE` (same as `--module`)
+* `DEVLOOP_REMOTE_CACHE_DIR` (same as `--remote-cache-dir`)
+* `DEVLOOP_SYNC_REMOTE_CACHE` (same as `--sync-remote-cache`)
+* `DEVLOOP_TAG` (same as `--tag`)
+
 ### devloop run
 
 Run a pipeline
@@ -1808,12 +1749,6 @@ Examples:
 Options:
     --assume-yes=false:
 	If true, devloop will skip yes/no confirmation from the user and default to yes
-
-    --auto=false:
-	Run with an auto-generated devloop configuration. This will create a temporary `devloop.yaml` file and kubernetes manifests necessary to run the application
-
-    --auto-create-config=true:
-	If true, devloop will try to create a config for the user's run if it doesn't find one
 
     --build-concurrency=-1:
 	Number of concurrently running builds. Set to 0 to run all builds in parallel. Doesn't violate build order among dependencies.
@@ -1969,8 +1904,6 @@ Use "devloop options" for a list of global command-line options (applies to all 
 Env vars:
 
 * `DEVLOOP_ASSUME_YES` (same as `--assume-yes`)
-* `DEVLOOP_AUTO` (same as `--auto`)
-* `DEVLOOP_AUTO_CREATE_CONFIG` (same as `--auto-create-config`)
 * `DEVLOOP_BUILD_CONCURRENCY` (same as `--build-concurrency`)
 * `DEVLOOP_BUILD_IMAGE` (same as `--build-image`)
 * `DEVLOOP_CACHE_ARTIFACTS` (same as `--cache-artifacts`)

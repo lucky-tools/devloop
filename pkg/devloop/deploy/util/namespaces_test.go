@@ -22,6 +22,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	kubectx "github.com/lucky-tools/devloop/pkg/devloop/kubernetes/context"
+	"github.com/lucky-tools/devloop/pkg/devloop/schema/latest"
 	"github.com/lucky-tools/devloop/testutil"
 )
 
@@ -30,6 +31,7 @@ func TestGetAllPodNamespaces(t *testing.T) {
 		description string
 		ns          string
 		apiConfig   api.Config
+		pipelines   []latest.Pipeline
 		expected    []string
 		shouldErr   bool
 	}{
@@ -61,13 +63,26 @@ func TestGetAllPodNamespaces(t *testing.T) {
 			},
 			expected: []string{"cli-ns"},
 		},
+		{
+			description: "helm release namespace is watched",
+			ns:          "cli-ns",
+			apiConfig:   api.Config{},
+			pipelines: []latest.Pipeline{{
+				Deploy: latest.DeployConfig{DeployType: latest.DeployType{
+					LegacyHelmDeploy: &latest.LegacyHelmDeploy{
+						Releases: []latest.HelmRelease{{Name: "release", Namespace: "helm-ns"}},
+					},
+				}},
+			}},
+			expected: []string{"cli-ns", "helm-ns"},
+		},
 	}
 	for _, test := range tests {
 		testutil.Run(t, test.description, func(t *testutil.T) {
 			t.Override(&kubectx.CurrentConfig, func() (api.Config, error) {
 				return test.apiConfig, nil
 			})
-			ns, err := GetAllPodNamespaces(test.ns)
+			ns, err := GetAllPodNamespaces(test.ns, test.pipelines)
 			t.CheckError(test.shouldErr, err)
 			if !test.shouldErr {
 				t.CheckDeepEqual(test.expected, ns)

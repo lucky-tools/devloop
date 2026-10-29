@@ -274,7 +274,7 @@ func TestIsUpdateCheckEnabled(t *testing.T) {
 	}
 	for _, test := range tests {
 		testutil.Run(t, test.description, func(t *testutil.T) {
-			t.Override(&GetConfigForCurrentKubectx, func(string) (*ContextConfig, error) { return test.cfg, test.readErr })
+			t.Override(&ReadConfigFile, func(string) (*GlobalConfig, error) { return &GlobalConfig{Global: test.cfg}, test.readErr })
 			actual := IsUpdateCheckEnabled("dummyconfig")
 			t.CheckDeepEqual(test.expected, actual)
 		})
@@ -923,7 +923,7 @@ func TestShouldDisplayUpdateMsg(t *testing.T) {
 	}
 	for _, test := range tests {
 		testutil.Run(t, test.description, func(t *testutil.T) {
-			t.Override(&GetConfigForCurrentKubectx, func(string) (*ContextConfig, error) { return test.cfg, nil })
+			t.Override(&ReadConfigFile, func(string) (*GlobalConfig, error) { return &GlobalConfig{Global: test.cfg}, nil })
 			t.CheckDeepEqual(test.expected, ShouldDisplayUpdateMsg("dummyconfig"))
 		})
 	}

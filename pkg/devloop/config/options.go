@@ -34,7 +34,6 @@ type WaitForDeletions struct {
 type DevloopOptions struct {
 	Apply                       bool
 	AutoBuild                   bool
-	AutoCreateConfig            bool
 	AutoDeploy                  bool
 	AutoSync                    bool
 	AssumeYes                   bool
@@ -59,7 +58,6 @@ type DevloopOptions struct {
 	SkipConfigDefaults          bool
 	Tail                        bool
 	WaitForConnection           bool
-	AutoInit                    bool
 	EnablePlatformNodeAffinity  bool
 	EnableGKEARMNodeToleration  bool
 	DisableMultiPlatformBuild   bool

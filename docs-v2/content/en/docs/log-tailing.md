@@ -16,7 +16,7 @@ Log Tailing is **disabled by default** for `run` mode; it can be enabled with th
 
 
 ## Log Structure
-To view log structure, run `devloop run --tail` in [`examples/microservices`](https://github.com/lucky-tools/devloop/tree/main/examples/microservices)
+To view log structure, run `devloop run --tail` in [`examples/microservices`](https://github.com/lucky-tools/devloop/tree/master/examples/microservices)
 
 ```bash
 devloop run --tail

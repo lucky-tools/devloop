@@ -20,11 +20,7 @@ Pipeline building blocks for CI/CD:
 * [devloop delete](#devloop-delete) - to cleanup the deployed artifacts
 * [devloop render](#devloop-render) - build and tag images, and output templated Kubernetes manifests
 * [devloop apply](#devloop-apply) - to apply hydrated manifests to a cluster
-
-Getting started with a new project:
-
-* [devloop init](#devloop-init) - to bootstrap Devloop config
-* [devloop fix](#devloop-fix) - to upgrade from older devloop.yaml schema version to newer devloop.yaml schema version 
+* [devloop restart](#devloop-restart) - update image tags and rolling-restart workloads without re-applying manifests
 
 Other Commands:
 
@@ -34,6 +30,7 @@ Other Commands:
 * [devloop config](#devloop-config) - manage context specific parameters
 * [devloop credits](#devloop-credits) - export third party notices to given path (./devloop-credits by default)
 * [devloop diagnose](#devloop-diagnose) - diagnostics of Devloop works in your project
+* [devloop pull](#devloop-pull) - pull an image from a registry and save it as a tarball
 * [devloop schema](#devloop-schema) - list and print json schemas used to validate devloop.yaml configuration
 
 

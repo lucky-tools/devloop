@@ -14,31 +14,6 @@
     "maturity": "beta",
     "description": "Use hydrated Kubernetes manifests to create resources on the cluster"
   },
-  "build.buildpacks": {
-    "build": "x",
-    "area": "Build",
-    "feature": "Cloud Native Buildpacks support",
-    "maturity": "GA",
-    "description": "Devloop natively support for artifacts built with Cloud Native Buildpacks",
-    "examples": [
-      {
-        "name": "go buildpacks",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/buildpacks"
-      },
-      {
-        "name": "java buildpacks",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/buildpacks-java"
-      },
-      {
-        "name": "node buildpacks",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/buildpacks-node"
-      },
-      {
-        "name": "python buildpacks",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/buildpacks-python"
-      }
-    ]
-  },
   "build.custom": {
     "dev": "x",
     "build": "x",
@@ -51,11 +26,11 @@
     "examples": [
       {
         "name": "buildx",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/custom-buildx"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/custom-buildx"
       },
       {
         "name": "ko",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/custom"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/custom"
       }
     ]
   },
@@ -93,7 +68,7 @@
     "examples": [
       {
         "name": "ko",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/ko"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/ko"
       }
     ]
   },
@@ -109,39 +84,23 @@
     "examples": [
       {
         "name": "docker",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/docker-deploy"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/docker-deploy"
       },
       {
         "name": "jib/maven",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/jib"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/jib"
       },
       {
         "name": "jib/gradle",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/jib-gradle"
-      },
-      {
-        "name": "go buildpacks",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/buildpacks"
-      },
-      {
-        "name": "java buildpacks",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/buildpacks-java"
-      },
-      {
-        "name": "node buildpacks",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/buildpacks-node"
-      },
-      {
-        "name": "python buildpacks",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/buildpacks-python"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/jib-gradle"
       },
       {
         "name": "ko",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/ko"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/ko"
       },
       {
         "name": "buildx",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/custom-buildx"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/custom-buildx"
       }
     ]
   },
@@ -248,19 +207,19 @@
     "examples": [
       {
         "name": "kubectl",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/getting-started"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/getting-started"
       },
       {
         "name": "helm",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/helm-deployment"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/helm-deployment"
       },
       {
         "name": "kustomize",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/kustomize"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/kustomize"
       },
       {
         "name": "docker",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/docker-deploy"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/docker-deploy"
       }
     ]
   },
@@ -285,7 +244,7 @@
     "examples": [
       {
         "name": "docker",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/docker-deploy"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/docker-deploy"
       }
     ]
   },
@@ -323,12 +282,6 @@
     "maturity": "beta",
     "description": "Upgrade an older devloop config to the current version"
   },
-  "generate_pipeline.tekton": {
-    "deploy": "x",
-    "area": "Generate tekton pipelines",
-    "maturity": "alpha",
-    "description": "User can generate a starter tekton pipeline using devloop"
-  },
   "verify": {
     "area": "devloop verify",
     "maturity": "GA",
@@ -345,42 +298,6 @@
     "maturity": "GA",
     "description": "store user preferences in a separate preferences file",
     "url": "/docs/design/global-config/"
-  },
-  "init": {
-    "area": "Init",
-    "maturity": "beta",
-    "description": "Initialize a devloop.yaml file based on the contents of the current directory",
-    "url": "/docs/init"
-  },
-  "init.dockerfiles": {
-    "area": "Init",
-    "feature": "init for Dockerfiles ",
-    "maturity": "beta",
-    "description": "devloop init recognizes Dockerfiles"
-  },
-  "init.interactive": {
-    "area": "Init",
-    "feature": "interactive",
-    "maturity": "beta",
-    "description": "devloop init interactive for CLI users"
-  },
-  "init.json_api": {
-    "area": "Init",
-    "feature": "JSON based",
-    "maturity": "beta",
-    "description": "devloop init JSON based API for IDE integrations"
-  },
-  "init.k8s_manifests": {
-    "area": "Init",
-    "feature": "init for Kubernetes manifests",
-    "maturity": "beta",
-    "description": "devloop init parses images from Kubernetes manifests"
-  },
-  "init.generate_manifests": {
-    "area": "Init",
-    "feature": "generate manifests",
-    "maturity": "beta",
-    "description": "devloop init will try to generate kubernetes manifests for your project"
   },
   "insecure_registry": {
     "dev": "x",
@@ -404,7 +321,7 @@
     "examples": [
       {
         "name": "hooks",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/lifecycle-hooks"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/lifecycle-hooks"
       }
     ]
   },
@@ -440,11 +357,11 @@
     "examples": [
       {
         "name": "profiles",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/profiles"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/profiles"
       },
       {
         "name": "profile patches",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/profile-patches"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/profile-patches"
       }
     ]
   },
@@ -493,7 +410,7 @@
     "examples": [
       {
         "name": "envTemplate",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/tagging-with-environment-variables"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/tagging-with-environment-variables"
       }
     ]
   },
@@ -506,7 +423,7 @@
     "examples": [
       {
         "name": "templated fields",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/templated-fields"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/templated-fields"
       }
     ]
   },
@@ -521,11 +438,11 @@
     "examples": [
       {
         "name": "custom test",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/custom-tests"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/custom-tests"
       },
       {
         "name": "structure test",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/structure-tests"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/structure-tests"
       }
     ]
   },
@@ -540,7 +457,7 @@
     "examples": [
       {
         "name": "structure test",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/structure-tests"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/structure-tests"
       }
     ]
   },
@@ -556,7 +473,7 @@
     "examples": [
       {
         "name": "custom test",
-        "url": "https://github.com/lucky-tools/devloop/tree/main/examples/custom-tests"
+        "url": "https://github.com/lucky-tools/devloop/tree/master/examples/custom-tests"
       }
     ]
   },

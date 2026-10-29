@@ -24,7 +24,6 @@ import (
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	coreV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/lucky-tools/devloop/pkg/devloop/instrumentation"
 	kubernetesclient "github.com/lucky-tools/devloop/pkg/devloop/kubernetes/client"
 	"github.com/lucky-tools/devloop/pkg/devloop/output/log"
 	"github.com/lucky-tools/devloop/pkg/devloop/schema/latest"
@@ -65,7 +64,6 @@ func NewResolver(ctx context.Context, pipelines []latest.Pipeline, opts Resolver
 		return r, fmt.Errorf("failed to parse platforms: %w", err)
 	}
 	log.Entry(ctx).Debugf("CLI platforms provided: %q", fromCli)
-	instrumentation.AddCliBuildTargetPlatforms(fromCli.String())
 
 	if opts.CheckClusterNodePlatforms {
 		fromClusterNodes, err = getClusterPlatforms(ctx, opts.KubeContext)
@@ -74,7 +72,6 @@ func NewResolver(ctx context.Context, pipelines []latest.Pipeline, opts Resolver
 			log.Entry(ctx).Warnln("failed to detect active kubernetes cluster node platform. Specify the correct build platform in the `devloop.yaml` file or using the `--platform` flag")
 		}
 		log.Entry(ctx).Debugf("platforms detected from active kubernetes cluster nodes: %q", fromClusterNodes)
-		instrumentation.AddDeployNodePlatforms(fromClusterNodes.String())
 	} else {
 		log.Entry(ctx).Debugln("platform detection from active kubernetes cluster is not enabled")
 	}
@@ -96,7 +93,6 @@ func NewResolver(ctx context.Context, pipelines []latest.Pipeline, opts Resolver
 				log.Entry(ctx).Warnf("build target platforms %q do not match active kubernetes cluster node platforms %q", platforms, fromClusterNodes)
 			}
 		}
-		instrumentation.AddResolvedBuildTargetPlatforms(platforms.String())
 		for _, artifact := range pipeline.Build.Artifacts {
 			pl := platforms
 			constraints, err := Parse(artifact.Platforms)

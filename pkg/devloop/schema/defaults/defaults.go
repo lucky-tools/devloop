@@ -25,6 +25,7 @@ import (
 
 	"github.com/lucky-tools/devloop/pkg/devloop/build/kaniko"
 	"github.com/lucky-tools/devloop/pkg/devloop/constants"
+	deployhelm "github.com/lucky-tools/devloop/pkg/devloop/deploy/helm"
 	kubectx "github.com/lucky-tools/devloop/pkg/devloop/kubernetes/context"
 	"github.com/lucky-tools/devloop/pkg/devloop/output/log"
 	"github.com/lucky-tools/devloop/pkg/devloop/schema/latest"
@@ -37,12 +38,15 @@ func Set(c *latest.DevloopConfig) error {
 	defaultToLocalBuild(c)
 	setDefaultTagger(c)
 	setDefaultLogsConfig(c)
+	if err := setHelmDefaults(c); err != nil {
+		return err
+	}
 
 	for _, a := range c.Build.Artifacts {
 		setDefaultWorkspace(a)
 		setDefaultSync(a)
 
-		if c.Build.Cluster != nil && a.CustomArtifact == nil && a.BuildpackArtifact == nil {
+		if c.Build.Cluster != nil && a.CustomArtifact == nil {
 			defaultToKanikoArtifact(a)
 		} else {
 			defaultToDockerArtifact(a)
@@ -57,9 +61,6 @@ func Set(c *latest.DevloopConfig) error {
 
 		case a.CustomArtifact != nil:
 			setCustomArtifactDefaults(a.CustomArtifact)
-
-		case a.BuildpackArtifact != nil:
-			setBuildpackArtifactDefaults(a.BuildpackArtifact)
 		}
 
 		for _, d := range a.Dependencies {
@@ -95,6 +96,26 @@ func Set(c *latest.DevloopConfig) error {
 	return nil
 }
 
+func setHelmDefaults(c *latest.DevloopConfig) error {
+	if c.Deploy.LegacyHelmDeploy == nil {
+		return nil
+	}
+
+	if c.Deploy.LegacyHelmDeploy.Concurrency == nil {
+		defaultConcurrency := 1
+		c.Deploy.LegacyHelmDeploy.Concurrency = &defaultConcurrency
+	}
+
+	if len(c.Deploy.LegacyHelmDeploy.Releases) > 1 {
+		_, err := deployhelm.NewDependencyGraph(c.Deploy.LegacyHelmDeploy.Releases)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // SetDefaultRenderer sets the default manifests to rawYaml.
 func SetDefaultRenderer(c *latest.DevloopConfig) {
 	if len(c.Render.Generate.Kpt) > 0 {
@@ -108,9 +129,15 @@ func SetDefaultRenderer(c *latest.DevloopConfig) {
 		return
 	}
 	if c.Render.Generate.Kustomize != nil {
+		if len(c.Render.Generate.Kustomize.Paths) == 0 {
+			c.Render.Generate.Kustomize.Paths = []string{"."}
+		}
 		return
 	}
 	if c.Render.Generate.Helm != nil {
+		return
+	}
+	if c.Deploy.LegacyHelmDeploy != nil {
 		return
 	}
 	if c.Deploy.DockerDeploy != nil {
@@ -186,21 +213,6 @@ func setCustomArtifactDefaults(a *latest.CustomArtifact) {
 	}
 }
 
-func setBuildpackArtifactDefaults(a *latest.BuildpackArtifact) {
-	if a.ProjectDescriptor == "" {
-		a.ProjectDescriptor = constants.DefaultProjectDescriptor
-	}
-	if a.Dependencies == nil {
-		a.Dependencies = &latest.BuildpackDependencies{
-			Paths: []string{"."},
-		}
-	}
-	if a.Builder == "" && len(a.Buildpacks) == 0 {
-		a.Builder = constants.DefaultBuildpacksBuilderImage
-		a.TrustBuilder = true
-	}
-}
-
 func setDockerArtifactDefaults(a *latest.DockerArtifact) {
 	a.DockerfilePath = valueOrDefault(a.DockerfilePath, constants.DefaultDockerfilePath)
 }
@@ -213,14 +225,12 @@ func setDefaultSync(a *latest.Artifact) {
 	if a.Sync != nil {
 		if len(a.Sync.Manual) == 0 && len(a.Sync.Infer) == 0 && a.Sync.Auto == nil {
 			switch {
-			case a.JibArtifact != nil || a.BuildpackArtifact != nil:
+			case a.JibArtifact != nil:
 				a.Sync.Auto = util.Ptr(true)
 			default:
 				a.Sync.Infer = []string{"**/*"}
 			}
 		}
-	} else if a.BuildpackArtifact != nil {
-		a.Sync = &latest.Sync{Auto: util.Ptr(true)}
 	}
 }
 

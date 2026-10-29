@@ -7,8 +7,9 @@ build:
       docker:
         buildArgs:
           STOP_FAILING_TIME: '{{.STOP_FAILING_TIME}}'
+manifests:
+  rawYaml:
+    - tolerance-check/kubernetes/*
 deploy:
   statusCheckDeadlineSeconds: 120
-  kubectl:
-    manifests:
-      - tolerance-check/kubernetes/*
+  kubectl: {}

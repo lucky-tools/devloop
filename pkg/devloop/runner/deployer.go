@@ -29,6 +29,7 @@ import (
 	"github.com/lucky-tools/devloop/pkg/devloop/deploy"
 	"github.com/lucky-tools/devloop/pkg/devloop/deploy/cloudrun"
 	"github.com/lucky-tools/devloop/pkg/devloop/deploy/docker"
+	"github.com/lucky-tools/devloop/pkg/devloop/deploy/helm"
 	kptV2 "github.com/lucky-tools/devloop/pkg/devloop/deploy/kpt"
 	"github.com/lucky-tools/devloop/pkg/devloop/deploy/kubectl"
 	"github.com/lucky-tools/devloop/pkg/devloop/deploy/label"
@@ -92,6 +93,7 @@ func GetDeployer(ctx context.Context, runCtx *runcontext.RunContext, labeller *l
 	}
 
 	if runCtx.Opts.Apply {
+		helmNamespaces := make(map[string]bool)
 		nonHelmDeployFound := false
 		cloudRunDeployFound := false
 
@@ -103,15 +105,37 @@ func GetDeployer(ctx context.Context, runCtx *runcontext.RunContext, labeller *l
 			if d.CloudRunDeploy != nil {
 				cloudRunDeployFound = true
 			}
+
+			if d.LegacyHelmDeploy != nil {
+				for _, release := range d.LegacyHelmDeploy.Releases {
+					if release.Namespace != "" {
+						helmNamespaces[release.Namespace] = true
+					}
+				}
+			}
 		}
 		if cloudRunDeployFound {
-			if nonHelmDeployFound {
+			if nonHelmDeployFound || len(helmNamespaces) > 0 {
 				// Cloud Run doesn't support multiple deployers in the config.
 				return nil, errors.New("devloop apply called with both Cloud Run and Kubernetes deployers. Mixing deployment targets is not allowed" +
 					" when using the Cloud Run deployer")
 			}
 			return getCloudRunDeployer(runCtx, labeller, pipelines.Deployers(), "")
 		}
+		if len(helmNamespaces) > 1 || (nonHelmDeployFound && len(helmNamespaces) == 1) {
+			return nil, errors.New("devloop apply called with conflicting namespaces set via devloop.yaml. This is likely due to the use of the 'deploy.helm.releases.*.namespace' field which is not supported in apply.  Remove the 'deploy.helm.releases.*.namespace' field(s) and run devloop apply again")
+		}
+
+		if len(helmNamespaces) == 1 && !nonHelmDeployFound {
+			if runCtx.Opts.Namespace == "" {
+				// if devloop --namespace flag not set, use the helm namespace value
+				for k := range helmNamespaces {
+					// map only has 1 (k,v) from length check in if condition
+					runCtx.Opts.Namespace = k
+				}
+			}
+		}
+
 		return getDefaultDeployer(runCtx, labeller, gks)
 	}
 
@@ -138,6 +162,19 @@ func GetDeployer(ctx context.Context, runCtx *runcontext.RunContext, labeller *l
 				LoadImages: false,
 			}
 			deployers = append(deployers, d)
+		}
+
+		if d.LegacyHelmDeploy != nil {
+			// copy relevant render config to legacy helm deployer
+			if pl.Render.Helm != nil {
+				d.LegacyHelmDeploy.Releases = pl.Render.Helm.Releases
+				d.LegacyHelmDeploy.Flags = pl.Render.Helm.Flags
+			}
+			deployer, err := helm.NewDeployer(ctx, dCtx, labeller, d.LegacyHelmDeploy, runCtx.Artifacts(), configName, gks)
+			if err != nil {
+				return nil, err
+			}
+			deployers = append(deployers, deployer)
 		}
 
 		if d.KubectlDeploy != nil {

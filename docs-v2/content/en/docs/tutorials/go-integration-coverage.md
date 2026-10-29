@@ -44,7 +44,7 @@ to run these steps automatically.
 ## The example application
 
 This tutorial refers to the files in the
-[`go-integration-coverage`](https://github.com/lucky-tools/devloop/tree/main/examples/go-integration-coverage)
+[`go-integration-coverage`](https://github.com/lucky-tools/devloop/tree/master/examples/go-integration-coverage)
 example.
 
 You may find it helpful to refer to these files as you go through this
@@ -227,7 +227,7 @@ commands.
 ## Running the steps
 
 To run the steps, follow the instructions in the
-[README.md](https://github.com/lucky-tools/devloop/tree/main/examples/go-integration-coverage).
+[README.md](https://github.com/lucky-tools/devloop/tree/master/examples/go-integration-coverage).
 
 ## References
 

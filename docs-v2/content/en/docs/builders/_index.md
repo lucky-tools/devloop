@@ -13,7 +13,6 @@ Devloop supports different [tools]({{< relref "/docs/builders/builder-types" >}}
 |----|:-----------:|:----------------:|
 | **Dockerfile** | [Yes]({{< relref "/docs/builders/builder-types/docker#dockerfile-locally" >}}) | [Yes]({{< relref "/docs/builders/builder-types/docker#dockerfile-in-cluster-with-kaniko" >}}) |
 | **Jib Maven and Gradle** | [Yes]({{< relref "/docs/builders/builder-types/jib#jib-maven-and-gradle-locally" >}}) | - |
-| **Cloud Native Buildpacks** | [Yes]({{< relref "/docs/builders/builder-types/buildpacks" >}}) | - |
 | **ko** | [Yes]({{< relref "/docs/builders/builder-types/ko" >}}) | - |
 | **Custom Script** | [Yes]({{<relref "/docs/builders/builder-types/custom#custom-build-script-locally" >}}) | [Yes]({{<relref "/docs/builders/builder-types/custom#custom-build-script-in-cluster" >}}) |
 

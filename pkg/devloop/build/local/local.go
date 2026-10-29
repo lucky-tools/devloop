@@ -23,6 +23,7 @@ import (
 	"github.com/moby/moby/client"
 
 	"github.com/lucky-tools/devloop/pkg/devloop/build"
+	dockerbuilder "github.com/lucky-tools/devloop/pkg/devloop/build/docker"
 	"github.com/lucky-tools/devloop/pkg/devloop/config"
 	"github.com/lucky-tools/devloop/pkg/devloop/docker"
 	"github.com/lucky-tools/devloop/pkg/devloop/output"
@@ -156,6 +157,13 @@ func (b *Builder) runBuildForArtifact(ctx context.Context, out io.Writer, a *lat
 		supported := builder.SupportedPlatforms()
 		if p := platforms.Intersect(supported); p.IsNotEmpty() {
 			platforms = p
+		} else if a.DockerArtifact != nil {
+			// The API builder only builds for the host platform. For a
+			// cross-platform docker build, fall back to the CLI builder
+			// (buildkit), which supports any platform and passes `--platform`
+			// through to `docker build`.
+			builder = dockerbuilder.NewCLIBuilder(b.localDocker, b.cfg, b.pushImages, true, "", "", b.artifactStore, b.sourceDependencies)
+			log.Entry(ctx).Warnf("builder for artifact %q doesn't support building for target platforms: %q. Using buildkit CLI builder instead.", a.ImageName, platforms)
 		} else {
 			log.Entry(ctx).Warnf("builder for artifact %q doesn't support building for target platforms: %q. Building for supported platforms %q instead.", a.ImageName, platforms, supported)
 			platforms = supported

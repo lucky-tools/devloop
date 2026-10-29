@@ -38,7 +38,6 @@ func TestMainHelp(t *testing.T) {
 
 		t.CheckNoError(err)
 		t.CheckContains("End-to-end Pipelines", output.String())
-		t.CheckContains("Getting Started With a New Project", output.String())
 		t.CheckEmpty(errOutput.String())
 	})
 }
@@ -68,7 +67,6 @@ func TestDevloopCmdline_MainHelp(t *testing.T) {
 
 		t.CheckNoError(err)
 		t.CheckContains("End-to-end Pipelines", output.String())
-		t.CheckContains("Getting Started With a New Project", output.String())
 		t.CheckEmpty(errOutput.String())
 	})
 }
@@ -106,19 +104,6 @@ func TestMain_InvalidUsageExitCode(t *testing.T) {
 }
 
 func TestMain_SuppressedErrorReporing(t *testing.T) {
-	testutil.Run(t, "inspect should suppress error output", func(t *testutil.T) {
-		var (
-			output    bytes.Buffer
-			errOutput bytes.Buffer
-		)
-		// non-existent profile should report an error
-		t.Override(&os.Args, []string{"devloop", "inspect", "build-env", "list", "--profile", "non-existent"})
-		err := Run(&output, &errOutput)
-		t.CheckError(true, err)
-		t.CheckContains(`{"errorCode":`, output.String())
-		t.CheckEmpty(errOutput.String())
-	})
-
 	testutil.Run(t, "diagnose should report error output", func(t *testutil.T) {
 		var (
 			output    bytes.Buffer

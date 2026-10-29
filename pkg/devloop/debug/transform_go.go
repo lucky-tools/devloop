@@ -84,21 +84,6 @@ func (t dlvTransformer) IsApplicable(config ImageConfiguration) bool {
 		return true
 	}
 
-	// FIXME: as there is currently no way to identify a buildpacks-produced image as holding a Go binary,
-	// nor to cause certain environment variables to be defined in the resulting image, look at the image's
-	// CNB metadata to see if any well-known Go-related buildpacks had been involved.
-	knownGoBuildpackIds := []string{
-		"google.go.build",           // GCP Buildpacks
-		"paketo-buildpacks/go-dist", // Paketo
-		"heroku/go",                 // Heroku
-	}
-	cnbBuildMetadata := config.Labels["io.buildpacks.build.metadata"]
-	for _, id := range knownGoBuildpackIds {
-		if strings.Contains(cnbBuildMetadata, id) {
-			log.Entry(context.TODO()).Infof("Artifact %q has Go buildpacks %q", config.Artifact, id)
-			return true
-		}
-	}
 	if len(config.Entrypoint) > 0 && !isEntrypointLauncher(config.Entrypoint) {
 		return isLaunchingDlv(config.Entrypoint)
 	}

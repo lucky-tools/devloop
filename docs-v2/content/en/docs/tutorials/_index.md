@@ -5,7 +5,7 @@ weight: 90
 simple_list: true
 ---
 
-See the [Github Examples page](https://github.com/lucky-tools/devloop/tree/main/examples) for more examples.
+See the [Github Examples page](https://github.com/lucky-tools/devloop/tree/master/examples) for more examples.
 
 {{< alert title="Deploying examples to a remote cluster" >}}
 When deploying to a remote cluster you have to point Devloop to your default image repository in one of the four ways:

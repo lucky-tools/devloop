@@ -23,15 +23,11 @@ Everyone is welcome to attend! You will receive a calendar invite when you join 
 
 ## Contributing
 
-See [Contributing Guide](https://github.com/lucky-tools/devloop/blob/main/CONTRIBUTING.md),
-[Developing Guide](https://github.com/lucky-tools/devloop/blob/main/DEVELOPMENT.md),
-and our [Code of Conduct](https://github.com/lucky-tools/devloop/blob/main/code-of-conduct.md)
+See [Contributing Guide](https://github.com/lucky-tools/devloop/blob/master/CONTRIBUTING.md),
+[Developing Guide](https://github.com/lucky-tools/devloop/blob/master/DEVELOPMENT.md),
+and our [Code of Conduct](https://github.com/lucky-tools/devloop/blob/master/CODE_OF_CONDUCT.md)
 on GitHub.
 
 ## Release Notes
 
-See [Release Notes](https://github.com/lucky-tools/devloop/blob/main/CHANGELOG.md) on Github.
-
-## Roadmap
-
-See our roadmap [in GitHub](https://github.com/lucky-tools/devloop/blob/main/ROADMAP.md).
+See [Release Notes](https://github.com/lucky-tools/devloop/releases) on Github.

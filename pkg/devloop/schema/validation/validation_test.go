@@ -1429,16 +1429,6 @@ func TestValidateValidDependencyAliases(t *testing.T) {
 									{Alias: "alias2", ImageName: "artifact2"},
 								},
 							},
-							{
-								ImageName: "artifact5",
-								ArtifactType: latest.ArtifactType{
-									BuildpackArtifact: &latest.BuildpackArtifact{},
-								},
-								Dependencies: []*latest.ArtifactDependency{
-									{Alias: "artifact!", ImageName: "artifact1"},
-									{Alias: "artifact#1", ImageName: "artifact1"},
-								},
-							},
 						},
 					},
 				},

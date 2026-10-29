@@ -787,6 +787,9 @@ type DeployType struct {
 	// DockerDeploy *alpha* uses the `docker` CLI to create application containers in Docker.
 	DockerDeploy *DockerDeploy `yaml:"docker,omitempty"`
 
+	// LegacyHelmDeploy *beta* uses the `helm` CLI to apply the charts to the cluster.
+	LegacyHelmDeploy *LegacyHelmDeploy `yaml:"helm,omitempty"`
+
 	// KptDeploy *alpha* uses the `kpt` CLI to manage and deploy manifests.
 	KptDeploy *KptDeploy `yaml:"kpt,omitempty"`
 
@@ -842,6 +845,12 @@ type KubectlDeploy struct {
 
 	// LifecycleHooks describes a set of lifecycle hooks that are executed before and after every deploy.
 	LifecycleHooks DeployHooks `yaml:"hooks,omitempty"`
+
+	// UseAPI uses client-go server-side apply to deploy manifests directly
+	// against the Kubernetes API server instead of shelling out to `kubectl`.
+	// Requires no `kubectl` binary on the host. When enabled, the kubectl
+	// `flags` are ignored.
+	UseAPI bool `yaml:"useAPI,omitempty"`
 }
 
 // KubectlFlags are additional flags passed on the command
@@ -860,6 +869,23 @@ type KubectlFlags struct {
 	// DisableValidation passes the `--validate=false` flag to supported
 	// `kubectl` commands when enabled.
 	DisableValidation bool `yaml:"disableValidation,omitempty"`
+}
+
+// LegacyHelmDeploy *beta* uses the `helm` CLI to apply the charts to the cluster.
+type LegacyHelmDeploy struct {
+	// Concurrency is how many packages can be installed concurrently. 0 means "no-limit".
+	// Defaults to `1`.
+	Concurrency *int `yaml:"concurrency,omitempty"`
+
+	// Releases is a list of Helm releases.
+	Releases []HelmRelease `yaml:"releases,omitempty"`
+
+	// Flags are additional option flags that are passed on the command
+	// line to `helm`.
+	Flags HelmDeployFlags `yaml:"flags,omitempty"`
+
+	// LifecycleHooks describes a set of lifecycle hooks that are executed before and after every deploy.
+	LifecycleHooks DeployHooks `yaml:"hooks,omitempty"`
 }
 
 // HelmDeployFlags are additional option flags that are passed on the command
@@ -1044,7 +1070,7 @@ type Sync struct {
 	Infer []string `yaml:"infer,omitempty" yamltags:"oneOf=sync"`
 
 	// Auto delegates discovery of sync rules to the build system.
-	// Only available for jib and buildpacks.
+	// Only available for jib.
 	Auto *bool `yaml:"auto,omitempty" yamltags:"oneOf=sync"`
 
 	// LifecycleHooks describes a set of lifecycle hooks that are executed before and after each file sync action on the target artifact's containers.
@@ -1149,9 +1175,6 @@ type ArtifactType struct {
 	// KanikoArtifact builds images using [kaniko](https://github.com/GoogleContainerTools/kaniko).
 	KanikoArtifact *KanikoArtifact `yaml:"kaniko,omitempty" yamltags:"oneOf=artifact"`
 
-	// BuildpackArtifact builds images using [Cloud Native Buildpacks](https://buildpacks.io/).
-	BuildpackArtifact *BuildpackArtifact `yaml:"buildpacks,omitempty" yamltags:"oneOf=artifact"`
-
 	// CustomArtifact *beta* builds images using a custom build script written by the user.
 	CustomArtifact *CustomArtifact `yaml:"custom,omitempty" yamltags:"oneOf=artifact"`
 }
@@ -1164,74 +1187,6 @@ type ArtifactDependency struct {
 	// For example, the `docker` builder will use the alias as a build-arg key.
 	// Defaults to the value of `image`.
 	Alias string `yaml:"alias,omitempty"`
-}
-
-// BuildpackArtifact *alpha* describes an artifact built using [Cloud Native Buildpacks](https://buildpacks.io/).
-// It can be used to build images out of project's sources without any additional configuration.
-type BuildpackArtifact struct {
-	// Builder is the builder image used.
-	Builder string `yaml:"builder,omitempty"`
-
-	// RunImage overrides the stack's default run image.
-	RunImage string `yaml:"runImage,omitempty"`
-
-	// Env are environment variables, in the `key=value` form,  passed to the build.
-	// Values can use the go template syntax.
-	// For example: `["key1=value1", "key2=value2", "key3={{.ENV_VARIABLE}}"]`.
-	Env []string `yaml:"env,omitempty"`
-
-	// Buildpacks is a list of strings, where each string is a specific buildpack to use with the builder.
-	// If you specify buildpacks the builder image automatic detection will be ignored. These buildpacks will be used to build the Image from your source code.
-	// Order matters.
-	Buildpacks []string `yaml:"buildpacks,omitempty"`
-
-	// TrustBuilder indicates that the builder should be trusted.
-	TrustBuilder bool `yaml:"trustBuilder,omitempty"`
-
-	// ClearCache removes old cache volume associated with the specific image
-	// and supplies a clean cache volume for build.
-	ClearCache bool `yaml:"clearCache,omitempty"`
-
-	// ProjectDescriptor is the path to the project descriptor file.
-	// Defaults to `project.toml` if it exists.
-	ProjectDescriptor string `yaml:"projectDescriptor,omitempty"`
-
-	// Dependencies are the file dependencies that devloop should watch for both rebuilding and file syncing for this artifact.
-	Dependencies *BuildpackDependencies `yaml:"dependencies,omitempty"`
-
-	// Volumes support mounting host volumes into the container.
-	Volumes []*BuildpackVolume `yaml:"volumes,omitempty"`
-
-	// BuildArgs are additional args passed to the `pack` build command.
-	// For example: `["--network", "host", "--cache-image", "gcr.io/my-project/my-cache"]`.
-	BuildArgs []string `yaml:"buildArgs,omitempty"`
-}
-
-// BuildpackDependencies *alpha* is used to specify dependencies for an artifact built by buildpacks.
-type BuildpackDependencies struct {
-	// Paths should be set to the file dependencies for this artifact, so that the devloop file watcher knows when to rebuild and perform file synchronization.
-	Paths []string `yaml:"paths,omitempty" yamltags:"oneOf=dependency"`
-
-	// Ignore specifies the paths that should be ignored by devloop's file watcher. If a file exists in both `paths` and in `ignore`, it will be ignored, and will be excluded from both rebuilds and file synchronization.
-	// Will only work in conjunction with `paths`.
-	Ignore []string `yaml:"ignore,omitempty"`
-}
-
-// BuildpackVolume *alpha* is used to mount host volumes or directories in the build container.
-type BuildpackVolume struct {
-	// Host is the local volume or absolute directory of the path to mount.
-	Host string `yaml:"host" devloop:"filepath" yamltags:"required"`
-
-	// Target is the path where the file or directory is available in the container.
-	// It is strongly recommended to not specify locations under `/cnb` or `/layers`.
-	Target string `yaml:"target" yamltags:"required"`
-
-	// Options specify a list of comma-separated mount options.
-	// Valid options are:
-	// `ro` (default): volume contents are read-only.
-	// `rw`: volume contents are readable and writable.
-	// `volume-opt=<key>=<value>`: can be specified more than once, takes a key-value pair.
-	Options string `yaml:"options,omitempty"`
 }
 
 // CustomArtifact *beta* describes an artifact built from a custom build script

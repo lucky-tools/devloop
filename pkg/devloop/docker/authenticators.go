@@ -22,7 +22,10 @@ import (
 	"sync"
 
 	"github.com/docker/cli/cli/config"
+	"github.com/docker/cli/cli/config/configfile"
+	clitypes "github.com/docker/cli/cli/config/types"
 	"github.com/google/go-containerregistry/pkg/authn"
+	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/google"
 
 	"github.com/lucky-tools/devloop/pkg/devloop/output/log"
@@ -86,18 +89,31 @@ func (a *lockedAuthenticator) Authorization() (*authn.AuthConfig, error) {
 func (a *Keychain) newAuthenticator(ctx context.Context, res authn.Resource) authn.Authenticator {
 	registry := res.RegistryStr()
 
+	// primaryKeychain captures configDir at package init, before init() resolves
+	// the ~/.docker / ~/.devloop fallback, so fall back to the resolved package
+	// variable when no explicit directory is set (e.g. by tests).
+	dir := a.configDir
+	if dir == "" {
+		dir = configDir
+	}
+
+	cfg, err := config.Load(dir)
+	if err != nil {
+		cfg = nil
+	}
+
 	// 1. Try getting a Google authenticator if docker config configured to use gcloud
-	cfg, err := config.Load(a.configDir)
-	if err == nil && cfg.CredentialHelpers[registry] == "gcloud" {
+	if cfg != nil && cfg.CredentialHelpers[registry] == "gcloud" {
 		if auth := getGoogleAuthenticator(ctx); auth != nil {
 			return auth
 		}
 	}
 
 	// 2. Use whatever `non anonymous` credential helper is configured
-	auth, err := authn.DefaultKeychain.Resolve(res)
-	if err == nil && auth != authn.Anonymous {
-		return auth
+	if cfg != nil {
+		if auth := resolveFromDockerConfig(cfg, res); auth != authn.Anonymous {
+			return auth
+		}
 	}
 
 	// 3. Try Google authenticator for known registries (same logic used by go-containerregistry)
@@ -109,6 +125,40 @@ func (a *Keychain) newAuthenticator(ctx context.Context, res authn.Resource) aut
 
 	// 4. Default to anonymous
 	return authn.Anonymous
+}
+
+// resolveFromDockerConfig resolves the authenticator for a registry from a
+// docker config file. It mirrors go-containerregistry's default keychain but
+// honors the directory resolved by devloop (including the ~/.devloop fallback)
+// instead of only ~/.docker and DOCKER_CONFIG.
+func resolveFromDockerConfig(cfg *configfile.ConfigFile, res authn.Resource) authn.Authenticator {
+	var found, empty clitypes.AuthConfig
+	for _, key := range []string{res.String(), res.RegistryStr()} {
+		if key == name.DefaultRegistry {
+			key = authn.DefaultAuthKey
+		}
+		authCfg, err := cfg.GetAuthConfig(key)
+		if err != nil {
+			continue
+		}
+		// GetAuthConfig sets ServerAddress; clear it so the "is empty" test is
+		// meaningful (mirrors go-containerregistry, see issue #1510).
+		authCfg.ServerAddress = ""
+		if authCfg != empty {
+			found = authCfg
+			break
+		}
+	}
+	if found == empty {
+		return authn.Anonymous
+	}
+	return authn.FromConfig(authn.AuthConfig{
+		Username:      found.Username,
+		Password:      found.Password,
+		Auth:          found.Auth,
+		IdentityToken: found.IdentityToken,
+		RegistryToken: found.RegistryToken,
+	})
 }
 
 func getGoogleAuthenticator(ctx context.Context) authn.Authenticator {

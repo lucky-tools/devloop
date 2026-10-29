@@ -21,12 +21,15 @@ import (
 	"sort"
 
 	kubectx "github.com/lucky-tools/devloop/pkg/devloop/kubernetes/context"
+	"github.com/lucky-tools/devloop/pkg/devloop/schema/latest"
+	"github.com/lucky-tools/devloop/pkg/devloop/util"
 )
 
 // GetAllPodNamespaces lists the namespaces that should be watched.
 // + The namespace passed on the command line
 // + Current kube context's namespace
-func GetAllPodNamespaces(configNamespace string) ([]string, error) {
+// + Namespaces referenced in Helm releases
+func GetAllPodNamespaces(configNamespace string, pipelines []latest.Pipeline) ([]string, error) {
 	nsMap := make(map[string]bool)
 
 	if configNamespace == "" {
@@ -46,6 +49,15 @@ func GetAllPodNamespaces(configNamespace string) ([]string, error) {
 		nsMap[configNamespace] = true
 	}
 
+	// Set additional namespaces each helm release referenced
+	helmReleasesNamespaces, err := collectHelmReleasesNamespaces(pipelines)
+	if err != nil {
+		return nil, fmt.Errorf("collecting helm releases namespaces: %w", err)
+	}
+	for _, namespace := range helmReleasesNamespaces {
+		nsMap[namespace] = true
+	}
+
 	// Collate the slice of namespaces.
 	namespaces := make([]string, 0, len(nsMap))
 	for ns := range nsMap {
@@ -53,5 +65,23 @@ func GetAllPodNamespaces(configNamespace string) ([]string, error) {
 	}
 
 	sort.Strings(namespaces)
+	return namespaces, nil
+}
+
+func collectHelmReleasesNamespaces(pipelines []latest.Pipeline) ([]string, error) {
+	var namespaces []string
+	for _, cfg := range pipelines {
+		if cfg.Deploy.LegacyHelmDeploy != nil {
+			for _, release := range cfg.Deploy.LegacyHelmDeploy.Releases {
+				if release.Namespace != "" {
+					templatedNamespace, err := util.ExpandEnvTemplateOrFail(release.Namespace, nil)
+					if err != nil {
+						return []string{}, fmt.Errorf("cannot parse the release namespace template: %w", err)
+					}
+					namespaces = append(namespaces, templatedNamespace)
+				}
+			}
+		}
+	}
 	return namespaces, nil
 }

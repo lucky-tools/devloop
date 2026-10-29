@@ -32,7 +32,6 @@ type BuilderType = enums.BuilderType
 const (
 	BuilderType_UNKNOWN_BUILDER_TYPE = enums.BuilderType_UNKNOWN_BUILDER_TYPE
 	BuilderType_JIB                  = enums.BuilderType_JIB
-	BuilderType_BUILDPACKS           = enums.BuilderType_BUILDPACKS
 	BuilderType_CUSTOM               = enums.BuilderType_CUSTOM
 	BuilderType_KANIKO               = enums.BuilderType_KANIKO
 	BuilderType_DOCKER               = enums.BuilderType_DOCKER

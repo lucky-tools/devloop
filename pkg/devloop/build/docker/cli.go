@@ -85,11 +85,12 @@ func (b *CLIBuilder) SupportedPlatforms() platform.Matcher {
 
 func (b *CLIBuilder) dockerCLIBuild(ctx context.Context, out io.Writer, name string, workspace string, dockerfilePath string, a *latest.DockerArtifact, opts docker.BuildOptions, pls []v1.Platform) (string, error) {
 	args := []string{}
-	buildCmd := "build"
 	if b.buildkit {
-		buildCmd = "buildx"
+		args = append(args, "buildx", "build")
+	} else {
+		args = append(args, "build")
 	}
-	args = append(args, buildCmd, workspace, "--file", dockerfilePath, "-t", opts.Tag)
+	args = append(args, workspace, "--file", dockerfilePath, "-t", opts.Tag)
 	imageInfoEnv, err := docker.EnvTags(opts.Tag)
 	if err != nil {
 		return "", fmt.Errorf("couldn't parse image tag: %w", err)

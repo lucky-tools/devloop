@@ -82,7 +82,6 @@ func (r *DevloopRunner) doDev(ctx context.Context, out io.Writer) error {
 		"devIteration": strconv.Itoa(r.devIteration),
 	})
 
-	meterUpdated := false
 	if needsSync {
 		childCtx, endTrace := instrumentation.StartTrace(ctx, "doDev_needsSync")
 		defer func() {
@@ -92,9 +91,6 @@ func (r *DevloopRunner) doDev(ctx context.Context, out io.Writer) error {
 
 		// todo: make this configurable
 		opts := backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 3)
-		instrumentation.AddDevIteration("sync")
-		meterUpdated = true
-
 		syncHandler := r.getSyncHandler(ctx, childCtx, out, endTrace)
 		for _, s := range r.changeSet.NeedsResync() {
 			err := backoff.Retry(
@@ -128,11 +124,6 @@ func (r *DevloopRunner) doDev(ctx context.Context, out io.Writer) error {
 			r.changeSet.ResetBuild()
 			r.intents.ResetBuild()
 		}()
-		if !meterUpdated {
-			instrumentation.AddDevIteration("build")
-			meterUpdated = true
-		}
-
 		var err error
 		bRes, err = r.Build(childCtx, out, r.changeSet.NeedsRebuild())
 		if err != nil {
@@ -188,9 +179,6 @@ func (r *DevloopRunner) doDev(ctx context.Context, out io.Writer) error {
 		log.Entry(ctx).Debug("stopping debugger")
 		r.deployer.GetDebugger().Stop()
 
-		if !meterUpdated {
-			instrumentation.AddDevIteration("deploy")
-		}
 		manifests, err := r.Render(childCtx, out, r.Builds, false)
 		if err != nil {
 			log.Entry(ctx).Warn("Skipping render due to error:", err)

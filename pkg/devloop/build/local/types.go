@@ -22,7 +22,6 @@ import (
 	"io"
 
 	"github.com/lucky-tools/devloop/pkg/devloop/build"
-	"github.com/lucky-tools/devloop/pkg/devloop/build/buildpacks"
 	"github.com/lucky-tools/devloop/pkg/devloop/build/custom"
 	dockerbuilder "github.com/lucky-tools/devloop/pkg/devloop/build/docker"
 	"github.com/lucky-tools/devloop/pkg/devloop/build/jib"
@@ -170,9 +169,6 @@ func newPerArtifactBuilder(b *Builder, a *latest.Artifact) (artifactBuilder, err
 		// required artifacts as environment variables
 		dependencies := util.EnvPtrMapToSlice(docker.ResolveDependencyImages(a.Dependencies, b.artifactStore, true), "=")
 		return custom.NewArtifactBuilder(b.localDocker, b.cfg, b.pushImages, b.skipTests, append(b.retrieveExtraEnv(), dependencies...)), nil
-
-	case a.BuildpackArtifact != nil:
-		return buildpacks.NewArtifactBuilder(b.localDocker, b.pushImages, b.mode, b.artifactStore), nil
 
 	case a.KoArtifact != nil:
 		return ko.NewArtifactBuilder(b.localDocker, b.pushImages, b.mode, b.insecureRegistries), nil

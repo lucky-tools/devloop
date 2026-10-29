@@ -27,7 +27,6 @@ import (
 	"os"
 	"sort"
 
-	"github.com/lucky-tools/devloop/pkg/devloop/build/buildpacks"
 	"github.com/lucky-tools/devloop/pkg/devloop/build/kaniko"
 	"github.com/lucky-tools/devloop/pkg/devloop/config"
 	"github.com/lucky-tools/devloop/pkg/devloop/docker"
@@ -47,7 +46,7 @@ var (
 )
 
 type artifactHasher interface {
-	hash(context.Context, io.Writer, *latest.Artifact, platform.Resolver, string) (string, error)
+	hash(context.Context, *latest.Artifact, platform.Resolver, string) (string, error)
 }
 
 type artifactHasherImpl struct {
@@ -67,20 +66,20 @@ func newArtifactHasher(artifacts graph.ArtifactGraph, lister DependencyLister, m
 	}
 }
 
-func (h *artifactHasherImpl) hash(ctx context.Context, out io.Writer, a *latest.Artifact, platforms platform.Resolver, tag string) (string, error) {
+func (h *artifactHasherImpl) hash(ctx context.Context, a *latest.Artifact, platforms platform.Resolver, tag string) (string, error) {
 	ctx, endTrace := instrumentation.StartTrace(ctx, "hash_GenerateHashOneArtifact", map[string]string{
 		"ImageName": instrumentation.PII(a.ImageName),
 	})
 	defer endTrace()
 
-	hash, err := h.safeHash(ctx, out, a, platforms.GetPlatforms(a.ImageName), tag)
+	hash, err := h.safeHash(ctx, a, platforms.GetPlatforms(a.ImageName), tag)
 	if err != nil {
 		endTrace(instrumentation.TraceEndError(err))
 		return "", err
 	}
 	hashes := []string{hash}
 	for _, dep := range sortedDependencies(a, h.artifacts) {
-		depHash, err := h.hash(ctx, out, dep, platforms, tag)
+		depHash, err := h.hash(ctx, dep, platforms, tag)
 		if err != nil {
 			endTrace(instrumentation.TraceEndError(err))
 			return "", err
@@ -94,15 +93,15 @@ func (h *artifactHasherImpl) hash(ctx context.Context, out io.Writer, a *latest.
 	return encode(hashes)
 }
 
-func (h *artifactHasherImpl) safeHash(ctx context.Context, out io.Writer, a *latest.Artifact, platforms platform.Matcher, tag string) (string, error) {
+func (h *artifactHasherImpl) safeHash(ctx context.Context, a *latest.Artifact, platforms platform.Matcher, tag string) (string, error) {
 	return h.syncStore.Exec(a.ImageName,
 		func() (string, error) {
-			return singleArtifactHash(ctx, out, h.lister, a, h.mode, platforms, tag)
+			return singleArtifactHash(ctx, h.lister, a, h.mode, platforms, tag)
 		})
 }
 
 // singleArtifactHash calculates the hash for a single artifact, and ignores its required artifacts.
-func singleArtifactHash(ctx context.Context, out io.Writer, depLister DependencyLister, a *latest.Artifact, mode config.RunMode, m platform.Matcher, tag string) (string, error) {
+func singleArtifactHash(ctx context.Context, depLister DependencyLister, a *latest.Artifact, mode config.RunMode, m platform.Matcher, tag string) (string, error) {
 	var inputs []string
 
 	// Append the artifact's configuration
@@ -133,7 +132,7 @@ func singleArtifactHash(ctx context.Context, out io.Writer, depLister Dependency
 	}
 
 	// add build args for the artifact if specified
-	args, err := hashBuildArgs(out, a, tag, mode)
+	args, err := hashBuildArgs(a, tag, mode)
 	if err != nil {
 		return "", fmt.Errorf("hashing build args: %w", err)
 	}
@@ -162,7 +161,7 @@ func encode(inputs []string) (string, error) {
 	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
-// TODO(dgageot): when the buildpacks builder image digest changes, we need to change the hash
+// artifactConfig marshals the artifact type used for cache keying.
 func artifactConfig(a *latest.Artifact) (string, error) {
 	buf, err := json.Marshal(a.ArtifactType)
 	if err != nil {
@@ -171,7 +170,7 @@ func artifactConfig(a *latest.Artifact) (string, error) {
 	return string(buf), nil
 }
 
-func hashBuildArgs(out io.Writer, artifact *latest.Artifact, tag string, mode config.RunMode) ([]string, error) {
+func hashBuildArgs(artifact *latest.Artifact, tag string, mode config.RunMode) ([]string, error) {
 	// only one of args or env is ever populated
 	var args map[string]*string
 	var env map[string]string
@@ -187,8 +186,6 @@ func hashBuildArgs(out io.Writer, artifact *latest.Artifact, tag string, mode co
 		args, err = docker.EvalBuildArgsWithEnv(mode, artifact.Workspace, artifact.DockerArtifact.DockerfilePath, artifact.DockerArtifact.BuildArgs, nil, envTags)
 	case artifact.KanikoArtifact != nil:
 		args, err = docker.EvalBuildArgsWithEnv(mode, kaniko.GetContext(artifact.KanikoArtifact, artifact.Workspace), artifact.KanikoArtifact.DockerfilePath, artifact.KanikoArtifact.BuildArgs, nil, envTags)
-	case artifact.BuildpackArtifact != nil:
-		env, err = buildpacks.GetEnv(out, artifact, mode)
 	case artifact.CustomArtifact != nil && artifact.CustomArtifact.Dependencies.Dockerfile != nil:
 		args, err = util.EvaluateEnvTemplateMap(artifact.CustomArtifact.Dependencies.Dockerfile.BuildArgs)
 	default:

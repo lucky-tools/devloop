@@ -51,21 +51,20 @@ jobs:
       run: |
         make
         echo DEVLOOP_BINARY=$PWD/out/devloop >> $GITHUB_ENV
-        out/devloop config set --global collect-metrics false
 
     - name: Build changed examples
       if: ${{ env.CHANGED_EXAMPLES_COUNT > 0 }}
       run: |
         for dir in $CHANGED_EXAMPLES; do
+            if [ ! -d "$dir" ]; then \
+                echo "skipping $dir: directory no longer exists"; \
+                continue; \
+            fi
             (cd $dir && echo ">> $dir" && \
                 if [[ $dir == 'integration/examples/custom-buildx' ]]; then \
                     echo "skipping $dir: requires image pushing to succeed which is not done in these tests"; \
-                elif [[ $dir == 'integration/examples/buildpacks-python' ]]; then \
-                    echo "skipping $dir: build packs python is failing with toml permission error"; \
-                elif [ $(expr "$($DEVLOOP_BINARY inspect build-env list)" : '.*"type":"local".*') -gt 0 ]; then \
-                    $DEVLOOP_BINARY build --push=false --cache-artifacts=false; \
                 else \
-                    echo "skipping $dir: not local build-env"; \
+                    $DEVLOOP_BINARY build --push=false --cache-artifacts=false; \
                 fi) \
              || exit 1;
         done

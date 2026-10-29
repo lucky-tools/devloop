@@ -2,7 +2,7 @@
 ---------------------
 
 [![Code Coverage](https://codecov.io/gh/lucky-tools/devloop/branch/main/graph/badge.svg)](https://codecov.io/gh/lucky-tools/devloop)
-[![LICENSE](https://img.shields.io/github/license/lucky-tools/devloop.svg)](https://github.com/lucky-tools/devloop/blob/main/LICENSE)
+[![LICENSE](https://img.shields.io/github/license/lucky-tools/devloop.svg)](https://github.com/lucky-tools/devloop/blob/master/LICENSE)
 [![Releases](https://img.shields.io/github/release-pre/lucky-tools/devloop.svg)](https://github.com/lucky-tools/devloop/releases)
 
 Devloop is a command line tool that facilitates continuous development for
@@ -30,7 +30,6 @@ Or, check out our [Github Releases](https://github.com/lucky-tools/devloop/relea
   * **context aware** - use Devloop profiles, user level config, environment variables and flags to describe differences in environments
   * **CI/CD building blocks** - use `devloop run` end-to-end, or use individual Devloop phases to build up your CI/CD pipeline. `devloop render` outputs hydrated Kubernetes manifests that can be used in GitOps workflows.
 * Pluggable, declarative configuration for your project
-  * **devloop init** - Devloop discovers your files and generates its own config file
   * **multi-component apps** - Devloop supports applications consisting of multiple components
   * **bring your own tools** - Devloop has a pluggable architecture to integrate with any build or deploy tool
 * Lightweight

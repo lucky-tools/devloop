@@ -71,7 +71,7 @@ directory of your source files and should generally match the artifact's
 The `remotePath` or `to` properties should be set to the absolute path of the
 source location _during compilation_. For example, the `golang` images, which
 are
-[often used in multi-stage builds](https://github.com/lucky-tools/devloop/tree/main/examples/getting-started/Dockerfile),
+[often used in multi-stage builds](https://github.com/lucky-tools/devloop/tree/master/examples/getting-started/Dockerfile),
 have a default working directory of `/go`. The following
 [configuration](https://github.com/golang/vscode-go/blob/master/docs/debugging-legacy.md#remote-debugging)
 works in this case:
@@ -361,7 +361,7 @@ Some language runtimes require additional support files to enable debugging.
 For these languages, a special set of [runtime-specific images](https://github.com/GoogleContainerTools/container-debug-support)
 are configured as _init-containers_ to populate a shared-volume that is mounted into
 each of the appropriate containers.  These images are hosted at
-`gcr.io/k8s-devloop/devloop-debug-support`; alternative locations can be
+`gcr.io/k8s-skaffold/skaffold-debug-support`; alternative locations can be
 specified in [Devloop's global configuration]({{< relref "/docs/design/global-config.md" >}}).
 
 For images that are successfully recognized, Devloop adds a `debug.cloud.google.com/config`

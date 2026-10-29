@@ -175,6 +175,13 @@ func getConfigs(ctx context.Context, cfgOpts configOpts, opts config.DevloopOpti
 	return configs, fieldsOverrodeByProfile, nil
 }
 
+// applyConfigEnv sets the environment variables declared in a config's `env`
+// field. It lives in its own function (rather than inline) because the
+// `processEachConfig` parameter named `config` shadows the `config` package.
+func applyConfigEnv(c *latest.DevloopConfig) error {
+	return config.SetEnvFromConfig(c.Env)
+}
+
 // processEachConfig processes each parsed config by applying profiles and recursively processing its dependencies.
 // The `index` parameter specifies the index of the current config in its `devloop.yaml` file. We use the `index` instead of the config `metadata.name` property to uniquely identify each config since not all configs define `name`.
 func processEachConfig(ctx context.Context, config *latest.DevloopConfig, cfgOpts configOpts, opts config.DevloopOptions, r *record, index int, fieldsOverrodeByProfile map[string]configlocations.YAMLOverrideInfo) (DevloopConfigSet, error) {
@@ -196,10 +203,30 @@ func processEachConfig(ctx context.Context, config *latest.DevloopConfig, cfgOpt
 	// `requiredConfigs` specifies if we are already in the dependency-tree of a required config, so all selected configs are required even if they are not explicitly named via the configuration flag.
 	required := cfgOpts.isRequired || len(opts.ConfigurationFilter) == 0 || stringslice.Contains(opts.ConfigurationFilter, config.Metadata.Name)
 
+	// Apply the config's `env` before profiles are resolved so that variables
+	// such as KUBECONFIG are visible to kubeconfig loading during parsing. Only
+	// required configs apply their env, matching the previous behaviour where env
+	// was applied to the final config set in the runner.
+	if required {
+		if err := applyConfigEnv(config); err != nil {
+			return nil, fmt.Errorf("setting env from config %q: %w", config.Metadata.Name, err)
+		}
+	}
+
 	profiles, _, err := schema.ApplyProfiles(config, fieldsOverrodeByProfile, opts, cfgOpts.profiles)
 	if err != nil {
 		return nil, sErrors.ConfigProfileActivationErr(config.Metadata.Name, cfgOpts.file, err)
 	}
+
+	// Re-apply env after profiles have been merged, so env variables added by a
+	// profile patch are also set. SetEnvFromConfig skips variables that are
+	// already present, so the pre-profile values set above win on conflict.
+	if required {
+		if err := applyConfigEnv(config); err != nil {
+			return nil, fmt.Errorf("setting env from config %q: %w", config.Metadata.Name, err)
+		}
+	}
+
 	if !opts.SkipConfigDefaults {
 		if err := defaults.Set(config); err != nil {
 			return nil, sErrors.ConfigSetDefaultValuesErr(config.Metadata.Name, cfgOpts.file, err)

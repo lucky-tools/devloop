@@ -449,73 +449,6 @@
         },
         {
           "properties": {
-            "buildpacks": {
-              "$ref": "#/definitions/BuildpackArtifact",
-              "description": "builds images using [Cloud Native Buildpacks](https://buildpacks.io/).",
-              "x-intellij-html-description": "builds images using <a href=\"https://buildpacks.io/\">Cloud Native Buildpacks</a>."
-            },
-            "context": {
-              "type": "string",
-              "description": "directory containing the artifact's sources.",
-              "x-intellij-html-description": "directory containing the artifact's sources.",
-              "default": "."
-            },
-            "hooks": {
-              "$ref": "#/definitions/BuildHooks",
-              "description": "describes a set of lifecycle hooks that are executed before and after each build of the target artifact.",
-              "x-intellij-html-description": "describes a set of lifecycle hooks that are executed before and after each build of the target artifact."
-            },
-            "image": {
-              "type": "string",
-              "description": "name of the image to be built.",
-              "x-intellij-html-description": "name of the image to be built.",
-              "examples": [
-                "gcr.io/k8s-devloop/example"
-              ]
-            },
-            "platforms": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array",
-              "description": "list of platforms to build this artifact image for. It overrides the values inferred through heuristics or provided in the top level `platforms` property or in the global config. If the target builder cannot build for atleast one of the specified platforms, then the build fails. Each platform is of the format `os[/arch[/variant]]`, e.g., `linux/amd64`. Example: `[\"linux/amd64\", \"linux/arm64\"]`.",
-              "x-intellij-html-description": "list of platforms to build this artifact image for. It overrides the values inferred through heuristics or provided in the top level <code>platforms</code> property or in the global config. If the target builder cannot build for atleast one of the specified platforms, then the build fails. Each platform is of the format <code>os[/arch[/variant]]</code>, e.g., <code>linux/amd64</code>. Example: <code>[&quot;linux/amd64&quot;, &quot;linux/arm64&quot;]</code>.",
-              "default": "[]"
-            },
-            "requires": {
-              "items": {
-                "$ref": "#/definitions/ArtifactDependency"
-              },
-              "type": "array",
-              "description": "describes build artifacts that this artifact depends on.",
-              "x-intellij-html-description": "describes build artifacts that this artifact depends on."
-            },
-            "runtimeType": {
-              "type": "string",
-              "description": "specifies the target language runtime for this artifact that is used to configure debug support. Should be one of `go`, `nodejs`, `jvm`, `python` or `netcore`. If unspecified the language runtime is inferred from common heuristics for the list of supported runtimes.",
-              "x-intellij-html-description": "specifies the target language runtime for this artifact that is used to configure debug support. Should be one of <code>go</code>, <code>nodejs</code>, <code>jvm</code>, <code>python</code> or <code>netcore</code>. If unspecified the language runtime is inferred from common heuristics for the list of supported runtimes."
-            },
-            "sync": {
-              "$ref": "#/definitions/Sync",
-              "description": "*beta* local files synced to pods instead of triggering an image build when modified. If no files are listed, sync all the files and infer the destination.",
-              "x-intellij-html-description": "<em>beta</em> local files synced to pods instead of triggering an image build when modified. If no files are listed, sync all the files and infer the destination.",
-              "default": "infer: [\"**/*\"]"
-            }
-          },
-          "preferredOrder": [
-            "image",
-            "context",
-            "sync",
-            "requires",
-            "hooks",
-            "platforms",
-            "runtimeType",
-            "buildpacks"
-          ],
-          "additionalProperties": false
-        },
-        {
-          "properties": {
             "context": {
               "type": "string",
               "description": "directory containing the artifact's sources.",
@@ -800,167 +733,6 @@
       "type": "object",
       "description": "describes the list of lifecycle hooks to execute before and after each artifact build step.",
       "x-intellij-html-description": "describes the list of lifecycle hooks to execute before and after each artifact build step."
-    },
-    "BuildpackArtifact": {
-      "properties": {
-        "buildArgs": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "description": "additional args passed to the `pack` build command.",
-          "x-intellij-html-description": "additional args passed to the <code>pack</code> build command.",
-          "default": "[]",
-          "examples": [
-            "[\"--network\", \"host\", \"--cache-image\", \"gcr.io/my-project/my-cache\"]"
-          ]
-        },
-        "builder": {
-          "type": "string",
-          "description": "builder image used.",
-          "x-intellij-html-description": "builder image used."
-        },
-        "buildpacks": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "description": "a list of strings, where each string is a specific buildpack to use with the builder. If you specify buildpacks the builder image automatic detection will be ignored. These buildpacks will be used to build the Image from your source code. Order matters.",
-          "x-intellij-html-description": "a list of strings, where each string is a specific buildpack to use with the builder. If you specify buildpacks the builder image automatic detection will be ignored. These buildpacks will be used to build the Image from your source code. Order matters.",
-          "default": "[]"
-        },
-        "clearCache": {
-          "type": "boolean",
-          "description": "removes old cache volume associated with the specific image and supplies a clean cache volume for build.",
-          "x-intellij-html-description": "removes old cache volume associated with the specific image and supplies a clean cache volume for build.",
-          "default": "false"
-        },
-        "dependencies": {
-          "$ref": "#/definitions/BuildpackDependencies",
-          "description": "file dependencies that devloop should watch for both rebuilding and file syncing for this artifact.",
-          "x-intellij-html-description": "file dependencies that devloop should watch for both rebuilding and file syncing for this artifact."
-        },
-        "env": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "description": "environment variables, in the `key=value` form,  passed to the build. Values can use the go template syntax.",
-          "x-intellij-html-description": "environment variables, in the <code>key=value</code> form,  passed to the build. Values can use the go template syntax.",
-          "default": "[]",
-          "examples": [
-            "[\"key1=value1\", \"key2=value2\", \"key3={{.ENV_VARIABLE}}\"]"
-          ]
-        },
-        "projectDescriptor": {
-          "type": "string",
-          "description": "path to the project descriptor file.",
-          "x-intellij-html-description": "path to the project descriptor file.",
-          "default": "project.toml"
-        },
-        "runImage": {
-          "type": "string",
-          "description": "overrides the stack's default run image.",
-          "x-intellij-html-description": "overrides the stack's default run image."
-        },
-        "trustBuilder": {
-          "type": "boolean",
-          "description": "indicates that the builder should be trusted.",
-          "x-intellij-html-description": "indicates that the builder should be trusted.",
-          "default": "false"
-        },
-        "volumes": {
-          "items": {
-            "$ref": "#/definitions/BuildpackVolume"
-          },
-          "type": "array",
-          "description": "support mounting host volumes into the container.",
-          "x-intellij-html-description": "support mounting host volumes into the container."
-        }
-      },
-      "preferredOrder": [
-        "builder",
-        "runImage",
-        "env",
-        "buildpacks",
-        "trustBuilder",
-        "clearCache",
-        "projectDescriptor",
-        "dependencies",
-        "volumes",
-        "buildArgs"
-      ],
-      "additionalProperties": false,
-      "type": "object",
-      "description": "*alpha* describes an artifact built using [Cloud Native Buildpacks](https://buildpacks.io/). It can be used to build images out of project's sources without any additional configuration.",
-      "x-intellij-html-description": "<em>alpha</em> describes an artifact built using <a href=\"https://buildpacks.io/\">Cloud Native Buildpacks</a>. It can be used to build images out of project's sources without any additional configuration."
-    },
-    "BuildpackDependencies": {
-      "properties": {
-        "ignore": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "description": "specifies the paths that should be ignored by devloop's file watcher. If a file exists in both `paths` and in `ignore`, it will be ignored, and will be excluded from both rebuilds and file synchronization. Will only work in conjunction with `paths`.",
-          "x-intellij-html-description": "specifies the paths that should be ignored by devloop's file watcher. If a file exists in both <code>paths</code> and in <code>ignore</code>, it will be ignored, and will be excluded from both rebuilds and file synchronization. Will only work in conjunction with <code>paths</code>.",
-          "default": "[]"
-        },
-        "paths": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "description": "should be set to the file dependencies for this artifact, so that the devloop file watcher knows when to rebuild and perform file synchronization.",
-          "x-intellij-html-description": "should be set to the file dependencies for this artifact, so that the devloop file watcher knows when to rebuild and perform file synchronization.",
-          "default": "[]"
-        }
-      },
-      "preferredOrder": [
-        "paths",
-        "ignore"
-      ],
-      "additionalProperties": false,
-      "type": "object",
-      "description": "*alpha* used to specify dependencies for an artifact built by buildpacks.",
-      "x-intellij-html-description": "<em>alpha</em> used to specify dependencies for an artifact built by buildpacks."
-    },
-    "BuildpackVolume": {
-      "required": [
-        "host",
-        "target"
-      ],
-      "properties": {
-        "host": {
-          "type": "string",
-          "description": "local volume or absolute directory of the path to mount.",
-          "x-intellij-html-description": "local volume or absolute directory of the path to mount."
-        },
-        "options": {
-          "type": "string",
-          "description": "specify a list of comma-separated mount options. Valid options are: `ro` (default): volume contents are read-only. `rw`: volume contents are readable and writable. `volume-opt=<key>=<value>`: can be specified more than once, takes a key-value pair.",
-          "x-intellij-html-description": "specify a list of comma-separated mount options. Valid options are: <code>ro</code> (default): volume contents are read-only. <code>rw</code>: volume contents are readable and writable. <code>volume-opt=&lt;key&gt;=&lt;value&gt;</code>: can be specified more than once, takes a key-value pair.",
-          "enum": [
-            "ro",
-            "rw",
-            "volume-opt=<key>=<value>"
-          ]
-        },
-        "target": {
-          "type": "string",
-          "description": "path where the file or directory is available in the container. It is strongly recommended to not specify locations under `/cnb` or `/layers`.",
-          "x-intellij-html-description": "path where the file or directory is available in the container. It is strongly recommended to not specify locations under <code>/cnb</code> or <code>/layers</code>."
-        }
-      },
-      "preferredOrder": [
-        "host",
-        "target",
-        "options"
-      ],
-      "additionalProperties": false,
-      "type": "object",
-      "description": "*alpha* used to mount host volumes or directories in the build container.",
-      "x-intellij-html-description": "<em>alpha</em> used to mount host volumes or directories in the build container."
     },
     "CloudRunDeploy": {
       "properties": {
@@ -1432,6 +1204,11 @@
           "description": "*alpha* uses the `docker` CLI to create application containers in Docker.",
           "x-intellij-html-description": "<em>alpha</em> uses the <code>docker</code> CLI to create application containers in Docker."
         },
+        "helm": {
+          "$ref": "#/definitions/LegacyHelmDeploy",
+          "description": "*beta* uses the `helm` CLI to apply the charts to the cluster.",
+          "x-intellij-html-description": "<em>beta</em> uses the <code>helm</code> CLI to apply the charts to the cluster."
+        },
         "kpt": {
           "$ref": "#/definitions/KptDeploy",
           "description": "*alpha* uses the `kpt` CLI to manage and deploy manifests.",
@@ -1474,6 +1251,7 @@
       },
       "preferredOrder": [
         "docker",
+        "helm",
         "kpt",
         "kubectl",
         "cloudrun",
@@ -3041,13 +2819,20 @@
           "description": "Kubernetes manifests in remote clusters.",
           "x-intellij-html-description": "Kubernetes manifests in remote clusters.",
           "default": "[]"
+        },
+        "useAPI": {
+          "type": "boolean",
+          "description": "uses client-go server-side apply to deploy manifests directly against the Kubernetes API server instead of shelling out to `kubectl`. Requires no `kubectl` binary on the host. When enabled, the kubectl `flags` are ignored.",
+          "x-intellij-html-description": "uses client-go server-side apply to deploy manifests directly against the Kubernetes API server instead of shelling out to <code>kubectl</code>. Requires no <code>kubectl</code> binary on the host. When enabled, the kubectl <code>flags</code> are ignored.",
+          "default": "false"
         }
       },
       "preferredOrder": [
         "flags",
         "remoteManifests",
         "defaultNamespace",
-        "hooks"
+        "hooks",
+        "useAPI"
       ],
       "additionalProperties": false,
       "type": "object",
@@ -3152,6 +2937,44 @@
       "type": "object",
       "description": "defines the paths to be modified with kustomize, along with extra flags to be passed to kustomize.",
       "x-intellij-html-description": "defines the paths to be modified with kustomize, along with extra flags to be passed to kustomize."
+    },
+    "LegacyHelmDeploy": {
+      "properties": {
+        "concurrency": {
+          "type": "integer",
+          "description": "how many packages can be installed concurrently. 0 means \"no-limit\".",
+          "x-intellij-html-description": "how many packages can be installed concurrently. 0 means &quot;no-limit&quot;.",
+          "default": "1"
+        },
+        "flags": {
+          "$ref": "#/definitions/HelmDeployFlags",
+          "description": "additional option flags that are passed on the command line to `helm`.",
+          "x-intellij-html-description": "additional option flags that are passed on the command line to <code>helm</code>."
+        },
+        "hooks": {
+          "$ref": "#/definitions/DeployHooks",
+          "description": "describes a set of lifecycle hooks that are executed before and after every deploy.",
+          "x-intellij-html-description": "describes a set of lifecycle hooks that are executed before and after every deploy."
+        },
+        "releases": {
+          "items": {
+            "$ref": "#/definitions/HelmRelease"
+          },
+          "type": "array",
+          "description": "a list of Helm releases.",
+          "x-intellij-html-description": "a list of Helm releases."
+        }
+      },
+      "preferredOrder": [
+        "concurrency",
+        "releases",
+        "flags",
+        "hooks"
+      ],
+      "additionalProperties": false,
+      "type": "object",
+      "description": "*beta* uses the `helm` CLI to apply the charts to the cluster.",
+      "x-intellij-html-description": "<em>beta</em> uses the <code>helm</code> CLI to apply the charts to the cluster."
     },
     "LocalBuild": {
       "type": "object",
@@ -3941,8 +3764,8 @@
       "properties": {
         "auto": {
           "type": "boolean",
-          "description": "delegates discovery of sync rules to the build system. Only available for jib and buildpacks.",
-          "x-intellij-html-description": "delegates discovery of sync rules to the build system. Only available for jib and buildpacks."
+          "description": "delegates discovery of sync rules to the build system. Only available for jib.",
+          "x-intellij-html-description": "delegates discovery of sync rules to the build system. Only available for jib."
         },
         "hooks": {
           "$ref": "#/definitions/SyncHooks",

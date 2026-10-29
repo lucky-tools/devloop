@@ -265,7 +265,7 @@ func TestGetCommandGradle(t *testing.T) {
 			jibArtifact:      latest.JibArtifact{},
 			filesInWorkspace: []string{},
 			expectedCmd: func(workspace string) exec.Cmd {
-				return GradleCommand.CreateCommand(ctx, workspace, []string{"_devloopFailIfJibOutOfDate", "-Djib.requiredVersion=" + MinimumJibGradleVersion, ":_jibDevloopFilesV2", "-q", "--console=plain"})
+				return GradleCommand.CreateCommand(ctx, workspace, []string{"_skaffoldFailIfJibOutOfDate", "-Djib.requiredVersion=" + MinimumJibGradleVersion, ":_jibSkaffoldFilesV2", "-q", "--console=plain"})
 			},
 		},
 		{
@@ -273,7 +273,7 @@ func TestGetCommandGradle(t *testing.T) {
 			jibArtifact:      latest.JibArtifact{Project: "project"},
 			filesInWorkspace: []string{},
 			expectedCmd: func(workspace string) exec.Cmd {
-				return GradleCommand.CreateCommand(ctx, workspace, []string{"_devloopFailIfJibOutOfDate", "-Djib.requiredVersion=" + MinimumJibGradleVersion, ":project:_jibDevloopFilesV2", "-q", "--console=plain"})
+				return GradleCommand.CreateCommand(ctx, workspace, []string{"_skaffoldFailIfJibOutOfDate", "-Djib.requiredVersion=" + MinimumJibGradleVersion, ":project:_jibSkaffoldFilesV2", "-q", "--console=plain"})
 			},
 		},
 		{
@@ -281,7 +281,7 @@ func TestGetCommandGradle(t *testing.T) {
 			jibArtifact:      latest.JibArtifact{},
 			filesInWorkspace: []string{"gradlew", "gradlew.cmd"},
 			expectedCmd: func(workspace string) exec.Cmd {
-				return GradleCommand.CreateCommand(ctx, workspace, []string{"_devloopFailIfJibOutOfDate", "-Djib.requiredVersion=" + MinimumJibGradleVersion, ":_jibDevloopFilesV2", "-q", "--console=plain"})
+				return GradleCommand.CreateCommand(ctx, workspace, []string{"_skaffoldFailIfJibOutOfDate", "-Djib.requiredVersion=" + MinimumJibGradleVersion, ":_jibSkaffoldFilesV2", "-q", "--console=plain"})
 			},
 		},
 		{
@@ -289,7 +289,7 @@ func TestGetCommandGradle(t *testing.T) {
 			jibArtifact:      latest.JibArtifact{Project: "project"},
 			filesInWorkspace: []string{"gradlew", "gradlew.cmd"},
 			expectedCmd: func(workspace string) exec.Cmd {
-				return GradleCommand.CreateCommand(ctx, workspace, []string{"_devloopFailIfJibOutOfDate", "-Djib.requiredVersion=" + MinimumJibGradleVersion, ":project:_jibDevloopFilesV2", "-q", "--console=plain"})
+				return GradleCommand.CreateCommand(ctx, workspace, []string{"_skaffoldFailIfJibOutOfDate", "-Djib.requiredVersion=" + MinimumJibGradleVersion, ":project:_jibSkaffoldFilesV2", "-q", "--console=plain"})
 			},
 		},
 	}
@@ -320,14 +320,14 @@ func TestGetSyncMapCommandGradle(t *testing.T) {
 			description: "single module",
 			jibArtifact: latest.JibArtifact{},
 			expectedCmd: func(workspace string) exec.Cmd {
-				return GradleCommand.CreateCommand(ctx, workspace, []string{"fake-gradleBuildArgs-for-_jibDevloopSyncMap-skipTests"})
+				return GradleCommand.CreateCommand(ctx, workspace, []string{"fake-gradleBuildArgs-for-_jibSkaffoldSyncMap-skipTests"})
 			},
 		},
 		{
 			description: "multi module",
 			jibArtifact: latest.JibArtifact{Project: "project"},
 			expectedCmd: func(workspace string) exec.Cmd {
-				return GradleCommand.CreateCommand(ctx, workspace, []string{"fake-gradleBuildArgs-for-project-for-_jibDevloopSyncMap-skipTests"})
+				return GradleCommand.CreateCommand(ctx, workspace, []string{"fake-gradleBuildArgs-for-project-for-_jibSkaffoldSyncMap-skipTests"})
 			},
 		},
 	}
@@ -424,12 +424,12 @@ func TestGradleArgs(t *testing.T) {
 		{
 			description: "single module",
 			jibArtifact: latest.JibArtifact{},
-			expected:    []string{"_devloopFailIfJibOutOfDate", "-Djib.requiredVersion=test-version", ":testTask"},
+			expected:    []string{"_skaffoldFailIfJibOutOfDate", "-Djib.requiredVersion=test-version", ":testTask"},
 		},
 		{
 			description: "multi module",
 			jibArtifact: latest.JibArtifact{Project: "module"},
-			expected:    []string{"_devloopFailIfJibOutOfDate", "-Djib.requiredVersion=test-version", ":module:testTask"},
+			expected:    []string{"_skaffoldFailIfJibOutOfDate", "-Djib.requiredVersion=test-version", ":module:testTask"},
 		},
 	}
 	for _, test := range tests {

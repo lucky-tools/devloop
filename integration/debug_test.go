@@ -61,14 +61,6 @@ func TestDebug(t *testing.T) {
 			args:        []string{"--profile", "specified-runtime", "--check-cluster-node-platforms=false"},
 			pods:        []string{"nodejs"},
 		},
-		// TODO(#8811): Enable this test when issue is solve.
-		// {
-		// 	description: "buildpacks",
-		// 	dir:         "testdata/debug",
-		// 	args:        []string{"--profile", "buildpacks"},
-		// 	deployments: []string{"java"},
-		// 	pods:        []string{"nodejs", "npm" /*, "python3"*/, "go" /*, "netcore"*/},
-		// },
 		{
 			description:   "helm",
 			dir:           "examples/helm-deployment",
@@ -192,7 +184,7 @@ func checkSupportContainer(containers []container.Summary, found *bool) {
 		return
 	}
 	for _, c := range containers {
-		if strings.Contains(c.Image, "gcr.io/k8s-devloop/devloop-debug-support") {
+		if strings.Contains(c.Image, "gcr.io/k8s-skaffold/skaffold-debug-support") {
 			*found = true
 		}
 	}

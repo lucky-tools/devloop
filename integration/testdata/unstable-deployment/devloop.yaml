@@ -3,7 +3,8 @@ kind: Config
 build:
   artifacts:
     - image: incorrect-example
+manifests:
+  rawYaml:
+    - incorrect-deployment.yaml
 deploy:
-  kubectl:
-    manifests:
-      - incorrect-deployment.yaml
+  kubectl: {}
