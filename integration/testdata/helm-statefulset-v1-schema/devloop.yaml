@@ -8,3 +8,6 @@ manifests:
     releases:
     - name: devloop-helm
       chartPath: charts
+      setValueTemplates:
+        image.repository: "{{.IMAGE_REPO_gcr_io_k8s_devloop_devloop_helm}}"
+        image.tag: "{{.IMAGE_TAG_gcr_io_k8s_devloop_devloop_helm}}"
