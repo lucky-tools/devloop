@@ -156,19 +156,19 @@ func TestDockerDialStdioCommand(t *testing.T) {
 	}
 }
 
-func TestBuildctlDialStdioCommand(t *testing.T) {
+func TestBuildkitdSocketPath(t *testing.T) {
 	tests := []struct {
 		description string
 		path        string
 		expected    string
 	}{
-		{description: "empty path", path: "", expected: "buildctl dial-stdio"},
-		{description: "root path", path: "/", expected: "buildctl dial-stdio"},
-		{description: "socket path", path: "/var/run/buildkit/buildkitd.sock", expected: "buildctl --addr=unix:///var/run/buildkit/buildkitd.sock dial-stdio"},
+		{description: "empty path", path: "", expected: "/run/buildkit/buildkitd.sock"},
+		{description: "root path", path: "/", expected: "/run/buildkit/buildkitd.sock"},
+		{description: "socket path", path: "/var/run/buildkit/buildkitd.sock", expected: "/var/run/buildkit/buildkitd.sock"},
 	}
 	for _, test := range tests {
 		testutil.Run(t, test.description, func(t *testutil.T) {
-			t.CheckDeepEqual(test.expected, buildctlDialStdioCommand(test.path))
+			t.CheckDeepEqual(test.expected, buildkitdSocketPath(test.path))
 		})
 	}
 }

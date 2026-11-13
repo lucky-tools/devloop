@@ -48,6 +48,10 @@ const (
 	// connection is established by the ssh dialer, so this value only appears
 	// in HTTP requests and is never dialed directly.
 	sshDummyHost = "http://docker.example.com"
+
+	// buildkitdDefaultSocketPath is buildkitd's default rootful unix socket path,
+	// used when an ssh:// URL carries no path.
+	buildkitdDefaultSocketPath = "/run/buildkit/buildkitd.sock"
 )
 
 // sshPasswordSpec holds the parsed parts of an ssh:// URL that carries a
@@ -130,14 +134,40 @@ func nativeSSHDialer(spec sshPasswordSpec) func(context.Context, string, string)
 
 // SSHBuildKitDialer returns a context dialer (for client.WithContextDialer) that
 // connects to a remote buildkitd over ssh using the encrypted password in an
-// ssh:// URL. ok is false when host is not such a URL, in which case the caller
-// should use its default connection logic.
+// ssh:// URL. It bridges buildkitd's gRPC API over an ssh-forwarded unix socket
+// (direct-streamlocal@openssh.com), so buildkitd is reached through the ssh
+// server itself and no buildctl is required on the remote host. ok is false when
+// host is not such a URL, in which case the caller should use its default
+// connection logic.
 func SSHBuildKitDialer(host string, key []byte) (func(context.Context, string) (net.Conn, error), bool, error) {
 	spec, ok, err := parseSSHPasswordURL(host, key)
 	if err != nil || !ok {
 		return nil, false, err
 	}
-	return sshDialer(spec, buildctlDialStdioCommand(spec.path)), true, nil
+	return sshUnixSocketDialer(spec), true, nil
+}
+
+// sshUnixSocketDialer returns a 2-arg context dialer (the shape used by grpc's
+// WithContextDialer) that reaches the remote buildkitd unix socket at spec.path
+// by opening a direct-streamlocal@openssh.com channel over the ssh connection.
+// The sshd forwards the channel to the socket, so no remote command is run.
+func sshUnixSocketDialer(spec sshPasswordSpec) func(context.Context, string) (net.Conn, error) {
+	return func(ctx context.Context, _ string) (net.Conn, error) {
+		config, err := sshClientConfig(spec)
+		if err != nil {
+			return nil, err
+		}
+		client, err := dialSSH(ctx, spec.host, config)
+		if err != nil {
+			return nil, err
+		}
+		conn, err := client.DialContext(ctx, "unix", buildkitdSocketPath(spec.path))
+		if err != nil {
+			_ = client.Close()
+			return nil, err
+		}
+		return &sshStreamConn{Conn: conn, client: client}, nil
+	}
 }
 
 func sshClientConfig(spec sshPasswordSpec) (*ssh.ClientConfig, error) {
@@ -198,13 +228,15 @@ func dockerDialStdioCommand(path string) string {
 	return "docker system dial-stdio"
 }
 
-// buildctlDialStdioCommand returns the remote command that bridges buildkitd's
-// gRPC API over the ssh session, mirroring buildkit's own ssh connection helper.
-func buildctlDialStdioCommand(path string) string {
+// buildkitdSocketPath returns the unix socket path for buildkitd from the ssh://
+// URL path. An empty or root path falls back to buildkitd's default rootful
+// socket, mirroring buildctl's default address. Rootless buildkitd sockets are
+// not auto-detected; specify the full path in the ssh:// URL in that case.
+func buildkitdSocketPath(path string) string {
 	if strings.Trim(path, "/") != "" {
-		return "buildctl --addr=unix://" + path + " dial-stdio"
+		return path
 	}
-	return "buildctl dial-stdio"
+	return buildkitdDefaultSocketPath
 }
 
 // sshConn adapts an ssh session running `docker system dial-stdio` to a
@@ -330,6 +362,24 @@ func (c *sshConn) RemoteAddr() net.Addr { return sshAddr{} }
 func (c *sshConn) SetDeadline(time.Time) error      { return nil }
 func (c *sshConn) SetReadDeadline(time.Time) error  { return nil }
 func (c *sshConn) SetWriteDeadline(time.Time) error { return nil }
+
+// sshStreamConn ties a stream forwarded over ssh (a direct-streamlocal channel)
+// to the ssh client that carries it, so closing the stream also closes the ssh
+// connection.
+type sshStreamConn struct {
+	net.Conn
+	client    *ssh.Client
+	closeOnce sync.Once
+}
+
+func (c *sshStreamConn) Close() error {
+	var err error
+	c.closeOnce.Do(func() {
+		err = c.Conn.Close()
+		_ = c.client.Close()
+	})
+	return err
+}
 
 type sshAddr struct{}
 
