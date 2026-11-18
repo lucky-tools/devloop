@@ -25,6 +25,7 @@ import (
 	"github.com/moby/buildkit/session/auth"
 	"github.com/moby/buildkit/util/errutil"
 	"github.com/moby/buildkit/util/progress/progresswriter"
+	"github.com/moby/buildkit/util/resolver/retryhandler"
 	"github.com/moby/buildkit/util/tracing"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/nacl/sign"
@@ -97,12 +98,50 @@ func (ap *authProvider) Register(server *grpc.Server) {
 	auth.RegisterAuthServer(server, ap)
 }
 
-func (ap *authProvider) FetchToken(ctx context.Context, req *auth.FetchTokenRequest) (rr *auth.FetchTokenResponse, err error) {
-	ac, err := ap.getAuthConfig(ctx, req.Host, req.Scopes)
+func (ap *authProvider) FetchToken(ctx context.Context, req *auth.FetchTokenRequest) (_ *auth.FetchTokenResponse, err error) {
+	ac, err := ap.getAuthConfig(ctx, req.Host, req.Scopes, ap.expireAc)
 	if err != nil {
 		return nil, err
 	}
 
+	// Format registry errors only after deciding whether to refresh. WithDetails
+	// can replace the HTTP status with a structured registry error.
+	defer func() {
+		if toCredentials(*ac).Secret != "" {
+			err = errors.Wrap(errutil.WithDetails(err), "failed to fetch oauth token")
+		} else {
+			err = errors.Wrap(err, "failed to fetch anonymous token")
+		}
+	}()
+
+	resp, err := ap.fetchToken(ctx, req, ac)
+	creds := toCredentials(*ac)
+	var statusErr remoteserrors.ErrUnexpectedStatus
+	if !errors.As(err, &statusErr) || statusErr.StatusCode != http.StatusUnauthorized || creds.Secret == "" {
+		return resp, err
+	}
+
+	// Helpers can return credentials that expire before the cache TTL. After
+	// both token request methods fail, reload once without changing the normal
+	// expiration policy used by other requests.
+	refreshed, refreshErr := ap.getAuthConfig(ctx, req.Host, req.Scopes, func(time.Time, string) bool {
+		return true
+	})
+	if refreshErr != nil {
+		return nil, refreshErr
+	}
+	newCreds := toCredentials(*refreshed)
+	if newCreds.Username == creds.Username && newCreds.Secret == creds.Secret && refreshed.RegistryToken == ac.RegistryToken {
+		return nil, err
+	}
+	ac = refreshed
+
+	return ap.fetchToken(ctx, req, ac)
+}
+
+// fetchToken performs a token exchange with the supplied credentials, including
+// the GET fallback for registries that do not support OAuth POST requests.
+func (ap *authProvider) fetchToken(ctx context.Context, req *auth.FetchTokenRequest, ac *types.AuthConfig) (rr *auth.FetchTokenResponse, err error) {
 	// check for statically configured bearer token
 	if ac.RegistryToken != "" {
 		return toTokenResponse(ac.RegistryToken, time.Time{}, 0), nil
@@ -128,9 +167,6 @@ func (ap *authProvider) FetchToken(ctx context.Context, req *auth.FetchTokenRequ
 		done := func(progresswriter.SubLogger) error {
 			return err
 		}
-		defer func() {
-			err = errors.Wrap(errutil.WithDetails(err), "failed to fetch oauth token")
-		}()
 		ap.mu.Lock()
 		name := fmt.Sprintf("[auth] %v token for %s", strings.Join(trimScopePrefix(req.Scopes), " "), req.Host)
 		if _, ok := ap.loggerCache[name]; !ok {
@@ -138,7 +174,9 @@ func (ap *authProvider) FetchToken(ctx context.Context, req *auth.FetchTokenRequ
 		}
 		ap.mu.Unlock()
 		// credential information is provided, use oauth POST endpoint
-		resp, err := authutil.FetchTokenWithOAuth(ctx, httpClient, nil, "buildkit-client", to)
+		resp, err := retryhandler.WithRetry(ctx, nil, func(ctx context.Context) (*authutil.OAuthTokenResponse, error) {
+			return authutil.FetchTokenWithOAuth(ctx, httpClient, nil, "buildkit-client", to)
+		})
 		if err != nil {
 			var errStatus remoteserrors.ErrUnexpectedStatus
 			if errors.As(err, &errStatus) {
@@ -146,7 +184,9 @@ func (ap *authProvider) FetchToken(ctx context.Context, req *auth.FetchTokenRequ
 				// As of September 2017, GCR is known to return 404.
 				// As of February 2018, JFrog Artifactory is known to return 401.
 				if (errStatus.StatusCode == http.StatusMethodNotAllowed && to.Username != "") || errStatus.StatusCode == http.StatusNotFound || errStatus.StatusCode == http.StatusUnauthorized {
-					resp, err := authutil.FetchToken(ctx, httpClient, nil, to)
+					resp, err := retryhandler.WithRetry(ctx, nil, func(ctx context.Context) (*authutil.FetchTokenResponse, error) {
+						return authutil.FetchToken(ctx, httpClient, nil, to)
+					})
 					if err != nil {
 						return nil, err
 					}
@@ -158,9 +198,11 @@ func (ap *authProvider) FetchToken(ctx context.Context, req *auth.FetchTokenRequ
 		return toTokenResponse(resp.AccessToken, resp.IssuedAt, resp.ExpiresInSeconds), nil
 	}
 	// do request anonymously
-	resp, err := authutil.FetchToken(ctx, httpClient, nil, to)
+	resp, err := retryhandler.WithRetry(ctx, nil, func(ctx context.Context) (*authutil.FetchTokenResponse, error) {
+		return authutil.FetchToken(ctx, httpClient, nil, to)
+	})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch anonymous token")
+		return nil, err
 	}
 	return toTokenResponse(resp.Token, resp.IssuedAt, resp.ExpiresInSeconds), nil
 }
@@ -219,7 +261,7 @@ func toCredentials(ac types.AuthConfig) *auth.CredentialsResponse {
 }
 
 func (ap *authProvider) Credentials(ctx context.Context, req *auth.CredentialsRequest) (*auth.CredentialsResponse, error) {
-	ac, err := ap.getAuthConfig(ctx, req.Host, nil)
+	ac, err := ap.getAuthConfig(ctx, req.Host, nil, ap.expireAc)
 	if err != nil {
 		return nil, err
 	}
@@ -259,14 +301,14 @@ func (ap *authProvider) VerifyTokenAuthority(ctx context.Context, req *auth.Veri
 	return &auth.VerifyTokenAuthorityResponse{Signed: sign.Sign(nil, req.Payload, priv)}, nil
 }
 
-func (ap *authProvider) getAuthConfig(ctx context.Context, host string, scopes []string) (*types.AuthConfig, error) {
+func (ap *authProvider) getAuthConfig(ctx context.Context, host string, scopes []string, expireCheck ExpireCachedAuthCheck) (*types.AuthConfig, error) {
 	ap.mu.Lock()
 	defer ap.mu.Unlock()
 
 	var ac types.AuthConfig
 	if ap.provider != nil {
 		span, _ := tracing.StartSpan(ctx, fmt.Sprintf("load credentials for %s", host))
-		res, err := ap.provider(ctx, host, scopes, ap.expireAc)
+		res, err := ap.provider(ctx, host, scopes, expireCheck)
 		tracing.FinishWithError(span, err)
 		if err != nil {
 			return nil, err
@@ -282,7 +324,7 @@ func (ap *authProvider) getAuthorityKey(ctx context.Context, host string, salt [
 		return nil, status.Errorf(codes.Unavailable, "client side tokens disabled")
 	}
 
-	ac, err := ap.getAuthConfig(ctx, host, nil)
+	ac, err := ap.getAuthConfig(ctx, host, nil, ap.expireAc)
 	if err != nil {
 		return nil, err
 	}

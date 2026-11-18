@@ -242,6 +242,10 @@ func WithUser(name string) ChownOption {
 				opt.User = &UserOpt{UID: uid}
 			}
 		case 1:
+			// An omitted group uses the same default as a user without a colon.
+			if v == "" {
+				continue
+			}
 			gid, err := parseUID(v)
 			if err != nil {
 				opt.Group = &UserOpt{Name: v}
@@ -258,7 +262,10 @@ func parseUID(str string) (int, error) {
 	if str == "root" {
 		return 0, nil
 	}
-	uid, err := strconv.ParseInt(str, 10, 32)
+	// uid_t/gid_t span 0..2^32-1, matching the daemon-side parser in
+	// executor/oci. ParseInt here would reject the upper half of that range and
+	// silently turn a numeric ID into a name lookup.
+	uid, err := strconv.ParseUint(str, 10, 32)
 	if err != nil {
 		return 0, err
 	}
@@ -703,7 +710,7 @@ func (f *FileOp) Validate(context.Context, *Constraints) error {
 		return nil
 	}
 	if f.action == nil {
-		return errors.Errorf("action is required")
+		return errors.New("action is required")
 	}
 	f.isValidated = true
 	return nil
@@ -805,7 +812,7 @@ func (ms *marshalState) add(fa *FileAction, c *Constraints) (*fileActionState, e
 			}
 			st.input2Relative = &src.target
 		} else {
-			return nil, errors.Errorf("invalid empty source for copy")
+			return nil, errors.New("invalid empty source for copy")
 		}
 	}
 

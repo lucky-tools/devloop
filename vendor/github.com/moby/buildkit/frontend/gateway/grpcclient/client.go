@@ -14,6 +14,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/containerd/containerd/v2/defaults"
 	distreference "github.com/distribution/reference"
 	"github.com/moby/buildkit/client/llb"
 	"github.com/moby/buildkit/client/llb/sourceresolver"
@@ -96,7 +97,8 @@ func convertRef(ref client.Reference) (*pb.Ref, error) {
 	if !ok {
 		return nil, errors.Errorf("invalid return reference type %T", ref)
 	}
-	return &pb.Ref{Id: r.id, Def: r.def}, nil
+	// Return only needs the ID of the reference held by the server.
+	return &pb.Ref{Id: r.id}, nil
 }
 
 func RunFromEnvironment(ctx context.Context, f client.BuildFunc) error {
@@ -820,12 +822,14 @@ func (c *grpcClient) Inputs(ctx context.Context) (map[string]llb.State, error) {
 // communication channel between the process and the ExecProcess message
 // stream.
 type procMessageForwarder struct {
+	ctx  context.Context
 	done chan struct{}
 	msgs chan *pb.ExecMessage
 }
 
-func newProcMessageForwarder() *procMessageForwarder {
+func newProcMessageForwarder(ctx context.Context) *procMessageForwarder {
 	return &procMessageForwarder{
+		ctx:  ctx,
 		done: make(chan struct{}),
 		msgs: make(chan *pb.ExecMessage),
 	}
@@ -839,14 +843,16 @@ func (b *procMessageForwarder) Send(ctx context.Context, m *pb.ExecMessage) {
 	}
 }
 
-func (b *procMessageForwarder) Recv(ctx context.Context) (m *pb.ExecMessage, ok bool) {
+func (b *procMessageForwarder) Recv(ctx context.Context) (*pb.ExecMessage, error) {
 	select {
 	case <-ctx.Done():
-		return nil, true
+		return nil, context.Cause(ctx)
+	case <-b.ctx.Done():
+		return nil, context.Cause(b.ctx)
 	case <-b.done:
-		return nil, false
-	case m = <-b.msgs:
-		return m, true
+		return nil, nil
+	case m := <-b.msgs:
+		return m, nil
 	}
 }
 
@@ -865,6 +871,9 @@ type messageForwarder struct {
 	mu     sync.Mutex
 	pids   map[string]*procMessageForwarder
 	stream pb.LLBBridge_ExecProcessClient
+	// Keep send serialization separate from mu so the receive loop can deliver
+	// process output while Send is blocked on flow control.
+	sendMu sync.Mutex
 	// startOnce used to only start the exec message forwarder once,
 	// so we only have one exec stream per client
 	startOnce sync.Once
@@ -904,6 +913,11 @@ func (m *messageForwarder) Start() (err error) {
 		m.eg.Go(func() error {
 			for {
 				msg, err := m.stream.Recv()
+				if err != nil {
+					// EOF and cancellation also end delivery to every process,
+					// even though they are not errors for Release.
+					m.cancel(errors.Wrap(err, "remote exec stream closed"))
+				}
 				if errors.Is(err, io.EOF) || grpcerrors.Code(err) == codes.Canceled {
 					return nil
 				}
@@ -954,11 +968,13 @@ func debugMessage(msg *pb.ExecMessage) string {
 func (m *messageForwarder) Send(msg *pb.ExecMessage) error {
 	m.mu.Lock()
 	_, ok := m.pids[msg.ProcessID]
-	defer m.mu.Unlock()
+	m.mu.Unlock()
 	if !ok {
 		return errors.Errorf("process %s has ended, not sending message %#v", msg.ProcessID, msg.Input)
 	}
 	bklog.G(m.ctx).Debugf("|---> %s", debugMessage(msg))
+	m.sendMu.Lock()
+	defer m.sendMu.Unlock()
 	return m.stream.Send(msg)
 }
 
@@ -970,7 +986,7 @@ func (m *messageForwarder) Release() error {
 func (m *messageForwarder) Register(pid string) *procMessageForwarder {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	sender := newProcMessageForwarder()
+	sender := newProcMessageForwarder(m.ctx)
 	m.pids[pid] = sender
 	return sender
 }
@@ -1114,9 +1130,13 @@ func (ctr *container) Start(ctx context.Context, req client.StartRequest) (clien
 		return nil, err
 	}
 
-	msg, _ := msgs.Recv(ctx)
+	msg, err := msgs.Recv(ctx)
+	if err != nil {
+		ctr.execMsgs.Deregister(pid)
+		return nil, err
+	}
 	if msg == nil {
-		return nil, errors.Errorf("failed to receive started message")
+		return nil, errors.New("failed to receive started message")
 	}
 	started := msg.GetStarted()
 	if started == nil {
@@ -1159,13 +1179,11 @@ func (ctr *container) Start(ctx context.Context, req client.StartRequest) (clien
 				processID: pid,
 				fd:        0,
 			}
-			_, err := io.Copy(m, stdinReader)
-			// ignore ErrClosedPipe, it is EOF for our usage.
-			if err != nil && !errors.Is(err, io.ErrClosedPipe) {
-				return err
+			_, copyErr := io.Copy(m, stdinReader)
+			if copyErr != nil && !errors.Is(copyErr, io.ErrClosedPipe) {
+				return copyErr
 			}
-			// not an error so must be eof
-			return ctr.execMsgs.Send(&pb.ExecMessage{
+			err := ctr.execMsgs.Send(&pb.ExecMessage{
 				ProcessID: pid,
 				Input: &pb.ExecMessage_File{
 					File: &pb.FdMessage{
@@ -1174,26 +1192,27 @@ func (ctr *container) Start(ctx context.Context, req client.StartRequest) (clien
 					},
 				},
 			})
+			// Cleanup still sends EOF to unblock remote stdin, but a failed send
+			// must not replace the process result that triggered cleanup.
+			if errors.Is(copyErr, io.ErrClosedPipe) {
+				return nil
+			}
+			return err
 		})
 	}
 
 	ctrProc.eg.Go(func() error {
 		var closeDoneOnce sync.Once
+		defer closeDoneOnce.Do(func() { close(done) })
 		var exitError error
 		for {
-			msg, ok := msgs.Recv(ctx)
-			if !ok {
+			msg, err := msgs.Recv(ctx)
+			if err != nil {
+				return err
+			}
+			if msg == nil {
 				// no more messages, return
 				return exitError
-			}
-
-			if msg == nil {
-				// empty message from ctx cancel, so just start shutting down
-				// input
-				closeDoneOnce.Do(func() {
-					close(done)
-				})
-				return context.Cause(ctx)
 			}
 
 			if file := msg.GetFile(); file != nil {
@@ -1377,7 +1396,7 @@ func (r *reference) ToState() (st llb.State, err error) {
 	}
 
 	if r.def == nil {
-		return st, errors.Errorf("gateway did not return reference with definition")
+		return st, errors.New("gateway did not return reference with definition")
 	}
 
 	defop, err := llb.NewDefinitionOp(r.def)
@@ -1451,8 +1470,8 @@ func grpcClientConn(ctx context.Context) (context.Context, *grpc.ClientConn, err
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithUnaryInterceptor(grpcerrors.UnaryClientInterceptor),
 		grpc.WithStreamInterceptor(grpcerrors.StreamClientInterceptor),
-		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(16 << 20)),
-		grpc.WithDefaultCallOptions(grpc.MaxCallSendMsgSize(16 << 20)),
+		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(defaults.DefaultMaxRecvMsgSize)),
+		grpc.WithDefaultCallOptions(grpc.MaxCallSendMsgSize(defaults.DefaultMaxSendMsgSize)),
 	}
 
 	//nolint:staticcheck // ignore SA1019 NewClient has different behavior and needs to be tested

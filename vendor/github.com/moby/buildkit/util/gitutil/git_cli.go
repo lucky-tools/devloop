@@ -7,8 +7,11 @@ import (
 	"os"
 	"os/exec"
 	"slices"
+	"strconv"
 	"strings"
+	"unicode/utf8"
 
+	"github.com/moby/buildkit/util/urlutil"
 	"github.com/pkg/errors"
 )
 
@@ -18,9 +21,11 @@ type GitCLI struct {
 	git  string
 	exec func(context.Context, *exec.Cmd) error
 
-	args    []string
-	dir     string
-	streams StreamFunc
+	args          []string
+	dir           string
+	streams       StreamFunc
+	advice        *bool
+	debugCommands bool
 
 	workTree string
 	gitDir   string
@@ -51,6 +56,20 @@ func WithExec(exec func(context.Context, *exec.Cmd) error) Option {
 func WithArgs(args ...string) Option {
 	return func(b *GitCLI) {
 		b.args = append(b.args, args...)
+	}
+}
+
+// WithGitAdvice controls whether Git advice messages are emitted.
+func WithGitAdvice(enabled bool) Option {
+	return func(b *GitCLI) {
+		b.advice = &enabled
+	}
+}
+
+// WithGitDebugCommands controls whether executed Git commands are logged.
+func WithGitDebugCommands(debugCommands bool) Option {
+	return func(b *GitCLI) {
+		b.debugCommands = debugCommands
 	}
 }
 
@@ -165,6 +184,9 @@ func (cli *GitCLI) Run(ctx context.Context, args ...string) (_ []byte, err error
 
 		// Block sneaky repositories from using repos from the filesystem as submodules.
 		cmd.Args = append(cmd.Args, "-c", "protocol.file.allow=user")
+		if cli.advice != nil && !*cli.advice {
+			cmd.Args = append(cmd.Args, "-c", "advice.detachedHead=false")
+		}
 		if cli.workTree != "" {
 			cmd.Args = append(cmd.Args, "--work-tree", cli.workTree)
 		}
@@ -179,21 +201,31 @@ func (cli *GitCLI) Run(ctx context.Context, args ...string) (_ []byte, err error
 		cmd.Stdin = nil
 		cmd.Stdout = buf
 		cmd.Stderr = errbuf
+		var stdoutStream io.WriteCloser
+		var stderrStream io.WriteCloser
+		flush := func() {}
 		if cli.streams != nil {
-			stdout, stderr, flush := cli.streams(ctx)
-			if stdout != nil {
-				cmd.Stdout = io.MultiWriter(stdout, cmd.Stdout)
+			var flushStream func()
+			stdoutStream, stderrStream, flushStream = cli.streams(ctx)
+			if flushStream != nil {
+				flush = flushStream
 			}
-			if stderr != nil {
-				cmd.Stderr = io.MultiWriter(stderr, cmd.Stderr)
+			if stdoutStream != nil {
+				cmd.Stdout = io.MultiWriter(stdoutStream, cmd.Stdout)
+				defer stdoutStream.Close()
 			}
-			defer stdout.Close()
-			defer stderr.Close()
+			if stderrStream != nil {
+				cmd.Stderr = io.MultiWriter(stderrStream, cmd.Stderr)
+				defer stderrStream.Close()
+			}
 			defer func() {
 				if err != nil {
 					flush()
 				}
 			}()
+		}
+		if cli.debugCommands && stderrStream != nil {
+			_, _ = io.WriteString(stderrStream, "+ "+formatDebugCommand(cmd.Args)+"\n")
 		}
 
 		cmd.Env = []string{
@@ -202,6 +234,13 @@ func (cli *GitCLI) Run(ctx context.Context, args ...string) (_ []byte, err error
 			"GIT_SSH_COMMAND=" + getGitSSHCommand(cli.sshKnownHosts),
 			//	"GIT_TRACE=1",
 			"LC_ALL=C", // Ensure consistent output.
+		}
+		if cli.advice != nil {
+			if *cli.advice {
+				cmd.Env = append(cmd.Env, "GIT_ADVICE=1")
+			} else {
+				cmd.Env = append(cmd.Env, "GIT_ADVICE=0")
+			}
 		}
 		if cli.hostGitConfig {
 			for _, ev := range [...]string{
@@ -212,6 +251,13 @@ func (cli *GitCLI) Run(ctx context.Context, args ...string) (_ []byte, err error
 				"HOMEPATH",
 				"GIT_CONFIG_GLOBAL",
 				"GIT_CONFIG_SYSTEM",
+				// When git runs as root under sudo it consults SUDO_UID to trust
+				// repositories owned by the user who invoked sudo, so client-side
+				// callers such as `sudo docker build` don't trip git's "detected
+				// dubious ownership" check and silently lose commit provenance.
+				// This mirrors git's own default behavior and does not disable
+				// safe.directory checks. See docker/buildx#3855.
+				"SUDO_UID",
 			} {
 				if v, ok := os.LookupEnv(ev); ok {
 					cmd.Env = append(cmd.Env, ev+"="+v)
@@ -270,6 +316,48 @@ func (cli *GitCLI) Run(ctx context.Context, args ...string) (_ []byte, err error
 		}
 		return buf.Bytes(), nil
 	}
+}
+
+func formatDebugCommand(args []string) string {
+	formatted := make([]string, 0, len(args))
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		if arg == "-c" && i+1 < len(args) {
+			formatted = append(formatted, arg, quoteDebugCommandArg(redactGitConfig(args[i+1])))
+			i++
+			continue
+		}
+		formatted = append(formatted, quoteDebugCommandArg(redactURLCredentials(arg)))
+	}
+	return strings.Join(formatted, " ")
+}
+
+func redactGitConfig(arg string) string {
+	// URL-scoped keys can contain '=' before the header value separator.
+	for i := range arg {
+		if arg[i] == '=' && strings.HasSuffix(strings.ToLower(arg[:i]), ".extraheader") {
+			return redactURLCredentials(arg[:i]) + "=xxxxx"
+		}
+	}
+	return redactURLCredentials(arg)
+}
+
+func redactURLCredentials(arg string) string {
+	if !strings.Contains(arg, "://") {
+		return arg
+	}
+	return urlutil.RedactCredentials(arg)
+}
+
+// quoteDebugCommandArg preserves argument boundaries and escapes nonprintable
+// characters for display. The output is not intended for shell re-execution.
+func quoteDebugCommandArg(arg string) string {
+	if arg == "" || !utf8.ValidString(arg) || strings.ContainsFunc(arg, func(r rune) bool {
+		return !strconv.IsPrint(r) || strings.ContainsRune(" \"'\\", r)
+	}) {
+		return strconv.Quote(arg)
+	}
+	return arg
 }
 
 func getGitSSHCommand(knownHosts string) string {

@@ -44,7 +44,7 @@ func (s *SourceOp) Validate(ctx context.Context, c *Constraints) error {
 		return s.err
 	}
 	if s.id == "" {
-		return errors.Errorf("source identifier can't be empty")
+		return errors.New("source identifier can't be empty")
 	}
 	return nil
 }
@@ -140,9 +140,9 @@ func ImageBlob(ref string, opts ...ImageBlobOption) State {
 	r, err := reference.ParseNormalizedNamed(ref)
 	if err == nil {
 		if _, tagged := r.(reference.Tagged); tagged {
-			err = errors.Errorf("tagged image reference not allowed for blob reference")
+			err = errors.New("tagged image reference not allowed for blob reference")
 		} else if ref, ok := r.(reference.Digested); !ok {
-			err = errors.Errorf("checksum required in blob reference")
+			err = errors.New("checksum required in blob reference")
 		} else {
 			digested = ref
 		}
@@ -194,9 +194,9 @@ func OCILayoutBlob(ref string, opts ...ImageBlobOption) State {
 	r, err := reference.ParseNormalizedNamed(ref)
 	if err == nil {
 		if _, tagged := r.(reference.Tagged); tagged {
-			err = errors.Errorf("tagged image reference not allowed for blob reference")
+			err = errors.New("tagged image reference not allowed for blob reference")
 		} else if ref, ok := r.(reference.Digested); !ok {
-			err = errors.Errorf("checksum required in blob reference")
+			err = errors.New("checksum required in blob reference")
 		} else {
 			digested = ref
 		}
@@ -477,10 +477,17 @@ func Git(url, fragment string, opts ...GitOption) State {
 		attrs[pb.AttrGitSkipSubmodules] = "true"
 		addCap(&gi.Constraints, pb.CapSourceGitSkipSubmodules)
 	}
+	if gi.DebugCommands {
+		attrs[pb.AttrGitDebugCommands] = "true"
+	}
 
 	if gi.MTime != "" {
 		attrs[pb.AttrGitMTime] = gi.MTime
 		addCap(&gi.Constraints, pb.CapSourceGitMTime)
+	}
+
+	if gi.Advice {
+		attrs[pb.AttrGitAdvice] = "true"
 	}
 
 	if gi.FetchByCommit {
@@ -531,6 +538,8 @@ type GitInfo struct {
 	SubDir             string
 	SkipSubmodules     bool
 	MTime              string
+	Advice             bool
+	DebugCommands      bool
 	Bundle             string
 	BundleOCISessionID string
 	BundleOCIStoreID   string
@@ -567,6 +576,22 @@ func GitMTimeCommit() GitOption {
 func GitMTime(v string) GitOption {
 	return gitOptionFunc(func(gi *GitInfo) {
 		gi.MTime = v
+	})
+}
+
+// GitAdvice controls whether Git advice messages are emitted while resolving
+// this git source.
+func GitAdvice(enabled bool) GitOption {
+	return gitOptionFunc(func(gi *GitInfo) {
+		gi.Advice = enabled
+	})
+}
+
+// GitDebugCommands controls whether executed Git commands are logged while
+// resolving this git source.
+func GitDebugCommands(enabled bool) GitOption {
+	return gitOptionFunc(func(gi *GitInfo) {
+		gi.DebugCommands = enabled
 	})
 }
 
