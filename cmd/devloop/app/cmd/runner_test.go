@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"testing"
 
 	"github.com/blang/semver"
@@ -31,6 +32,63 @@ import (
 	"github.com/lucky-tools/devloop/pkg/devloop/update"
 	"github.com/lucky-tools/devloop/testutil"
 )
+
+func TestApplySyncDockerHost(t *testing.T) {
+	tests := []struct {
+		description string
+		command     string
+		syncHost    string
+		host        string
+		context     string
+		wantHost    string
+		wantContext string
+	}{
+		{
+			description: "sync overrides DOCKER_HOST",
+			command:     "sync",
+			syncHost:    "ssh://root@192.168.1.53",
+			host:        "ssh://root@192.168.1.51",
+			context:     "51-remote",
+			wantHost:    "ssh://root@192.168.1.53",
+			wantContext: "",
+		},
+		{
+			description: "build ignores DOCKER_HOST_SYNC",
+			command:     "build",
+			syncHost:    "ssh://root@192.168.1.53",
+			host:        "ssh://root@192.168.1.51",
+			context:     "51-remote",
+			wantHost:    "ssh://root@192.168.1.51",
+			wantContext: "51-remote",
+		},
+		{
+			description: "sync without DOCKER_HOST_SYNC keeps DOCKER_HOST",
+			command:     "sync",
+			host:        "ssh://root@192.168.1.51",
+			context:     "51-remote",
+			wantHost:    "ssh://root@192.168.1.51",
+			wantContext: "51-remote",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			t.Setenv("DOCKER_HOST_SYNC", test.syncHost)
+			t.Setenv("DOCKER_HOST", test.host)
+			t.Setenv("DOCKER_CONTEXT", test.context)
+
+			if err := applySyncDockerHost(test.command); err != nil {
+				t.Fatalf("applySyncDockerHost(%q): %v", test.command, err)
+			}
+
+			if got := os.Getenv("DOCKER_HOST"); got != test.wantHost {
+				t.Errorf("DOCKER_HOST = %q, want %q", got, test.wantHost)
+			}
+			if got := os.Getenv("DOCKER_CONTEXT"); got != test.wantContext {
+				t.Errorf("DOCKER_CONTEXT = %q, want %q", got, test.wantContext)
+			}
+		})
+	}
+}
 
 func TestCreateNewRunner(t *testing.T) {
 	tests := []struct {

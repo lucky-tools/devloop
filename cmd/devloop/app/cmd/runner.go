@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 
 	"github.com/lucky-tools/devloop/pkg/devloop/config"
 	sErrors "github.com/lucky-tools/devloop/pkg/devloop/errors"
@@ -74,6 +75,15 @@ func runContext(ctx context.Context, out io.Writer, opts config.DevloopOptions) 
 	if err != nil {
 		return nil, nil, err
 	}
+
+	// DOCKER_HOST_SYNC (from the process environment or from the config's `env`
+	// field, which withFallbackConfig has just applied) lets `devloop sync`
+	// target a different Docker daemon than the other commands. It must be
+	// applied here, before the first Docker client is created below in
+	// validation.ProcessWithRunContext.
+	if err := applySyncDockerHost(opts.Command); err != nil {
+		return nil, nil, err
+	}
 	setDefaultRendererAndDeployer(cfgSet)
 
 	if err := validation.Process(cfgSet, validation.GetValidationOpts(opts)); err != nil {
@@ -101,6 +111,38 @@ func runContext(ctx context.Context, out io.Writer, opts config.DevloopOptions) 
 	}
 
 	return runCtx, configs, nil
+}
+
+// applySyncDockerHost points the process at DOCKER_HOST_SYNC when the sync
+// command runs, so a single config file can build on one Docker host and sync
+// into containers on another. Other commands ignore the variable.
+//
+// It must be called after the config's `env` field has been applied and before
+// any Docker client is created: the API client (docker.NewAPIClient) and the
+// `docker exec` subprocesses used by sync both read DOCKER_HOST from the
+// process environment.
+func applySyncDockerHost(command string) error {
+	if command != "sync" {
+		return nil
+	}
+
+	host := os.Getenv("DOCKER_HOST_SYNC")
+	if host == "" {
+		return nil
+	}
+
+	if err := os.Setenv("DOCKER_HOST", host); err != nil {
+		return fmt.Errorf("setting DOCKER_HOST from DOCKER_HOST_SYNC: %w", err)
+	}
+	// The Docker CLI gives DOCKER_CONTEXT precedence over DOCKER_HOST. Clear it
+	// so the `docker exec` subprocesses used by sync reach the same daemon as
+	// the API client, which only reads DOCKER_HOST.
+	if err := os.Unsetenv("DOCKER_CONTEXT"); err != nil {
+		return fmt.Errorf("clearing DOCKER_CONTEXT for DOCKER_HOST_SYNC: %w", err)
+	}
+	log.Entry(context.TODO()).Infof("Using DOCKER_HOST_SYNC for the sync command")
+
+	return nil
 }
 
 // withFallbackConfig will try to automatically generate a config if root `devloop.yaml` file does not exist.
