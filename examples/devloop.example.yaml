@@ -26,6 +26,7 @@ metadata:                               # 项目元信息（optional）
 env:                                        # 顶层环境变量，`KEY=value` 数组（optional）
   - DOCKER_HOST=ssh://root@192.168.1.53     # 若变量已存在于环境，则不覆盖
   - DOCKER_CONTEXT=53-remote                # 仅当变量未设置时才会生效
+  # - DOCKER_HOST_SYNC=ssh://root@192.168.1.53  # 仅 `devloop sync` 生效，覆盖 DOCKER_HOST（用于 build 与 sync 分属不同主机）
 
 # -----------------------------------------------------------------------------
 # requires：引用其它 devloop 配置（跨文件复用配置，optional）
